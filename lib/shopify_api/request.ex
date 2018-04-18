@@ -41,7 +41,19 @@ defmodule ShopifyApi.Request do
     end
   end
 
-  defp url(%{domain: domain}, path), do: "https://#{domain}/admin/#{path}"
+  defp url(%{domain: domain}, path) do
+    # TODO not feeling 100% about this, is there another way to do it?
+    transport =
+      case Mix.env() do
+        :test ->
+          "http://"
+
+        _ ->
+          "https://"
+      end
+
+    "#{transport}#{domain}/admin/#{path}"
+  end
 
   defp headers(%{access_token: access_token}) do
     [

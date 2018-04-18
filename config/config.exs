@@ -21,6 +21,9 @@ use Mix.Config
 #     config :logger, level: :info
 #
 
+# Provider out server with a min of an empty Map
+config :shopify_api, ShopifyApi.Shop, %{}
+
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
 # by uncommenting the line below and defining dev.exs, test.exs and such.
