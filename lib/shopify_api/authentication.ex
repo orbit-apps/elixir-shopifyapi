@@ -23,7 +23,7 @@ defmodule ShopifyApi.Authentication do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         info("ShopifyApp [#{shop.domain}] fetched token")
         token = body |> Poison.decode!() |> Map.get("access_token")
-        ShopServer.set(%{access_token: token})
+        ShopServer.set(%{domain: shop.domain, access_token: token})
         {:ok, token}
 
       {:ok, %HTTPoison.Response{} = response} ->
