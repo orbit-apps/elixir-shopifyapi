@@ -24,9 +24,15 @@ Add it to your phoenix routes.
 
 ```
 scope "/shop" do
-  forward "/", Plug.ShopifyApi
+  forward("/", ShopifyApi.Router)
 end
 ```
+
+## Installing this app in a Shop
+
+1. Start something like ngrok
+2. Configure your app to allow your ngrok url as one of the redirect_urls
+3. Point your browser to `http://localhost:4000/shop/install?shop=your-shop.shopify.com` and it should prompt you to login and authorize it.
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
