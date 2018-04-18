@@ -7,7 +7,7 @@ defmodule ShopifyApi.Product do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Product.all(ShopifyApi.ShopServer.get)
+  iex> ShopifyApi.Product.all(shop)
   {:ok, %{"products" => [%{"product_id" => "_", "title" => "Testing Create Product"}]}}
   """
   def all(%Shop{} = shop) do
@@ -25,7 +25,7 @@ defmodule ShopifyApi.Product do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Product.delete(ShopifyApi.ShopServer.get, 598612213811)
+  iex> ShopifyApi.Product.delete(shop, 598612213811)
   {:ok, %{}}
   """
   def delete(%Shop{} = shop, product_id) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Product do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Product.create(ShopifyApi.ShopServer.get, %{product: %{body_html: "Testing create", title: "Testing Create Product"}})
+  iex> ShopifyApi.Product.create(shop, %{product: %{body_html: "Testing create", title: "Testing Create Product"}})
   {:ok, %{"product" => %{"product_id" => "_", "title" => "Testing Create Product"}}}
   """
   def create(%Shop{} = shop, %{product: %{}} = product) do
