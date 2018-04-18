@@ -1,4 +1,15 @@
 defmodule ShopifyApi.Request do
+  @moduledoc """
+  Provides basic REST actions for hitting the Shopify API. Don't use this
+  directly instead use one of the helper modules such as `ShopifyApi.Product`.
+
+  Actons provided, the names correspond to the HTTP Action called.
+    - get
+    - put
+    - post
+    - delete
+  """
+
   use HTTPoison.Base
 
   def get(shop, path) do

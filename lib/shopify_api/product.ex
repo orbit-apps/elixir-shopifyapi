@@ -1,8 +1,10 @@
 defmodule ShopifyApi.Product do
+  @moduledoc """
+  """
   alias ShopifyApi.Shop
   alias ShopifyApi.Request
 
-  @doc ~S"""
+  @doc """
   ## Example
 
   iex> ShopifyApi.Product.all(ShopifyApi.ShopServer.get)
@@ -20,7 +22,7 @@ defmodule ShopifyApi.Product do
     Request.put(shop, "products/#{product_id}.json", product)
   end
 
-  @doc ~S"""
+  @doc """
   ## Example
 
   iex> ShopifyApi.Product.delete(ShopifyApi.ShopServer.get, 598612213811)
@@ -30,7 +32,7 @@ defmodule ShopifyApi.Product do
     Request.delete(shop, "products/#{product_id}.json")
   end
 
-  @doc ~S"""
+  @doc """
   ## Example
 
   iex> ShopifyApi.Product.create(ShopifyApi.ShopServer.get, %{product: %{body_html: "Testing create", title: "Testing Create Product"}})
