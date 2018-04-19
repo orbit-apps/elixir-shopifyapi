@@ -29,6 +29,6 @@ defmodule ShopifyApi.ProductTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    assert {:ok, products_map} = Product.all(shop)
+    assert {:ok, products} = Product.all(shop)
   end
 end

@@ -12,6 +12,11 @@ defmodule ShopifyApi.Request do
 
   use HTTPoison.Base
 
+  @transport "https://"
+  if Mix.env() == :test do
+    @transport "http://"
+  end
+
   def get(shop, path) do
     shopify_request(:get, url(shop, path), "", headers(shop))
   end
@@ -42,17 +47,7 @@ defmodule ShopifyApi.Request do
   end
 
   defp url(%{domain: domain}, path) do
-    # TODO not feeling 100% about this, is there another way to do it?
-    transport =
-      case Mix.env() do
-        :test ->
-          "http://"
-
-        _ ->
-          "https://"
-      end
-
-    "#{transport}#{domain}/admin/#{path}"
+    "#{@transport}#{domain}/admin/#{path}"
   end
 
   defp headers(%{access_token: access_token}) do
