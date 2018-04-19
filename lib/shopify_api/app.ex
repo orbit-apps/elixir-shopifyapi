@@ -2,8 +2,6 @@ defmodule ShopifyApi.App do
   defstruct name: "",
             client_id: "",
             client_secret: "",
-            code: "",
-            hmac: "",
             auth_redirect_uri: "",
             nonce: ""
 
