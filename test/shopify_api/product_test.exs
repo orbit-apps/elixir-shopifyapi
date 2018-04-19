@@ -5,19 +5,17 @@ defmodule ShopifyApi.ProductTest do
   setup _context do
     bypass = Bypass.open()
 
-    shop = %ShopifyApi.Shop{
-      access_token: "token",
-      client_id: "id",
-      client_secret: "secret",
-      domain: "localhost:#{bypass.port}",
-      auth_redirect_uri: "http://shop.example.com/shop/authorized",
-      nonce: "test"
+    token = %ShopifyApi.AuthToken{
+      token: "token",
+      shop: "localhost:#{bypass.port}"
     }
 
-    {:ok, %{shop: shop, bypass: bypass}}
+    shop = %ShopifyApi.Shop{domain: "localhost:#{bypass.port}"}
+
+    {:ok, %{shop: shop, auth_token: token, bypass: bypass}}
   end
 
-  test "", %{bypass: bypass, shop: shop} do
+  test "", %{bypass: bypass, shop: shop, auth_token: token} do
     products = %{
       "products" => [
         %{"product_id" => "_", "title" => "Testing Create Product"}
@@ -29,6 +27,6 @@ defmodule ShopifyApi.ProductTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    assert {:ok, products} = Product.all(shop)
+    assert {:ok, products} = Product.all(token)
   end
 end

@@ -1,15 +1,13 @@
-defmodule ShopifyApi.ShopServer do
+defmodule ShopifyApi.AppServer do
   use GenServer
   import Logger, only: [info: 1]
-  alias ShopifyApi.Shop
 
-  @name :shopify_api_shop_server
+  @name :shopify_api_app_server
 
   def start_link do
     info("Starting #{__MODULE__}...")
-    # TODO have some sane way to handle this config not existing
-    state = Application.get_env(:shopify_api, Shop)
-    state = for {k, v} <- state, into: %{}, do: {k, struct(Shop, v)}
+    state = Application.get_env(:shopify_api, ShopifyApi.App)
+    state = for {k, v} <- state, into: %{}, do: {k, struct(ShopifyApi.App, v)}
     GenServer.start_link(__MODULE__, state, name: @name)
   end
 
@@ -26,8 +24,7 @@ defmodule ShopifyApi.ShopServer do
     GenServer.call(@name, :count)
   end
 
-  @spec set(%{:domain => any, any => any}) :: atom
-  def set(%{domain: domain} = new_values) do
+  def set(domain, new_values) do
     GenServer.cast(@name, {:set, domain, new_values})
   end
 
@@ -39,8 +36,7 @@ defmodule ShopifyApi.ShopServer do
 
   @callback handle_cast(map, map) :: tuple
   def handle_cast({:set, domain, new_values}, %{} = state) do
-    new_state =
-      Map.update(state, domain, %Shop{domain: domain}, fn t -> Map.merge(t, new_values) end)
+    new_state = Map.update(state, domain, %ShopifyApi.App{}, fn t -> Map.merge(t, new_values) end)
 
     {:noreply, new_state}
   end

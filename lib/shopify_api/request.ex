@@ -17,20 +17,20 @@ defmodule ShopifyApi.Request do
     @transport "http://"
   end
 
-  def get(shop, path) do
-    shopify_request(:get, url(shop, path), "", headers(shop))
+  def get(auth, path) do
+    shopify_request(:get, url(auth, path), "", headers(auth))
   end
 
-  def put(shop, path, object) do
-    shopify_request(:put, url(shop, path), Poison.encode!(object), headers(shop))
+  def put(auth, path, object) do
+    shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth))
   end
 
-  def post(shop, path, object) do
-    shopify_request(:post, url(shop, path), Poison.encode!(object), headers(shop))
+  def post(auth, path, object) do
+    shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth))
   end
 
-  def delete(shop, path) do
-    shopify_request(:delete, url(shop, path), "", headers(shop))
+  def delete(auth, path) do
+    shopify_request(:delete, url(auth, path), "", headers(auth))
   end
 
   defp shopify_request(action, url, body, headers) do
@@ -46,11 +46,11 @@ defmodule ShopifyApi.Request do
     end
   end
 
-  defp url(%{domain: domain}, path) do
+  defp url(%{shop: domain}, path) do
     "#{@transport}#{domain}/admin/#{path}"
   end
 
-  defp headers(%{access_token: access_token}) do
+  defp headers(%{token: access_token}) do
     [
       {"Content-Type", "application/json"},
       {"X-Shopify-Access-Token", access_token}

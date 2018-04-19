@@ -8,7 +8,9 @@ defmodule ShopifyApi.Application do
 
     # Define workers and child supervisors to be supervised
     children = [
-      supervisor(ShopifyApi.ShopServer, [])
+      supervisor(ShopifyApi.ShopServer, []),
+      supervisor(ShopifyApi.AppServer, []),
+      supervisor(ShopifyApi.AuthTokenServer, [])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
