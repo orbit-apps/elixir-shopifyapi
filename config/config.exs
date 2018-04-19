@@ -23,6 +23,7 @@ use Mix.Config
 
 # Provider out server with a min of an empty Map
 config :shopify_api, ShopifyApi.Shop, %{}
+config :shopify_api, ShopifyApi.App, %{}
 
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment

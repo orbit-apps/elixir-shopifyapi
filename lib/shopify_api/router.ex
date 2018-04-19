@@ -2,17 +2,16 @@ defmodule ShopifyApi.Router do
   require Logger
   use Plug.Router
 
-  alias ShopifyApi.Authentication
-  alias ShopifyApi.ShopServer
-
   plug(:match)
   plug(:dispatch)
 
   get "/install" do
-    case fetch_shop(conn) do
-      {:ok, shop} ->
+    case fetch_shopify_app(conn) do
+      {:ok, app} ->
+        install_url = ShopifyApi.App.install_url(app, shop_domain(conn))
+
         conn
-        |> Plug.Conn.put_resp_header("location", Authentication.install_url(shop))
+        |> Plug.Conn.put_resp_header("location", install_url)
         |> Plug.Conn.resp(unquote(302), "You are being redirected.")
         |> Plug.Conn.halt()
 
@@ -23,25 +22,35 @@ defmodule ShopifyApi.Router do
     end
   end
 
-  get "/authorized" do
-    Logger.info("Authorized #{conn.query_params["shop"]}")
+  get "/authorized/:app" do
+    Logger.info("Authorized #{shop_domain(conn)}")
 
-    ShopServer.set(%{
-      code: conn.query_params["code"],
-      hmac: conn.query_params["hmac"],
-      domain: conn.query_params["shop"],
-      nonce: conn.query_params["state"],
-      timestamp: String.to_integer(conn.query_params["timestamp"])
-    })
+    # TODO verify
+    # conn.query_params["hmac"],
+    # conn.query_params["state"],
 
-    case fetch_shop(conn) do
-      {:ok, shop} ->
-        Authentication.update_token(shop)
+    with {:ok, app} <- fetch_shopify_app(conn),
+         {:ok, token} <- ShopifyApi.App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
+      ShopifyApi.AuthTokenServer.set(shop_domain(conn), %{
+        code: auth_code(conn),
+        timestamp: String.to_integer(conn.query_params["timestamp"]),
+        access_token: token
+      })
 
+      conn
+      |> Plug.Conn.resp(200, "Authenticated.")
+      |> Plug.Conn.halt()
+    else
+      {_, app} ->
+        Logger.info("#{__MODULE__} app #{inspect app}")
         conn
-        |> Plug.Conn.resp(200, "Authenticated.")
+        |> Plug.Conn.resp(404, "Not Found.")
         |> Plug.Conn.halt()
-
+      {_, token} ->
+        Logger.info("#{__MODULE__} app #{inspect token}")
+        conn
+        |> Plug.Conn.resp(404, "Not Found.")
+        |> Plug.Conn.halt()
       _ ->
         conn
         |> Plug.Conn.resp(404, "Not Found.")
@@ -49,7 +58,21 @@ defmodule ShopifyApi.Router do
     end
   end
 
-  defp fetch_shop(conn) do
-    ShopServer.get(conn.query_params["shop"])
+  defp fetch_shopify_app(conn) do
+    conn
+    |> app_name()
+    |> ShopifyApi.AppServer.get()
+  end
+
+  defp app_name(conn) do
+    conn.params["app"]
+  end
+
+  defp shop_domain(conn) do
+    conn.params["shop"]
+  end
+
+  defp auth_code(conn) do
+    conn.params["code"]
   end
 end
