@@ -12,6 +12,11 @@ defmodule ShopifyApi.Request do
 
   use HTTPoison.Base
 
+  @transport "https://"
+  if Mix.env() == :test do
+    @transport "http://"
+  end
+
   def get(shop, path) do
     shopify_request(:get, url(shop, path), "", headers(shop))
   end
@@ -41,7 +46,9 @@ defmodule ShopifyApi.Request do
     end
   end
 
-  defp url(%{domain: domain}, path), do: "https://#{domain}/admin/#{path}"
+  defp url(%{domain: domain}, path) do
+    "#{@transport}#{domain}/admin/#{path}"
+  end
 
   defp headers(%{access_token: access_token}) do
     [
