@@ -41,16 +41,14 @@ defmodule ShopifyApi.Router do
       |> Plug.Conn.resp(200, "Authenticated.")
       |> Plug.Conn.halt()
     else
-      {_, app} ->
-        Logger.info("#{__MODULE__} app #{inspect app}")
+      {_, res} ->
+        # TODO does this actually work?
+        Logger.info("#{__MODULE__} app #{inspect(res)}")
+
         conn
         |> Plug.Conn.resp(404, "Not Found.")
         |> Plug.Conn.halt()
-      {_, token} ->
-        Logger.info("#{__MODULE__} app #{inspect token}")
-        conn
-        |> Plug.Conn.resp(404, "Not Found.")
-        |> Plug.Conn.halt()
+
       _ ->
         conn
         |> Plug.Conn.resp(404, "Not Found.")
