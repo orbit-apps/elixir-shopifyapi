@@ -34,7 +34,8 @@ defmodule ShopifyApi.Router do
       ShopifyApi.AuthTokenServer.set(shop_domain(conn), %{
         code: auth_code(conn),
         timestamp: String.to_integer(conn.query_params["timestamp"]),
-        access_token: token
+        token: token,
+        shop: shop_domain(conn)
       })
 
       conn
