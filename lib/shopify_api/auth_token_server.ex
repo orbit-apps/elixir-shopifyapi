@@ -13,8 +13,8 @@ defmodule ShopifyApi.AuthTokenServer do
     GenServer.call(@name, :all)
   end
 
-  def get(domain) do
-    GenServer.call(@name, {:get, domain})
+  def get(app_name) do
+    GenServer.call(@name, {:get, app_name})
   end
 
   @spec count :: integer
@@ -22,8 +22,8 @@ defmodule ShopifyApi.AuthTokenServer do
     GenServer.call(@name, :count)
   end
 
-  def set(domain, new_values) do
-    GenServer.cast(@name, {:set, domain, new_values})
+  def set(app_name, new_values) do
+    GenServer.cast(@name, {:set, app_name, new_values})
   end
 
   #
@@ -33,7 +33,7 @@ defmodule ShopifyApi.AuthTokenServer do
   def init(state), do: {:ok, state}
 
   @callback handle_cast(map, map) :: tuple
-  def handle_cast({:set, domain, new_values}, %{} = state) do
+  def handle_cast({:set, app_name, new_values}, %{} = state) do
     new_state =
       update_in(state, [app_name], fn t ->
         # TODO: Fix and figure out how to make this nicer.        
@@ -50,8 +50,8 @@ defmodule ShopifyApi.AuthTokenServer do
     {:reply, state, state}
   end
 
-  def handle_call({:get, domain}, _caller, state) do
-    {:reply, Map.fetch(state, domain), state}
+  def handle_call({:get, app_name}, _caller, state) do
+    {:reply, Map.fetch(state, app_name), state}
   end
 
   def handle_call(:count, _caller, state) do
