@@ -35,7 +35,11 @@ defmodule ShopifyApi.AuthTokenServer do
   @callback handle_cast(map, map) :: tuple
   def handle_cast({:set, domain, new_values}, %{} = state) do
     new_state =
-      Map.update(state, domain, %ShopifyApi.AuthToken{shop: domain}, fn t ->
+      update_in(state, [app_name], fn t ->
+        # TODO: Fix and figure out how to make this nicer.        
+        if t == nil do
+          t = %ShopifyApi.AuthToken{}
+        end
         Map.merge(t, new_values)
       end)
 
