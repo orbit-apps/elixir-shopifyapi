@@ -15,8 +15,8 @@ defmodule ShopifyApi.AppServer do
     GenServer.call(@name, :all)
   end
 
-  def get(domain) do
-    GenServer.call(@name, {:get, domain})
+  def get(name) do
+    GenServer.call(@name, {:get, name})
   end
 
   @spec count :: integer
@@ -24,8 +24,8 @@ defmodule ShopifyApi.AppServer do
     GenServer.call(@name, :count)
   end
 
-  def set(domain, new_values) do
-    GenServer.cast(@name, {:set, domain, new_values})
+  def set(name, new_values) do
+    GenServer.cast(@name, {:set, name, new_values})
   end
 
   #
@@ -35,8 +35,14 @@ defmodule ShopifyApi.AppServer do
   def init(state), do: {:ok, state}
 
   @callback handle_cast(map, map) :: tuple
-  def handle_cast({:set, domain, new_values}, %{} = state) do
-    new_state = Map.update(state, domain, %ShopifyApi.App{}, fn t -> Map.merge(t, new_values) end)
+  def handle_cast({:set, name, new_values}, %{} = state) do
+    new_state = update_in(state, [name], fn t ->
+      if t == nil do
+        t = %ShopifyApi.App{}
+      end
+
+      Map.merge(t, new_values)
+    end)
 
     {:noreply, new_state}
   end
@@ -45,8 +51,8 @@ defmodule ShopifyApi.AppServer do
     {:reply, state, state}
   end
 
-  def handle_call({:get, domain}, _caller, state) do
-    {:reply, Map.fetch(state, domain), state}
+  def handle_call({:get, name}, _caller, state) do
+    {:reply, Map.fetch(state, name), state}
   end
 
   def handle_call(:count, _caller, state) do
