@@ -36,13 +36,13 @@ defmodule ShopifyApi.AppServer do
 
   @callback handle_cast(map, map) :: tuple
   def handle_cast({:set, name, new_values}, %{} = state) do
-    new_state = update_in(state, [name], fn t ->
-      if t == nil do
-        t = %ShopifyApi.App{}
-      end
-
-      Map.merge(t, new_values)
-    end)
+    new_state =
+      update_in(state, [name], fn t ->
+        case t do
+          nil -> Map.merge(%ShopifyApi.App{}, new_values)
+          _ -> Map.merge(t, new_values)
+        end
+      end)
 
     {:noreply, new_state}
   end

@@ -36,11 +36,10 @@ defmodule ShopifyApi.AuthTokenServer do
   def handle_cast({:set, app_name, new_values}, %{} = state) do
     new_state =
       update_in(state, [app_name], fn t ->
-        # TODO: Fix and figure out how to make this nicer.        
-        if t == nil do
-          t = %ShopifyApi.AuthToken{}
+        case t do
+          nil -> Map.merge(%ShopifyApi.AuthToken{}, new_values)
+          _ -> Map.merge(t, new_values)
         end
-        Map.merge(t, new_values)
       end)
 
     {:noreply, new_state}
