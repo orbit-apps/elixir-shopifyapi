@@ -56,6 +56,15 @@ defmodule ShopifyApi.Router do
     end
   end
 
+  forward("/graphql/config", to: Absinthe.Plug, schema: GraphQL.Config.Schema)
+
+  forward(
+    "/graphiql",
+    to: Absinthe.Plug.GraphiQL,
+    schema: GraphQL.Config.Schema,
+    interface: :playground
+  )
+
   defp fetch_shopify_app(conn) do
     conn
     |> app_name()
