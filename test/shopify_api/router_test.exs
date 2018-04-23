@@ -12,7 +12,12 @@ defmodule ShopifyApi.RouterTest do
   @shop_domain "shop.example.com"
 
   setup do
-    ShopifyApi.AppServer.set(@app_name, %{name: @app_name, auth_redirect_uri: @redirect_uri, scope: "nothing"})
+    ShopifyApi.AppServer.set(@app_name, %{
+      name: @app_name,
+      auth_redirect_uri: @redirect_uri,
+      scope: "nothing"
+    })
+
     ShopifyApi.ShopServer.set(%{domain: @shop_domain})
   end
 

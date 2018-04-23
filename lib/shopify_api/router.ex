@@ -5,7 +5,7 @@ defmodule ShopifyApi.Router do
   plug(:match)
   plug(:dispatch)
 
-  if Mix.env == :dev do
+  if Mix.env() == :dev do
     use Plug.Debugger
   end
 
