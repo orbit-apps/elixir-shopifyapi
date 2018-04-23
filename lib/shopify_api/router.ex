@@ -31,7 +31,7 @@ defmodule ShopifyApi.Router do
 
     with {:ok, app} <- fetch_shopify_app(conn),
          {:ok, token} <- ShopifyApi.App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
-      ShopifyApi.AuthTokenServer.set(shop_domain(conn), %{
+      ShopifyApi.AuthTokenServer.set(shop_domain(conn), app_name(conn), %{
         code: auth_code(conn),
         timestamp: String.to_integer(conn.query_params["timestamp"]),
         token: token,
