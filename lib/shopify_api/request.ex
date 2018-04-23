@@ -46,7 +46,7 @@ defmodule ShopifyApi.Request do
     end
   end
 
-  defp url(%{shop: domain}, path) do
+  defp url(%{shop_name: domain}, path) do
     "#{@transport}#{domain}/admin/#{path}"
   end
 

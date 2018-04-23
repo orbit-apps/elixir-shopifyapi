@@ -7,7 +7,7 @@ defmodule ShopifyApi.ProductTest do
 
     token = %ShopifyApi.AuthToken{
       token: "token",
-      shop: "localhost:#{bypass.port}"
+      shop_name: "localhost:#{bypass.port}"
     }
 
     shop = %ShopifyApi.Shop{domain: "localhost:#{bypass.port}"}
