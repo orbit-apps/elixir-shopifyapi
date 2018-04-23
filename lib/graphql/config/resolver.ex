@@ -20,10 +20,12 @@ defmodule GraphQL.Config.Resolver do
   end
 
   def tokens_for_app(app, _, _) do
-    tokens = case ShopifyApi.AuthTokenServer.get_for_app(app.name) do
-      nil -> []
-      results -> results
-    end
+    tokens =
+      case ShopifyApi.AuthTokenServer.get_for_app(app.name) do
+        nil -> []
+        results -> results
+      end
+
     {:ok, tokens}
   end
 

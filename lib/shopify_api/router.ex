@@ -15,7 +15,9 @@ defmodule ShopifyApi.Router do
         |> Plug.Conn.resp(unquote(302), "You are being redirected.")
         |> Plug.Conn.halt()
 
-      _ ->
+      res ->
+        Logger.info("#{__MODULE__} failed install with: #{res}")
+
         conn
         |> Plug.Conn.resp(404, "Not Found.")
         |> Plug.Conn.halt()
@@ -42,14 +44,9 @@ defmodule ShopifyApi.Router do
       |> Plug.Conn.resp(200, "Authenticated.")
       |> Plug.Conn.halt()
     else
-      {_, res} ->
+      res ->
         Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
 
-        conn
-        |> Plug.Conn.resp(404, "Not Found.")
-        |> Plug.Conn.halt()
-
-      _ ->
         conn
         |> Plug.Conn.resp(404, "Not Found.")
         |> Plug.Conn.halt()

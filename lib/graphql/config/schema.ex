@@ -12,7 +12,8 @@ defmodule GraphQL.Config.Schema do
     field(:scope, :string)
     field(:auth_redirect_uri, :string)
     field(:nonce, :string)
-    field(:auth_tokens, list_of(:auth_token)) do
+
+    field :auth_tokens, list_of(:auth_token) do
       resolve(&GraphQL.Config.Resolver.tokens_for_app/3)
     end
   end
