@@ -40,10 +40,16 @@ defmodule ShopifyApi.App do
 end
 
 defmodule ShopifyApi.AuthRequest do
+  require Logger
   @headers [{"Content-Type", "application/json"}]
 
+  @transport "https://"
+  if Mix.env() == :test do
+    @transport "http://"
+  end
+
   defp access_token_url(domain) do
-    "https://#{domain}/admin/oauth/access_token"
+    "#{@transport}#{domain}/admin/oauth/access_token"
   end
 
   def post(%ShopifyApi.App{} = app, domain, auth_code) do
@@ -53,6 +59,7 @@ defmodule ShopifyApi.AuthRequest do
       code: auth_code
     }
 
+    Logger.debug("#{__MODULE__} requesting token from #{access_token_url(domain)}")
     HTTPoison.post(access_token_url(domain), Poison.encode!(http_body), @headers)
   end
 end
