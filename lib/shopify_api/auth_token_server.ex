@@ -63,9 +63,11 @@ defmodule ShopifyApi.AuthTokenServer do
   end
 
   def handle_call({:get_for_app, app}, _caller, state) do
-    vals = state
-    |> Map.values
-    |> Enum.filter(fn t -> t.app_name == app end)
+    vals =
+      state
+      |> Map.values()
+      |> Enum.filter(fn t -> t.app_name == app end)
+
     {:reply, vals, state}
   end
 
