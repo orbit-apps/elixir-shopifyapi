@@ -43,8 +43,7 @@ defmodule ShopifyApi.Router do
       |> Plug.Conn.halt()
     else
       {_, res} ->
-        # TODO does this actually work?
-        Logger.info("#{__MODULE__} app #{inspect(res)}")
+        Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
 
         conn
         |> Plug.Conn.resp(404, "Not Found.")
