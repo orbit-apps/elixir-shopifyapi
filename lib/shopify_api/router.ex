@@ -60,16 +60,6 @@ defmodule ShopifyApi.Router do
   # TODO this should be behind a api token authorization
   forward("/graphql/config", to: Absinthe.Plug, schema: GraphQL.Config.Schema)
 
-  # Only mount graphiql in dev
-  if Mix.env == :dev do
-    forward(
-      "/graphiql",
-      to: Absinthe.Plug.GraphiQL,
-      schema: GraphQL.Config.Schema,
-      interface: :playground
-    )
-  end
-
   defp fetch_shopify_app(conn) do
     conn
     |> app_name()

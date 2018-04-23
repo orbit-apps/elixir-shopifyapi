@@ -28,6 +28,18 @@ scope "/shop" do
 end
 ```
 
+Optional, add graphiql to your phoenix config
+```
+if Mix.env == :dev do
+  forward(
+    "/graphiql",
+    to: Absinthe.Plug.GraphiQL,
+    schema: GraphQL.Config.Schema,
+    interface: :playground
+  )
+end
+```
+
 ## Installing this app in a Shop
 
 1. Start something like ngrok
