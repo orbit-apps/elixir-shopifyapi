@@ -43,4 +43,14 @@ defmodule GraphQL.Config.Resolver do
     tokens = Enum.map(ShopifyApi.AuthTokenServer.all(), fn x -> elem(x, 1) end)
     {:ok, tokens}
   end
+
+  def update_auth_token(_root, args, _info) do
+    with :ok <- ShopifyApi.AuthTokenServer.set(args.shop_name, args.app_name, args),
+         {:ok, token} <- ShopifyApi.AuthTokenServer.get(args.shop_name, args.app_name) do
+      {:ok, token}
+    else
+      _ ->
+        {:error, "could not create shop"}
+    end
+  end
 end

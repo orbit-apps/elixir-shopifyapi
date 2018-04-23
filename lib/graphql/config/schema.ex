@@ -21,9 +21,9 @@ defmodule GraphQL.Config.Schema do
   object :auth_token do
     field(:code, :string)
     field(:token, :string)
-    field(:shop, :string)
+    field(:shop_name, :string)
+    field(:app_name, :string)
     field(:timestamp, :integer)
-    field(:shop)
   end
 
   query do
@@ -54,6 +54,15 @@ defmodule GraphQL.Config.Schema do
       arg(:auth_redirect_uri, non_null(:string))
       arg(:nonce, non_null(:string))
       resolve(&GraphQL.Config.Resolver.update_app/3)
+    end
+
+    field :update_auth_token, :auth_token do
+      arg(:code, non_null(:string))
+      arg(:token, non_null(:string))
+      arg(:shop_name, non_null(:string))
+      arg(:app_name, non_null(:string))
+      arg(:timestamp, :integer)
+      resolve(&GraphQL.Config.Resolver.update_auth_token/3)
     end
   end
 end
