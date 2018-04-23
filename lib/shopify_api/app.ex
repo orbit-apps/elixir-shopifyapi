@@ -11,7 +11,7 @@ defmodule ShopifyApi.App do
   def install_url(%__MODULE__{} = app, domain) do
     query_params = [
       client_id: app.client_id,
-      scope: "read_orders,read_products,write_products",
+      scope: app.scope,
       redirect_uri: app.auth_redirect_uri,
       state: app.nonce
     ]
