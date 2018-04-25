@@ -6,3 +6,4 @@ notifications:
 script:
   - mix format --check-formatted
   - mix test
+  - mix coveralls.travis
