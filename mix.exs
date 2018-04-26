@@ -10,7 +10,8 @@ defmodule Plug.ShopifyApi.MixProject do
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      dialyzer: [plt_add_deps: :transitive]
+      dialyzer: [plt_add_deps: :transitive],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -29,14 +30,15 @@ defmodule Plug.ShopifyApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:absinthe, "~> 1.4.0"},
       {:absinthe_plug, "~> 1.4.0"},
-      {:httpoison, "~> 1.0"},
-      {:plug, "~> 1.0"},
-      {:poison, "~> 3.1"},
+      {:absinthe, "~> 1.4.0"},
+      {:bypass, "~> 0.8", only: :test},
       {:credo, "~> 0.3", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
-      {:bypass, "~> 0.8", only: :test}
+      {:excoveralls, only: [:dev, :test]},
+      {:httpoison, "~> 1.0"},
+      {:plug, "~> 1.0"},
+      {:poison, "~> 3.1"}
     ]
   end
 end
