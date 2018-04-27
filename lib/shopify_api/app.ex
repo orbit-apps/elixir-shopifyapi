@@ -3,7 +3,8 @@ defmodule ShopifyApi.App do
             client_id: "",
             client_secret: "",
             auth_redirect_uri: "",
-            nonce: ""
+            nonce: "",
+            scope: ""
 
   require Logger
   alias ShopifyApi.AuthRequest
