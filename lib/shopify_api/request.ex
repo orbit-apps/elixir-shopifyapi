@@ -35,7 +35,7 @@ defmodule ShopifyApi.Request do
 
   defp shopify_request(action, url, body, headers) do
     case request(action, url, body, headers) do
-      {:ok, %{status_code: 200} = response} ->
+      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
         {:ok, fetch_body(response)}
 
       {:ok, response} ->
