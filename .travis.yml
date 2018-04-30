@@ -7,4 +7,4 @@ env:
 script:
   - mix format --check-formatted
   - mix test
-  - mix coveralls.travis
+#- mix coveralls.travis
