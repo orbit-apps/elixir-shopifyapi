@@ -57,6 +57,8 @@ defmodule ShopifyApi.Router do
     end
   end
 
+  forward("/webhook", to: ShopifyApi.WebhookRouter)
+
   # TODO this should be behind a api token authorization
   forward("/graphql/config", to: Absinthe.Plug, schema: GraphQL.Config.Schema)
 
