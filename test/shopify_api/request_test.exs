@@ -57,5 +57,21 @@ defmodule ShopifyApi.RequestTest do
 
       assert {:ok, _} = Request.post(token, "example", %{})
     end
+
+    test "3/Arity is a default map", %{
+      bypass: bypass,
+      shop: shop,
+      auth_token: token
+    } do
+      Bypass.expect_once(bypass, "POST", "/admin/example", fn conn ->
+        IO.inspect(conn)
+        # assert Plug.Conn.body_params(conn) = %{foo: "bar"}
+        Plug.Conn.resp(conn, 201, "{}")
+
+        # TODO: Add use parse example to check that shape is expected.
+      end)
+
+      assert {:ok, _} = Request.post(token, "example", %{foo: "bar"})
+    end
   end
 end
