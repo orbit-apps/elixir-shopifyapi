@@ -1,7 +1,7 @@
 defmodule ShopifyApi.RouterTest do
-  require Test.Util
   use ExUnit.Case
   use Plug.Test
+  import Test.Util
 
   @app_name "test"
   @redirect_uri "example.com"
@@ -21,7 +21,7 @@ defmodule ShopifyApi.RouterTest do
     test "with a valid app it redirects" do
       conn =
         conn(:get, "/install?app=#{@app_name}&shop=#{@shop_domain}")
-        |> Test.Util.conn_parse()
+        |> conn_parse()
         |> ShopifyApi.Router.call(%{})
 
       assert conn.status == 302
@@ -36,7 +36,7 @@ defmodule ShopifyApi.RouterTest do
     test "without a valid app it errors" do
       conn =
         conn(:get, "/install?app=not-an-app")
-        |> Test.Util.conn_parse()
+        |> conn_parse()
         |> ShopifyApi.Router.call(%{})
 
       assert conn.status == 404
@@ -63,7 +63,7 @@ defmodule ShopifyApi.RouterTest do
 
       conn =
         conn(:get, "/authorized/#{@app_name}?shop=#{shop_domain}&code=#{@code}&timestamp=1234")
-        |> Test.Util.conn_parse()
+        |> conn_parse()
         |> ShopifyApi.Router.call(%{})
 
       assert conn.status == 200
@@ -74,7 +74,7 @@ defmodule ShopifyApi.RouterTest do
     test "fails without a valid app", %{bypass: bypass, shop_domain: shop_domain} do
       conn =
         conn(:get, "/authorized/invalid-app?shop=#{shop_domain}&code=#{@code}&timestamp=1234")
-        |> Test.Util.conn_parse()
+        |> conn_parse()
         |> ShopifyApi.Router.call(%{})
 
       assert conn.status == 404
@@ -83,7 +83,7 @@ defmodule ShopifyApi.RouterTest do
     test "fails without a valid shop", %{bypass: bypass} do
       conn =
         conn(:get, "/authorized/#{@app_name}?shop=invalid-shop&code=#{@code}&timestamp=1234")
-        |> Test.Util.conn_parse()
+        |> conn_parse()
         |> ShopifyApi.Router.call(%{})
 
       assert conn.status == 404
