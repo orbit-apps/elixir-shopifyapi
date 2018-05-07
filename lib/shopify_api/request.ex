@@ -25,7 +25,7 @@ defmodule ShopifyApi.Request do
     shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth))
   end
 
-  def post(auth, path, object) do
+  def post(auth, path, object \\ %{}) do
     shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth))
   end
 
