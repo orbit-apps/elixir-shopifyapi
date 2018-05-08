@@ -1,13 +1,13 @@
-defmodule ShopifyApi.Product do
+defmodule ShopifyApi.Rest.Product do
   @moduledoc """
   """
   alias ShopifyApi.AuthToken
-  alias ShopifyApi.Request
+  alias ShopifyApi.Rest.Request
 
   @doc """
   ## Example
 
-  iex> ShopifyApi.Product.all(auth)
+  iex> ShopifyApi.Rest.Product.all(auth)
   {:ok, %{"products" => [%{"product_id" => "_", "title" => "Testing Create Product"}]}}
   """
   def all(%AuthToken{} = auth) do
@@ -25,7 +25,7 @@ defmodule ShopifyApi.Product do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Product.delete(auth, 598612213811)
+  iex> ShopifyApi.Rest.Product.delete(auth, 598612213811)
   {:ok, %{}}
   """
   def delete(%AuthToken{} = auth, product_id) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Product do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Product.create(auth, %{product: %{body_html: "Testing create", title: "Testing Create Product"}})
+  iex> ShopifyApi.Rest.Product.create(auth, %{product: %{body_html: "Testing create", title: "Testing Create Product"}})
   {:ok, %{"product" => %{"product_id" => "_", "title" => "Testing Create Product"}}}
   """
   def create(%AuthToken{} = auth, %{product: %{}} = product) do

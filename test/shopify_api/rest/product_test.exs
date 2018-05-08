@@ -1,6 +1,6 @@
-defmodule ShopifyApi.ProductTest do
+defmodule ShopifyApi.Rest.ProductTest do
   use ExUnit.Case
-  alias ShopifyApi.Product
+  alias ShopifyApi.Rest.Product
 
   setup _context do
     bypass = Bypass.open()
