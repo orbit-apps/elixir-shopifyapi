@@ -1,8 +1,8 @@
-defmodule ShopifyApi.ProductVariant do
+defmodule ShopifyApi.Legacy.ProductVariant do
   @moduledoc """
   """
   alias ShopifyApi.AuthToken
-  alias ShopifyApi.Request
+  alias ShopifyApi.Legacy.Request
 
   @doc """
     Return a single Product Variant
@@ -14,7 +14,7 @@ defmodule ShopifyApi.ProductVariant do
   @doc """
     Return all of a Product's Variants.
 
-    iex> ShopifyApi.ProductVariant.get(token, product_id)
+    iex> ShopifyApi.Legacy.ProductVariant.get(token, product_id)
 
   """
   def all(%AuthToken{} = auth, product_id) do
@@ -24,7 +24,7 @@ defmodule ShopifyApi.ProductVariant do
   @doc """
     Return a count of all Product Variants.
 
-  iex> ShopifyApi.ProductVariant.get(token, product_id)
+  iex> ShopifyApi.Legacy.ProductVariant.get(token, product_id)
   {:ok, %{"count" => integer}}
   """
 
@@ -35,7 +35,7 @@ defmodule ShopifyApi.ProductVariant do
   @doc """
     Delete a Product Variant.
 
-  iex> ShopifyApi.Product.delete(token, product_it, variant_id)
+  iex> ShopifyApi.Legacy.Product.delete(token, product_it, variant_id)
   {:ok, %{}}
   """
   def delete(%AuthToken{} = auth, product_id, variant_id) do
@@ -45,7 +45,7 @@ defmodule ShopifyApi.ProductVariant do
   @doc """
     Create a new Product Variant.
 
-  iex> ShopifyApi.ProductVariant.create(token, product_id, %{variant: %{body_html: "Testing variant create", title: "Testing Create Product Variant"}})
+  iex> ShopifyApi.Legacy.ProductVariant.create(token, product_id, %{variant: %{body_html: "Testing variant create", title: "Testing Create Product Variant"}})
   """
   def create(%AuthToken{} = auth, product_id, %{variant: %{}} = variant) do
     Request.post(auth, "products/#{product_id}/variants.json", variant)
