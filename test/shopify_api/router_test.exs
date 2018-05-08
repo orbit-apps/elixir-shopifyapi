@@ -75,7 +75,7 @@ defmodule ShopifyApi.RouterTest do
       assert auth_token == @token.access_token
     end
 
-    test "fails without a valid app", %{bypass: bypass, shop_domain: shop_domain} do
+    test "fails without a valid app", %{bypass: _bypass, shop_domain: shop_domain} do
       conn =
         conn(:get, "/authorized/invalid-app?shop=#{shop_domain}&code=#{@code}&timestamp=1234")
         |> parse
@@ -84,7 +84,7 @@ defmodule ShopifyApi.RouterTest do
       assert conn.status == 404
     end
 
-    test "fails without a valid shop", %{bypass: bypass} do
+    test "fails without a valid shop", %{bypass: _bypass} do
       conn =
         conn(:get, "/authorized/#{@app_name}?shop=invalid-shop&code=#{@code}&timestamp=1234")
         |> parse

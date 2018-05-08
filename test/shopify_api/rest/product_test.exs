@@ -15,7 +15,7 @@ defmodule ShopifyApi.Rest.ProductTest do
     {:ok, %{shop: shop, auth_token: token, bypass: bypass}}
   end
 
-  test "", %{bypass: bypass, shop: shop, auth_token: token} do
+  test "", %{bypass: bypass, shop: _shop, auth_token: token} do
     products = %{
       "products" => [
         %{"product_id" => "_", "title" => "Testing Create Product"}

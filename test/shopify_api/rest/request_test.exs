@@ -18,7 +18,7 @@ defmodule ShopifyApi.Rest.RequestTest do
   describe "all" do
     test "auth headers get added to out going request", %{
       bypass: bypass,
-      shop: shop,
+      shop: _shop,
       auth_token: token
     } do
       Bypass.expect_once(bypass, "GET", "/admin/example", fn conn ->
@@ -34,7 +34,7 @@ defmodule ShopifyApi.Rest.RequestTest do
   describe "GET" do
     test "returns ok when returned status code is 200", %{
       bypass: bypass,
-      shop: shop,
+      shop: _shop,
       auth_token: token
     } do
       Bypass.expect_once(bypass, "GET", "/admin/example", fn conn ->
@@ -48,7 +48,7 @@ defmodule ShopifyApi.Rest.RequestTest do
   describe "POST" do
     test "returns ok when returned status code is 201", %{
       bypass: bypass,
-      shop: shop,
+      shop: _shop,
       auth_token: token
     } do
       Bypass.expect_once(bypass, "POST", "/admin/example", fn conn ->
