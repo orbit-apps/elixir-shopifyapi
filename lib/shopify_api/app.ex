@@ -9,7 +9,7 @@ defmodule ShopifyApi.App do
   require Logger
   alias ShopifyApi.AuthRequest
 
-  def install_url(%__MODULE__{} = app, domain) do
+  def install_url(%__MODULE__{} = app, domain) when is_binary(domain) do
     query_params = [
       client_id: app.client_id,
       scope: app.scope,
