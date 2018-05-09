@@ -36,6 +36,7 @@ defmodule Plug.ShopifyApi.MixProject do
       {:credo, "~> 0.3", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:excoveralls, only: [:dev, :test]},
+      {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 1.0"},
       {:plug, "~> 1.0"},
       {:poison, "~> 3.1"}
