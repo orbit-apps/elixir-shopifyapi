@@ -38,12 +38,12 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.get_query()
-      {:error, _}
+      iex> ShopifyApi.Rest.Customer.getQuery()
+      {:error, "Not implemented"}
   """
   def get_query() do
-    Logger.warn("#{__MODULE__} error not resource implemented.")
-      {:error, "not implemented"}
+    Logger.warn("#{__MODULE__} error, resource not implemented.")
+      {:error, "Not implemented"}
   end
 
   @doc """
