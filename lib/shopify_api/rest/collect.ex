@@ -12,7 +12,7 @@ defmodule ShopifyApi.Rest.Collect do
   ## Example
 
       iex> ShopifyApi.Rest.Request.add(auth)
-      {:ok, { "collect" => %{} }
+      {:ok, { "collect" => %{} }}
   """
   def add(%AuthToken{} = auth, %{collect: %{}} = collect) do
     Request.post(auth, "admin/collects.json", collect)
@@ -24,7 +24,7 @@ defmodule ShopifyApi.Rest.Collect do
   ## Example
 
       iex> ShopifyApi.Rest.Delete(auth, string)
-      {:ok, 200}
+      {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, collect_id) do
     Request.delete(auth, "admin/collects/#{collect_id}.json")
