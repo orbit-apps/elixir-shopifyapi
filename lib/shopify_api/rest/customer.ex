@@ -43,7 +43,7 @@ defmodule ShopifyApi.Rest.Customer do
   """
   def get_query() do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
-      {:error, "Not implemented"}
+    {:error, "Not implemented"}
   end
 
   @doc """
@@ -78,7 +78,10 @@ defmodule ShopifyApi.Rest.Customer do
       iex> ShopifyApi.Rest.Customer.CreateActivationUrl(auth, integer)
       {:ok, {"account_activation_url" => "" }
   """
-  def create_activation_url(%AuthToken{} = auth, %{customer: %{customer_id: customer_id}} = customer) do
+  def create_activation_url(
+        %AuthToken{} = auth,
+        %{customer: %{customer_id: customer_id}} = customer
+      ) do
     Request.post(auth, "customers/#{customer_id}/account_activation.json", customer)
   end
 
