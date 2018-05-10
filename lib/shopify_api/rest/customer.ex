@@ -90,7 +90,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.send_invite(auth, integer)
+      iex> ShopifyApi.Rest.Customer.sendInvite(auth, integer)
       {:ok, {"customer_invite" => %{}}
   """
   def send_invite(%AuthToken{} = auth, customer_id) do
@@ -126,7 +126,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.
+      iex> ShopifyApi.Rest.Customer.GetOrder(auth, integer)
       {:ok, {"orders" => [] }}
   """
   def get_order(%AuthToken{} = auth, customer_id) do
