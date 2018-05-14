@@ -66,7 +66,7 @@ defmodule ShopifyApi.Rest.Customer do
       iex> ShopifyApi.Rest.Customer.update(auth, map)
       {:ok, {"customer" => %{}}
   """
-  def update(%AuthToken{} = auth, %{customer: %{customer_id: customer_id}} = customer) do
+  def update(%AuthToken{} = auth, %{customer: %{id: customer_id}} = customer) do
     Request.put(auth, "customers/#{customer_id}.json", customer)
   end
 
@@ -80,7 +80,7 @@ defmodule ShopifyApi.Rest.Customer do
   """
   def create_activation_url(
         %AuthToken{} = auth,
-        %{customer: %{customer_id: customer_id}} = customer
+        %{customer: %{id: customer_id}} = customer
       ) do
     Request.post(auth, "customers/#{customer_id}/account_activation.json", customer)
   end
@@ -129,7 +129,7 @@ defmodule ShopifyApi.Rest.Customer do
       iex> ShopifyApi.Rest.Customer.GetOrder(auth, integer)
       {:ok, {"orders" => [] }}
   """
-  def get_order(%AuthToken{} = auth, customer_id) do
+  def get_orders(%AuthToken{} = auth, customer_id) do
     Request.get(auth, "customers/#{customer_id}/orders.json")
   end
 end
