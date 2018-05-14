@@ -14,9 +14,7 @@ defmodule ShopifyApi.Rest.Product do
     iex> ShopifyApi.Rest.Product.all(auth)
     {:ok, %{ "products" => [] }}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "products.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "products.json")
 
   @doc """
   Return a single product.
@@ -26,9 +24,7 @@ defmodule ShopifyApi.Rest.Product do
     iex> ShopifyApi.Rest.Product.get(auth, integer)
     {:ok, %{ "product" => %{} }}
   """
-  def get(%AuthToken{} = auth, product_id) do
-    Request.get(auth, "products/#{product_id}.json")
-  end
+  def get(%AuthToken{} = auth, product_id), do: Request.get(auth, "products/#{product_id}.json")
 
   @doc """
   Return a count of products.
@@ -38,9 +34,7 @@ defmodule ShopifyApi.Rest.Product do
     iex> ShopifyApi.Rest.Product.count(auth)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth) do
-    Request.get(auth, "products/count.json")
-  end
+  def count(%AuthToken{} = auth), do: Request.get(auth, "products/count.json")
 
   @doc """
   Update a product.
@@ -50,9 +44,11 @@ defmodule ShopifyApi.Rest.Product do
     iex> ShopifyApi.Rest.Product.update(auth, map)
     {:ok, %{ "product" => %{} }}
   """
-  def update(%AuthToken{} = auth, %{product: %{id: product_id}} = product) do
-    Request.put(auth, "products/#{product_id}.json", product)
-  end
+  def update(%AuthToken{} = auth, %{"product" => %{"id" => product_id} = product}),
+    do: ShopifyApi.Rest.Product.update(auth, %{product: product |> Map.put(:id, product_id)})
+
+  def update(%AuthToken{} = auth, %{product: %{id: product_id}} = product),
+    do: Request.put(auth, "products/#{product_id}.json", product)
 
   @doc """
   Delete a product.
@@ -62,9 +58,8 @@ defmodule ShopifyApi.Rest.Product do
       iex> ShopifyApi.Rest.Product.delete(auth, integer)
       {:ok, 200 }
   """
-  def delete(%AuthToken{} = auth, product_id) do
-    Request.delete(auth, "products/#{product_id}.json")
-  end
+  def delete(%AuthToken{} = auth, product_id),
+    do: Request.delete(auth, "products/#{product_id}.json")
 
   @doc """
   Create a new product.
@@ -74,7 +69,9 @@ defmodule ShopifyApi.Rest.Product do
       iex> ShopifyApi.Rest.Product.create(auth, map)
       {:ok, %{ "product" => %{} }}
   """
-  def create(%AuthToken{} = auth, %{product: %{}} = product) do
-    Request.post(auth, "products.json", product)
-  end
+  def create(%AuthToken{} = auth, %{"product" => %{} = product}),
+    do: ShopifyApi.Rest.Product.update(auth, %{product: product})
+
+  def create(%AuthToken{} = auth, %{product: %{}} = product),
+    do: Request.post(auth, "products.json", product)
 end
