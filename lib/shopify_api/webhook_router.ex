@@ -14,19 +14,38 @@ defmodule ShopifyApi.WebhookRouter do
     - :shopify_event
   """
   post "/:app" do
-    conn =
+    with conn <- fetch_app(conn),
+         {:ok, raw_body, conn} <- read_body(conn),
+         conn <- parse_body(conn, raw_body),
+         true <- verify_hmac(conn, conn.assigns.app, raw_body),
+         conn <- fetch_shop(conn),
+         conn <- fetch_app(conn),
+         conn <- fetch_event(conn) do
+      # TODO Webhooks need to actually store this message somewhere that it can be picked up and processed
       conn
-      |> fetch_shop
-      |> fetch_app
-      |> fetch_event
+      |> Plug.Conn.resp(200, "ok.")
+      |> Plug.Conn.halt()
+    else
+      _ ->
+        Logger.warn("#{__MODULE__} failed validation of webhook callback")
 
-    Logger.debug("#{__MODULE__} #{conn.assigns[:shop].domain}")
+        conn
+        |> Plug.Conn.resp(200, "ok.")
+        |> Plug.Conn.halt()
+    end
+  end
 
-    # TODO Webhooks need to actually store this message somewhere that it can be picked up and processed
+  defp verify_hmac(conn, %ShopifyApi.App{client_secret: secret}, content) do
+    List.first(Plug.Conn.get_req_header(conn, "x-shopify-hmac-sha256")) ==
+      ShopifyApi.Security.sha256_hmac(content, secret)
+  end
 
-    conn
-    |> Plug.Conn.resp(200, "ok.")
-    |> Plug.Conn.halt()
+  # TODO support XML
+  defp parse_body(conn, content) do
+    case Poison.decode(content) do
+      {:ok, json} ->
+        Map.put(conn, :body_params, json)
+    end
   end
 
   defp fetch_shop_name(conn) do
