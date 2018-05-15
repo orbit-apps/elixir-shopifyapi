@@ -10,7 +10,8 @@ defmodule ShopifyApi.Application do
     children = [
       supervisor(ShopifyApi.ShopServer, []),
       supervisor(ShopifyApi.AppServer, []),
-      supervisor(ShopifyApi.AuthTokenServer, [])
+      supervisor(ShopifyApi.AuthTokenServer, []),
+      supervisor(ShopifyApi.EventPipe.Supervisor, [%{}])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
