@@ -8,6 +8,7 @@ defmodule Plug.ShopifyApi.MixProject do
       app: :shopify_api,
       version: @version,
       elixir: "~> 1.6",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [plt_add_deps: :transitive],
@@ -41,4 +42,7 @@ defmodule Plug.ShopifyApi.MixProject do
       {:poison, "~> 3.1"}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end

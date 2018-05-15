@@ -1,4 +1,4 @@
-defmodule ShopifyApi.RouterTest do
+defmodule Test.ShopifyApi.RouterTest do
   use ExUnit.Case
   use Plug.Test
 
@@ -62,7 +62,7 @@ defmodule ShopifyApi.RouterTest do
       {:ok, %{bypass: bypass, shop_domain: shop_domain}}
     end
 
-    test "fails with invalid hmac", %{bypass: bypass, shop_domain: shop_domain} do
+    test "fails with invalid hmac", %{bypass: _bypass, shop_domain: shop_domain} do
       conn =
         conn(
           :get,
