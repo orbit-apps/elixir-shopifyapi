@@ -35,10 +35,6 @@ defmodule ShopifyApi.WebhookRouter do
     |> List.first()
   end
 
-  defp fetch_app_name(conn) do
-    conn.path_params["app"]
-  end
-
   defp fetch_shop(conn) do
     case ShopifyApi.ShopServer.get(fetch_shop_name(conn)) do
       {:ok, shop} ->
@@ -47,7 +43,7 @@ defmodule ShopifyApi.WebhookRouter do
   end
 
   defp fetch_app(conn) do
-    case ShopifyApi.AppServer.get(fetch_app_name(conn)) do
+    case ShopifyApi.AppServer.get(conn.path_params["app"]) do
       {:ok, app} ->
         Plug.Conn.assign(conn, :app, app)
     end
