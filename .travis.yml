@@ -1,5 +1,7 @@
 language: elixir
 elixir: '1.6.1'
+services:
+  - redis-server
 notifications:
   email: false
 env:
