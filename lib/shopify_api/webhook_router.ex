@@ -21,7 +21,12 @@ defmodule ShopifyApi.WebhookRouter do
          conn <- fetch_shop(conn),
          conn <- fetch_app(conn),
          conn <- fetch_event(conn) do
-      # TODO Webhooks need to actually store this message somewhere that it can be picked up and processed
+      ShopifyApi.EventPipe.WebhookEventQueue.sync_notify(%ShopifyApi.EventPipe.Event{
+        destination: :webhook,
+        action: conn.assigns.shopify_event,
+        object: conn.body_params
+      })
+
       conn
       |> Plug.Conn.resp(200, "ok.")
       |> Plug.Conn.halt()

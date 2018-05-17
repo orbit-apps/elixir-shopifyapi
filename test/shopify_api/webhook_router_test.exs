@@ -1,3 +1,35 @@
+defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
+  @moduledoc """
+  Test processor for webhook events.
+  """
+  require Logger
+  use GenStage
+
+  @doc "Starts the consumer."
+  def start_link() do
+    Logger.info("Starting #{__MODULE__}...")
+    GenStage.start_link(__MODULE__, :ok)
+  end
+
+  def init(:ok) do
+    # Starts a permanent subscription to the broadcaster
+    # which will automatically start requesting items.
+    {
+      :consumer,
+      :ok,
+      subscribe_to: [ShopifyApi.EventPipe.WebhookEventQueue]
+    }
+  end
+
+  def handle_events(events, _from, state) do
+    for event <- events do
+      Logger.info("#{__MODULE__} is processing an event #{inspect(event)}")
+    end
+
+    {:noreply, [], state}
+  end
+end
+
 defmodule Test.ShopifyApi.WebhookRouterTest do
   use ExUnit.Case
   use Plug.Test
@@ -14,6 +46,8 @@ defmodule Test.ShopifyApi.WebhookRouterTest do
   @shopify_topic "test"
 
   setup do
+    Test.ShopifyApi.EventPipe.WebhookEventProcessor.start_link()
+
     ShopifyApi.AppServer.set(@app_name, %{
       name: @app_name,
       client_secret: @client_secret
