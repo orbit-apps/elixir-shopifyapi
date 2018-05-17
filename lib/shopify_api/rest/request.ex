@@ -11,24 +11,29 @@ defmodule ShopifyApi.Rest.Request do
   """
 
   use HTTPoison.Base
+  alias ShopifyApi.AuthToken
 
   @transport "https://"
   if Mix.env() == :test do
     @transport "http://"
   end
 
+  @spec get(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
   def get(auth, path) do
     shopify_request(:get, url(auth, path), "", headers(auth))
   end
 
+  @spec put(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
   def put(auth, path, object) do
     shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth))
   end
 
+  @spec post(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
   def post(auth, path, object \\ %{}) do
     shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth))
   end
 
+  @spec delete(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
   def delete(auth, path) do
     shopify_request(:delete, url(auth, path), "", headers(auth))
   end
