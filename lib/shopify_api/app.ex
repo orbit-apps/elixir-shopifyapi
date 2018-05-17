@@ -6,6 +6,18 @@ defmodule ShopifyApi.App do
             nonce: "",
             scope: ""
 
+  @typedoc """
+      Type that represents a Shopify App
+  """
+  @type t :: %__MODULE__{
+          name: String.t(),
+          client_id: String.t(),
+          client_secret: String.t(),
+          auth_redirect_uri: String.t(),
+          nonce: String.t(),
+          scope: String.t()
+        }
+
   require Logger
   alias ShopifyApi.AuthRequest
 
