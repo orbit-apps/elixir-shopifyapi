@@ -23,7 +23,7 @@ defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
 
   def handle_events(events, _from, state) do
     for event <- events do
-      Logger.error("#{__MODULE__} is processing an event #{inspect(event)}")
+      Logger.info("#{__MODULE__} is processing an event #{inspect(event)}")
     end
 
     {:noreply, [], state}
