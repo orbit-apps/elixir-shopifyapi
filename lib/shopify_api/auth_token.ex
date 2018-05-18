@@ -8,8 +8,8 @@ defmodule ShopifyApi.AuthToken do
   @typedoc """
       Type that represents a Shopify Auth Token with
 
-        - app_name corrisponding to %ShopifyApi.App{name: app_name}
-        - shop_name corrisponding to %ShopifyApi.Shop{domain: shop_name}
+        - app_name corresponding to %ShopifyApi.App{name: app_name}
+        - shop_name corresponding to %ShopifyApi.Shop{domain: shop_name}
   """
   @type t :: %__MODULE__{
           code: String.t(),

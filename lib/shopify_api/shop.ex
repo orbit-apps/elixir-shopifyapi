@@ -5,7 +5,7 @@ defmodule ShopifyApi.Shop do
   @typedoc """
       Type that represents a Shopify Shop with
 
-        - domain corrisponding to the full URL for the shop
+        - domain corresponding to the full URL for the shop
   """
   @type t :: %__MODULE__{
           domain: String.t()
