@@ -42,7 +42,7 @@ defmodule ShopifyApi.WebhookRouter do
 
   defp verify_hmac(conn, %ShopifyApi.App{client_secret: secret}, content) do
     List.first(Plug.Conn.get_req_header(conn, "x-shopify-hmac-sha256")) ==
-      ShopifyApi.Security.sha256_hmac(content, secret)
+      ShopifyApi.Security.base64_sha256_hmac(content, secret)
   end
 
   # TODO support XML

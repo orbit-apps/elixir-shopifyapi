@@ -64,7 +64,7 @@ defmodule Test.ShopifyApi.WebhookRouterTest do
         |> Plug.Conn.put_req_header("x-shopify-topic", @shopify_topic)
         |> Plug.Conn.put_req_header(
           "x-shopify-hmac-sha256",
-          ShopifyApi.Security.sha256_hmac(@post_body, @client_secret)
+          ShopifyApi.Security.base64_sha256_hmac(@post_body, @client_secret)
         )
         |> parse
 
