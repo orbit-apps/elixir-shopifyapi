@@ -15,7 +15,7 @@ defmodule ShopifyApi.Rest.Collect do
       {:ok, { "collect" => %{} }}
   """
   def add(%AuthToken{} = auth, %{collect: %{}} = collect) do
-    Request.post(auth, "admin/collects.json", collect)
+    Request.post(auth, "collects.json", collect)
   end
 
   @doc """
@@ -27,7 +27,7 @@ defmodule ShopifyApi.Rest.Collect do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, collect_id) do
-    Request.delete(auth, "admin/collects/#{collect_id}.json")
+    Request.delete(auth, "collects/#{collect_id}.json")
   end
 
   @doc """
@@ -39,7 +39,7 @@ defmodule ShopifyApi.Rest.Collect do
       {:ok, { "collects" => [] }}
   """
   def all(%AuthToken{} = auth) do
-    Request.get(auth, "admin/collects.json")
+    Request.get(auth, "collects.json")
   end
 
   @doc """
@@ -51,7 +51,7 @@ defmodule ShopifyApi.Rest.Collect do
       {:ok, { "count": integer }}
   """
   def count(%AuthToken{} = auth) do
-    Request.get(auth, "admin/collects/count.json")
+    Request.get(auth, "collects/count.json")
   end
 
   @doc """
@@ -63,6 +63,6 @@ defmodule ShopifyApi.Rest.Collect do
       {:ok, { "collect" => %{} }}
   """
   def get(%AuthToken{} = auth, collect_id) do
-    Request.get(auth, "admin/collects/#{collect_id}.json")
+    Request.get(auth, "collects/#{collect_id}.json")
   end
 end
