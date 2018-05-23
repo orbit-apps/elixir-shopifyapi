@@ -1,4 +1,7 @@
 defmodule ShopifyApi.App do
+  @moduledoc """
+    ShopifyApi.App contains logic and a struct for representing a Shopify App.
+  """
   defstruct name: "",
             client_id: "",
             client_secret: "",
@@ -6,9 +9,25 @@ defmodule ShopifyApi.App do
             nonce: "",
             scope: ""
 
+  @typedoc """
+      Type that represents a Shopify App
+  """
+  @type t :: %__MODULE__{
+          name: String.t(),
+          client_id: String.t(),
+          client_secret: String.t(),
+          auth_redirect_uri: String.t(),
+          nonce: String.t(),
+          scope: String.t()
+        }
+
   require Logger
   alias ShopifyApi.AuthRequest
 
+  @doc """
+    Generates the install URL for an App and a Shop.
+  """
+  @spec install_url(__MODULE__.t(), String.t()) :: String.t()
   def install_url(%__MODULE__{} = app, domain) when is_binary(domain) do
     query_params = [
       client_id: app.client_id,
@@ -21,6 +40,12 @@ defmodule ShopifyApi.App do
     "https://#{domain}/admin/oauth/authorize?#{URI.encode_query(query_params)}"
   end
 
+  @doc """
+    After an App is installed and the Shop owner ends up back on ourside of the fence we
+    need to request an AuthToken. This function uses ShopifyApi.AuthRequest.post/3 to
+    fetch and parse the AuthToken.
+  """
+  @spec fetch_token(__MODULE__.t(), String.t(), String.t()) :: {:ok, map()} | {:error, String.t()}
   def fetch_token(%__MODULE__{} = app, domain, auth_code) do
     # > body: "{\"access_token\":\"3e6ea1b6dc727cccc1ad50fff19e7908\",\"scope\":\"read_orders,write_products\"}",
     case AuthRequest.post(app, domain, auth_code) do
@@ -41,6 +66,10 @@ defmodule ShopifyApi.App do
 end
 
 defmodule ShopifyApi.AuthRequest do
+  @moduledoc """
+    AuthRequest.post/3 contains logic to request AuthTokens from Shopify given an App,
+    Shop domain, and the auth code from the App install.
+  """
   require Logger
   @headers [{"Content-Type", "application/json"}]
 
@@ -53,6 +82,7 @@ defmodule ShopifyApi.AuthRequest do
     "#{@transport}#{domain}/admin/oauth/access_token"
   end
 
+  @spec post(ShopifyApi.App.t(), String.t(), String.t()) :: {:ok, any()} | {:error, any()}
   def post(%ShopifyApi.App{} = app, domain, auth_code) do
     http_body = %{
       client_id: app.client_id,
