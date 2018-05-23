@@ -90,6 +90,6 @@ defmodule ShopifyApi.Router do
       |> Enum.sort_by(&elem(&1, 0))
       |> Enum.map_every(1, &(elem(&1, 0) <> "=" <> elem(&1, 1)))
       |> Enum.map_join("&", & &1)
-      |> ShopifyApi.Security.sha256_hmac(secret)
+      |> ShopifyApi.Security.base16_sha256_hmac(secret)
   end
 end
