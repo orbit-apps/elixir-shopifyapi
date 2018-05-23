@@ -134,7 +134,7 @@ defmodule Test.ShopifyApi.RouterTest do
     end
 
     def add_hmac_to_params(params) do
-      params <> "&hmac=" <> ShopifyApi.Security.sha256_hmac(params, @client_secret)
+      params <> "&hmac=" <> ShopifyApi.Security.base16_sha256_hmac(params, @client_secret)
     end
   end
 end
