@@ -50,16 +50,16 @@ defmodule ShopifyApi.App do
     # > body: "{\"access_token\":\"3e6ea1b6dc727cccc1ad50fff19e7908\",\"scope\":\"read_orders,write_products\"}",
     case AuthRequest.post(app, domain, auth_code) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        Logger.info("#{__MODULE__} [#{domain}] fetched token")
+        Logger.info(fn -> "#{__MODULE__} [#{domain}] fetched token" end)
         # TODO probably don't use the ! ver of decode
         {:ok, body |> Poison.decode!() |> Map.get("access_token")}
 
       {:ok, %HTTPoison.Response{} = response} ->
-        Logger.warn("#{__MODULE__} fetching token code: #{response.status_code}")
+        Logger.warn(fn -> "#{__MODULE__} fetching token code: #{response.status_code}" end)
         {:error, response.status_code}
 
       {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.warn("#{__MODULE__} error fetching token: #{inspect(reason)}")
+        Logger.warn(fn -> "#{__MODULE__} error fetching token: #{inspect(reason)}" end)
         {:error, reason}
     end
   end
@@ -90,7 +90,7 @@ defmodule ShopifyApi.AuthRequest do
       code: auth_code
     }
 
-    Logger.debug("#{__MODULE__} requesting token from #{access_token_url(domain)}")
+    Logger.debug(fn -> "#{__MODULE__} requesting token from #{access_token_url(domain)}" end)
     HTTPoison.post(access_token_url(domain), Poison.encode!(http_body), @headers)
   end
 end

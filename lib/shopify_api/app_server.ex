@@ -1,11 +1,11 @@
 defmodule ShopifyApi.AppServer do
   use GenServer
-  import Logger, only: [info: 1]
+  import Logger
 
   @name :shopify_api_app_server
 
   def start_link do
-    info("Starting #{__MODULE__}...")
+    Logger.info(fn -> "Starting #{__MODULE__}..." end)
     state = Application.get_env(:shopify_api, ShopifyApi.App)
     state = for {k, v} <- state, into: %{}, do: {k, struct(ShopifyApi.App, v)}
     GenServer.start_link(__MODULE__, state, name: @name)
