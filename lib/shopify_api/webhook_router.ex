@@ -32,7 +32,7 @@ defmodule ShopifyApi.WebhookRouter do
       |> Plug.Conn.halt()
     else
       _ ->
-        Logger.warn("#{__MODULE__} failed validation of webhook callback")
+        Logger.warn(fn -> "#{__MODULE__} failed validation of webhook callback" end)
 
         conn
         |> Plug.Conn.resp(200, "ok.")

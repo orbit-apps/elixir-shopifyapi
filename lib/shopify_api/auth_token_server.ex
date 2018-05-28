@@ -1,11 +1,11 @@
 defmodule ShopifyApi.AuthTokenServer do
   use GenServer
-  import Logger, only: [info: 1]
+  require Logger
 
   @name :shopify_api_auth_token_server
 
   def start_link do
-    info("Starting #{__MODULE__}...")
+    Logger.info(fn -> "Starting #{__MODULE__}..." end)
     GenServer.start_link(__MODULE__, %{}, name: @name)
   end
 
