@@ -70,7 +70,7 @@ defmodule ShopifyApi.Rest.Product do
       {:ok, %{ "product" => %{} }}
   """
   def create(%AuthToken{} = auth, %{"product" => %{} = product}),
-    do: ShopifyApi.Rest.Product.update(auth, %{product: product})
+    do: ShopifyApi.Rest.Product.create(auth, %{product: product})
 
   def create(%AuthToken{} = auth, %{product: %{}} = product),
     do: Request.post(auth, "products.json", product)
