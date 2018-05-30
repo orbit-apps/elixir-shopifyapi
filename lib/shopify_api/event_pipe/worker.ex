@@ -6,18 +6,18 @@ defmodule ShopifyApi.EventPipe.Worker do
 
   def perform(event), do: Logger.warn("Failed to process event: #{inspect(event)}")
 
-  def fire_callback(%{"callback" => callback} = event) when is_binary(callback) do
+  def fire_callback(%{callback: callback} = event) when is_binary(callback) do
     Task.async(fn ->
       {func, _} = Code.eval_string(callback)
       func.(event)
     end)
   end
 
-  def fire_callback(%{"callback" => callback}) when is_nil(callback),
-    do: {:ok, "no callback to call"}
+  def fire_callback(%{callback: callback}) when is_nil(callback) do
+    {:ok, "no callback to call"}
+  end
 
   def fire_callback(event) do
-    Logger.warn("unhandled callback #{inspect(event)}")
     {:ok, ""}
   end
 
