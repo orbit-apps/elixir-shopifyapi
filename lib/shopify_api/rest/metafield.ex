@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.Metafield do
     {:ok, %{ "metafields" => [] }}
   """
   def all(%AuthToken{} = auth, type, id) do
-    Request.get(auth, resource_type(type, id))
+    Request.get(auth, path_from_resource(type, id))
   end
 
   @doc """
@@ -47,7 +47,7 @@ defmodule ShopifyApi.Rest.Metafield do
     {:ok, %{ "count" => integer }}
   """
   def count(%AuthToken{} = auth, type, resource_id) do
-    Request.get(auth, resource_type(type, resource_id))
+    Request.get(auth, path_from_resource(type, resource_id))
   end
 
   @doc """
@@ -59,7 +59,7 @@ defmodule ShopifyApi.Rest.Metafield do
     {:ok, %{ "metafields" => [] }}
   """
   def get(%AuthToken{} = auth, type, resource_id) do
-    Request.get(auth, resource_type(type, resource_id))
+    Request.get(auth, path_from_resource(type, resource_id))
   end
 
   @doc """
@@ -71,7 +71,7 @@ defmodule ShopifyApi.Rest.Metafield do
     {:ok, %{ "metafield" => %{} }}
   """
   def create(%AuthToken{} = auth, type, resource_id, %Metafield{} = metafield) do
-    Request.post(auth, resource_type(type, resource_id), metafield)
+    Request.post(auth, path_from_resource(type, resource_id), metafield)
   end
 
   @doc """
@@ -83,7 +83,7 @@ defmodule ShopifyApi.Rest.Metafield do
     {:ok, %{ "metafield" => %{} }}
   """
   def update(%AuthToken{} = auth, type, resource_id, %Metafield{} = metafield) do
-    Request.put(auth, resource_type(type, resource_id), metafield)
+    Request.put(auth, path_from_resource(type, resource_id), metafield)
   end
 
   @doc """
@@ -95,12 +95,12 @@ defmodule ShopifyApi.Rest.Metafield do
     {:ok, %{ "metafield" => %{} }}
   """
   def delete(%AuthToken{} = auth, metafield_id) do
-    Request.delete(auth, resource_type(:metafield, metafield_id))
+    Request.delete(auth, path_from_resource(:metafield, metafield_id))
   end
 
   ## Private
 
-  defp resource_type(resource, id) do
+  defp path_from_resource(resource, id) do
     case resource do
       :article ->
         "blogs/#{id}/articles/#{id}/metafields.json"
@@ -134,6 +134,9 @@ defmodule ShopifyApi.Rest.Metafield do
 
       :shop ->
         "metafields.json"
+
+      _ ->
+        "Resource not found"
     end
   end
 end
