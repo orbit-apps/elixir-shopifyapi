@@ -19,12 +19,7 @@ defmodule Plug.ShopifyApi.MixProject do
   def application do
     [
       mod: {ShopifyApi.Application, []},
-      extra_applications: [
-        :exq,
-        :httpoison,
-        :logger,
-        :poison
-      ]
+      extra_applications: [:logger]
     ]
   end
 
@@ -37,8 +32,7 @@ defmodule Plug.ShopifyApi.MixProject do
       {:credo, "~> 0.3", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:excoveralls, only: [:dev, :test]},
-      {:exq, "~> 0.10.1"},
-      {:exq_ui, "~> 0.9.0"},
+      {:toniq, "~> 1.0"},
       {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 1.0"},
       {:plug, "~> 1.0"},

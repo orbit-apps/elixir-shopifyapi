@@ -1,12 +1,13 @@
 defmodule ShopifyApi.EventPipe.ProductWorker do
   @moduledoc """
-  Exq worker for procecessing Products
+  Worker for procecessing Products
   """
+  use Toniq.Worker, max_concurrency: 10
   require Logger
   import ShopifyApi.EventPipe.Worker
   alias ShopifyApi.Rest.Product
 
-  def perform(%{"action" => _, "object" => _, "token" => _} = event) do
+  def perform(%{action: _, object: _, token: _} = event) do
     Logger.info("#{__MODULE__} is processing an event")
     Logger.info(inspect(event))
 
@@ -15,11 +16,20 @@ defmodule ShopifyApi.EventPipe.ProductWorker do
     |> fire_callback
   end
 
-  defp call_shopify(%{"action" => "create", "object" => product} = event),
-    do: Product.create(fetch_token(event), product)
+  defp call_shopify(%{action: :create, object: product} = event) do
+    case fetch_token(event) do
+      {:ok, token} ->
+        Product.create(token, product)
 
-  defp call_shopify(%{"action" => "update", "object" => product} = event),
-    do: Product.update(fetch_token(event), product)
+      msg ->
+        msg
+    end
+  end
 
-  defp call_shopify(%{"action" => action}), do: {:error, "Unhandled action #{action}"}
+  defp call_shopify(%{action: :update, object: product} = event) do
+    Logger.warn(event)
+    Product.update(fetch_token(event), product)
+  end
+
+  defp call_shopify(%{action: action}), do: {:error, "Unhandled action #{action}"}
 end
