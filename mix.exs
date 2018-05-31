@@ -19,12 +19,7 @@ defmodule Plug.ShopifyApi.MixProject do
   def application do
     [
       mod: {ShopifyApi.Application, []},
-      extra_applications: [
-        :httpoison,
-        :logger,
-        :poison,
-        :toniq
-      ]
+      extra_applications: [:logger]
     ]
   end
 
