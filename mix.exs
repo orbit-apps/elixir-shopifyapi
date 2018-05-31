@@ -11,7 +11,15 @@ defmodule Plug.ShopifyApi.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [plt_add_deps: :transitive],
-      test_coverage: [tool: ExCoveralls]
+      test_coverage: [tool: ExCoveralls],
+
+      # Ex_Doc configuration
+      name: "Shopify API",
+      source_url: "https://github.com/pixelunion/elixir-shopifyapi",
+      docs: [
+        main: "ShopifyApi.App",
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -32,6 +40,7 @@ defmodule Plug.ShopifyApi.MixProject do
       {:credo, "~> 0.3", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:excoveralls, only: [:dev, :test]},
+      {:ex_doc, "~> 0.18.3", only: [:dev], runtime: false},
       {:toniq, "~> 1.0"},
       {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 1.0"},
