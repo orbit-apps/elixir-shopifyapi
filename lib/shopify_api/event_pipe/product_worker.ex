@@ -17,10 +17,13 @@ defmodule ShopifyApi.EventPipe.ProductWorker do
   end
 
   defp call_shopify(%{action: :create, object: product} = event) do
-    Logger.warn("about to try creating!")
-    resp = Product.create(fetch_token(event), product)
-    Logger.warn(resp)
-    resp
+    case fetch_token(event) do
+      {:ok, token} ->
+        Product.create(token, product)
+
+      msg ->
+        msg
+    end
   end
 
   defp call_shopify(%{action: :update, object: product} = event) do
