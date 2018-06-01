@@ -8,8 +8,7 @@ defmodule ShopifyApi.EventPipe.ProductWorker do
   alias ShopifyApi.Rest.Product
 
   def perform(%{action: _, object: _, token: _} = event) do
-    Logger.info("#{__MODULE__} is processing an event")
-    Logger.info(inspect(event))
+    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
 
     event
     |> Map.put(:response, call_shopify(event))
@@ -27,8 +26,13 @@ defmodule ShopifyApi.EventPipe.ProductWorker do
   end
 
   defp call_shopify(%{action: :update, object: product} = event) do
-    Logger.warn(event)
-    Product.update(fetch_token(event), product)
+    case fetch_token(event) do
+      {:ok, token} ->
+        Product.update(token, product)
+
+      msg ->
+        msg
+    end
   end
 
   defp call_shopify(%{action: action}), do: {:error, "Unhandled action #{action}"}

@@ -8,6 +8,7 @@ defmodule ShopifyApi.EventPipe.Worker do
 
   def fire_callback(%{callback: callback} = event) when is_binary(callback) do
     Task.start(fn ->
+      Logger.info(fn -> "Firing call back to #{callback} with #{inspect(event)}" end)
       {func, _} = Code.eval_string(callback)
       func.(event)
     end)
