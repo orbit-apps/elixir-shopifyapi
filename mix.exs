@@ -18,7 +18,12 @@ defmodule Plug.ShopifyAPI.MixProject do
       source_url: "https://github.com/pixelunion/elixir-shopifyapi",
       docs: [
         main: "ShopifyAPI.App",
-        extras: ["README.md"]
+        extras: [
+          "README.md",
+          "guides/installation.md",
+          "guides/getting_started.md",
+          "guides/graphql.md"
+        ]
       ]
     ]
   end
