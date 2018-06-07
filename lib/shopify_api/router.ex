@@ -1,11 +1,11 @@
-defmodule ShopifyApi.Router do
+defmodule ShopifyAPI.Router do
   require Logger
   use Plug.Router
 
   alias Plug.{Conn, Debugger}
   alias Absinthe.Plug
   alias GraphQL.Config.Schema
-  alias ShopifyApi.{App, AppServer, AuthTokenServer, WebhookRouter, Security}
+  alias ShopifyAPI.{App, AppServer, AuthTokenServer, Security, WebhookRouter}
 
   plug(:match)
   plug(:dispatch)

@@ -1,15 +1,15 @@
-defmodule ShopifyApi.Rest.Webhook do
+defmodule ShopifyAPI.REST.Webhook do
   @moduledoc """
   """
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.{Request, Webhook}
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.{Request, Webhook}
 
   @doc """
   ## Helper method to generate the callback URI this server responds to.
 
   ## Example
 
-  iex> ShopifyApi.Rest.Webhook.webhook_uri(%AuthToken{app_name: "some-shopify-app"})
+  iex> ShopifyAPI.REST.Webhook.webhook_uri(%AuthToken{app_name: "some-shopify-app"})
   "https://shopifyapi-server.example.com/shop/webhook/some-shopify-app"
   """
   def webhook_uri(%AuthToken{app_name: app}) do
@@ -20,7 +20,7 @@ defmodule ShopifyApi.Rest.Webhook do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Rest.Webhook.all(auth)
+  iex> ShopifyAPI.REST.Webhook.all(auth)
   {:ok, %{"webhooks" => [%{"webhook_id" => "_", "address" => "https://example.com"}]}}
   """
   def all(%AuthToken{} = auth) do
@@ -38,7 +38,7 @@ defmodule ShopifyApi.Rest.Webhook do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Rest.Webhook.delete(auth, webhook_id)
+  iex> ShopifyAPI.REST.Webhook.delete(auth, webhook_id)
   {:ok, %{}}
   """
   def delete(%AuthToken{} = auth, webhook_id) do
@@ -48,7 +48,7 @@ defmodule ShopifyApi.Rest.Webhook do
   @doc """
   ## Example
 
-  iex> ShopifyApi.Rest.Webhook.create(auth, %{webhook: %{address: "https://example.com"}})
+  iex> ShopifyAPI.REST.Webhook.create(auth, %{webhook: %{address: "https://example.com"}})
   {:ok, %{"webhook" => %{"webhook_id" => "_", "address" => "https://example.com"}}}
   """
   def create(%AuthToken{} = auth, %{webhook: %{}} = webhook) do

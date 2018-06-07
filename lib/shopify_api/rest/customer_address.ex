@@ -1,18 +1,18 @@
-defmodule ShopifyApi.Rest.CustomerAddress do
+defmodule ShopifyAPI.REST.CustomerAddress do
   @moduledoc """
   Shopify REST API Customer Address resources.
   """
 
   require Logger
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of all addresses for a customer.
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.all(auth, string)
+      iex> ShopifyAPI.REST.CustomerAddress.all(auth, string)
       {:ok, %{ "addresses" => [] }}
   """
   def all(%AuthToken{} = auth, customer_id) do
@@ -24,7 +24,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.get(auth, string, string)
+      iex> ShopifyAPI.REST.CustomerAddress.get(auth, string, string)
       {:ok, %{ "customer_address" => %{} }}
   """
   def get(%AuthToken{} = auth, customer_id, address_id) do
@@ -36,7 +36,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.create(auth, string, map)
+      iex> ShopifyAPI.REST.CustomerAddress.create(auth, string, map)
       {:ok, %{ "customer_address" => %{} }}
   """
   def create(%AuthToken{} = auth, customer_id, %{address: %{}} = address) do
@@ -48,7 +48,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.update(auth, string, string)
+      iex> ShopifyAPI.REST.CustomerAddress.update(auth, string, string)
       {:ok, %{ "customer_address" => %{} }}
   """
   def update(
@@ -68,7 +68,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.delete(auth, string, string)
+      iex> ShopifyAPI.REST.CustomerAddress.delete(auth, string, string)
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, customer_id, address_id) do
@@ -82,7 +82,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.action()
+      iex> ShopifyAPI.REST.CustomerAddress.action()
       {:error, "Not implemented" }
   """
   def action do
@@ -95,7 +95,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerAddress.setDefault(auth, string, string)
+      iex> ShopifyAPI.REST.CustomerAddress.setDefault(auth, string, string)
       {:ok, %{ "customer_address" => %{} }}
   """
   def set_default(

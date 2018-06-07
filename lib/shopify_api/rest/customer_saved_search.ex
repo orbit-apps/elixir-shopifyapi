@@ -1,6 +1,6 @@
-defmodule ShopifyApi.Rest.CustomerSavedSearch do
+defmodule ShopifyAPI.REST.CustomerSavedSearch do
   @moduledoc """
-  ShopifyApi REST API CustomerSavedSearch resource
+  ShopifyAPI REST API CustomerSavedSearch resource
   """
 
   require Logger
@@ -10,7 +10,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.all()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.all()
       {:error, "Not implemented" }
   """
   def all do
@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.count()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.count()
       {:error, "Not implemented" }
   """
   def count do
@@ -36,7 +36,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.get()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.get()
       {:error, "Not implemented" }
   """
   def get do
@@ -49,7 +49,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.query()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.query()
       {:error, "Not implemented" }
   """
   def query do
@@ -62,7 +62,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.create()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.create()
       {:error, "Not implemented" }
   """
   def create do
@@ -75,7 +75,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.update()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.update()
       {:error, "Not implemented" }
   """
   def update do
@@ -88,7 +88,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
 
   ## Example
 
-      iex> ShopifyApi.Rest.CustomerSavedSearch.delete()
+      iex> ShopifyAPI.REST.CustomerSavedSearch.delete()
       {:error, "Not implemented" }
   """
   def delete do

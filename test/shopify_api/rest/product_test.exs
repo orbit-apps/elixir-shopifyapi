@@ -1,9 +1,9 @@
-defmodule ShopifyApi.Rest.ProductTest do
+defmodule ShopifyAPI.REST.ProductTest do
   use ExUnit.Case
 
   alias Plug.Conn
-  alias ShopifyApi.Rest.Product
-  alias ShopifyApi.{AuthToken, Shop}
+  alias ShopifyAPI.REST.Product
+  alias ShopifyAPI.{AuthToken, Shop}
 
   setup _context do
     bypass = Bypass.open()

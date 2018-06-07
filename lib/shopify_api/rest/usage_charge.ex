@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.UsageCharge do
+defmodule ShopifyAPI.REST.UsageCharge do
   @moduledoc """
-  ShopifyApi REST API UsageCharge resource
+  ShopifyAPI REST API UsageCharge resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Create a usage charge.
 
   ## Example
 
-      iex> ShopifyApi.Rest.UsageCharge.create(auth, integer, map)
+      iex> ShopifyAPI.REST.UsageCharge.create(auth, integer, map)
       {:ok, { "usage_charge" => %{} }}
   """
   def create(
@@ -31,7 +31,7 @@ defmodule ShopifyApi.Rest.UsageCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.UsageCharge.get(auth, integer)
+      iex> ShopifyAPI.REST.UsageCharge.get(auth, integer)
       {:ok, { "usage_charge" => %{} }}
   """
   def get(
@@ -53,7 +53,7 @@ defmodule ShopifyApi.Rest.UsageCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.UsageCharge.all(auth, integer)
+      iex> ShopifyAPI.REST.UsageCharge.all(auth, integer)
       {:ok, { "usage_charges" => [] }}
   """
   def all(%AuthToken{} = auth, recurring_application_charge_id) do

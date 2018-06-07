@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.AccessScope do
+defmodule ShopifyAPI.REST.AccessScope do
   @moduledoc """
   Shopify REST API Access Scope resources.
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of all access scopes associated with the access token.
 
   ## Example
 
-      iex> ShopifyApi.Rest.AccessScope.get(auth)
+      iex> ShopifyAPI.REST.AccessScope.get(auth)
       {:ok, %{ "access_scopes" => [] }}
   """
   def get(%AuthToken{} = auth) do

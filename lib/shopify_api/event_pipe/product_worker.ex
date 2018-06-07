@@ -1,11 +1,11 @@
-defmodule ShopifyApi.EventPipe.ProductWorker do
+defmodule ShopifyAPI.EventPipe.ProductWorker do
   @moduledoc """
   Worker for procecessing Products
   """
   use Toniq.Worker, max_concurrency: 10
   require Logger
-  import ShopifyApi.EventPipe.Worker
-  alias ShopifyApi.Rest.Product
+  import ShopifyAPI.EventPipe.Worker
+  alias ShopifyAPI.REST.Product
 
   def perform(%{action: _, object: _, token: _} = event) do
     Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)

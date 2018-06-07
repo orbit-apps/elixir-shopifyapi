@@ -1,7 +1,7 @@
-defmodule ShopifyApi.EventPipe.Supervisor do
+defmodule ShopifyAPI.EventPipe.Supervisor do
   require Logger
   use Supervisor
-  alias ShopifyApi.EventPipe.WebhookEventQueue
+  alias ShopifyAPI.EventPipe.WebhookEventQueue
 
   def start_link(opts) do
     Logger.info("Starting #{__MODULE__}...")

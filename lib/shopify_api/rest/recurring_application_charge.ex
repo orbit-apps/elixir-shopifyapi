@@ -1,18 +1,18 @@
-defmodule ShopifyApi.Rest.RecurringApplicationCharge do
+defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   @moduledoc """
-  ShopifyApi REST API Recurring Application Charge resource
+  ShopifyAPI REST API Recurring Application Charge resource
   """
 
   require Logger
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Create a recurring application charge.
 
   ## Example
 
-      iex> ShopifyApi.Rest.RecurringApplicationCharge.create(auth, map)
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.create(auth, map)
       {:ok, { "recurring_application_charge" => #{} }}
   """
   def create(
@@ -27,7 +27,7 @@ defmodule ShopifyApi.Rest.RecurringApplicationCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.RecurringApplicationCharge.get(auth, integer)
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.get(auth, integer)
       {:ok, { "recurring_application_charge" => %{} }}
   """
   def get(%AuthToken{} = auth, recurring_application_charge_id) do
@@ -39,7 +39,7 @@ defmodule ShopifyApi.Rest.RecurringApplicationCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.RecurringApplicationCharge.all(auth)
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.all(auth)
       {:ok, { "recurring_application_charges" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -51,7 +51,7 @@ defmodule ShopifyApi.Rest.RecurringApplicationCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.RecurringApplicationCharge.activate(auth, integer)
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.activate(auth, integer)
       {:ok, { "recurring_application_charge" => %{} }}
   """
   def activate(%AuthToken{} = auth, recurring_application_charge_id) do
@@ -66,7 +66,7 @@ defmodule ShopifyApi.Rest.RecurringApplicationCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.RecurringApplicationCharge.cancel(auth, integer)
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.cancel(auth, integer)
       {:ok, 200 }
   """
   def cancel(%AuthToken{} = auth, recurring_application_charge_id) do
@@ -78,7 +78,7 @@ defmodule ShopifyApi.Rest.RecurringApplicationCharge do
 
   ## Example
 
-      iex> ShopifyApi.Rest.RecurringApplicationCharge.update()
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.update()
       {:error, "Not implemented" }
   """
   def update do

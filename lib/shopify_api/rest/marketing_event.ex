@@ -1,18 +1,18 @@
-defmodule ShopifyApi.Rest.MarketingEvent do
+defmodule ShopifyAPI.REST.MarketingEvent do
   @moduledoc """
-  ShopifyApi REST API MarketingEvent resource
+  ShopifyAPI REST API MarketingEvent resource
   """
 
   require Logger
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of all marketing events.
 
   ## Example
 
-      iex> ShopifyApi.Rest.MarketingEvent.all(auth)
+      iex> ShopifyAPI.REST.MarketingEvent.all(auth)
       {:ok, { "marketing_events" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -24,7 +24,7 @@ defmodule ShopifyApi.Rest.MarketingEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.MarketingEvent.count(auth)
+      iex> ShopifyAPI.REST.MarketingEvent.count(auth)
       {:ok, { "count" => integer }}
   """
   def count(%AuthToken{} = auth) do
@@ -36,7 +36,7 @@ defmodule ShopifyApi.Rest.MarketingEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.MarketingEvent.get(auth, integer)
+      iex> ShopifyAPI.REST.MarketingEvent.get(auth, integer)
       {:ok, { "marketing_event" => %{} }}
   """
   def get(%AuthToken{} = auth, marketing_event_id) do
@@ -48,7 +48,7 @@ defmodule ShopifyApi.Rest.MarketingEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.MarketingEvent.create(auth, map)
+      iex> ShopifyAPI.REST.MarketingEvent.create(auth, map)
       {:ok, { "marketing_event" => %{} }}
   """
   def create(%AuthToken{} = auth, %{marketing_event: %{id: marketing_event_id}} = marketing_event) do
@@ -60,7 +60,7 @@ defmodule ShopifyApi.Rest.MarketingEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.MarketingEvent.update(auth, map)
+      iex> ShopifyAPI.REST.MarketingEvent.update(auth, map)
       {:ok, { "marketing_event" => %{} }}
   """
   def update(%AuthToken{} = auth, %{marketing_event: %{id: marketing_event_id}} = marketing_event) do
@@ -72,7 +72,7 @@ defmodule ShopifyApi.Rest.MarketingEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.MarketingEvent.delete(auth)
+      iex> ShopifyAPI.REST.MarketingEvent.delete(auth)
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, marketing_event_id) do
@@ -86,7 +86,7 @@ defmodule ShopifyApi.Rest.MarketingEvent do
 
   ## Example
 
-  iex> ShopifyApi.Rest.MarketingEvent.create_engagement()
+  iex> ShopifyAPI.REST.MarketingEvent.create_engagement()
       {:error, "Not implemented" }
   """
   def create_engagement do

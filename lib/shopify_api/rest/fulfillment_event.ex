@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.FulfillmentEvent do
+defmodule ShopifyAPI.REST.FulfillmentEvent do
   @moduledoc """
-  ShopifyApi REST API FulfillmentEvent resource
+  ShopifyAPI REST API FulfillmentEvent resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of all fulfillment events.
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentEvent.all(auth, string, string)
+      iex> ShopifyAPI.REST.FulfillmentEvent.all(auth, string, string)
       {:ok, { "fulfillment_events" => [] }}
   """
   def all(%AuthToken{} = auth, order_id, fulfillment_id) do
@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.FulfillmentEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentEvent.get(auth, string, string, string)
+      iex> ShopifyAPI.REST.FulfillmentEvent.get(auth, string, string, string)
       {:ok, { "fulfillment_event" => %{} }}
   """
   def get(%AuthToken{} = auth, order_id, fulfillment_id, event_id) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Rest.FulfillmentEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentEvent.post(auth, map)
+      iex> ShopifyAPI.REST.FulfillmentEvent.post(auth, map)
       {:ok, { "fulfillment_event" => %{} }}
   """
   def post(
@@ -55,7 +55,7 @@ defmodule ShopifyApi.Rest.FulfillmentEvent do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentEvent.delete(auth, string, string, string)
+      iex> ShopifyAPI.REST.FulfillmentEvent.delete(auth, string, string, string)
       {:ok,  200 }
   """
   def delete(%AuthToken{} = auth, order_id, fulfillment_id, event_id) do

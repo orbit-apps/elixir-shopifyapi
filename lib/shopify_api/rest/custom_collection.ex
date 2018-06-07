@@ -1,16 +1,16 @@
-defmodule ShopifyApi.Rest.CustomCollection do
+defmodule ShopifyAPI.REST.CustomCollection do
   @moduledoc """
   Shopify REST API Custom Collection resources
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Get a list of all the custom collections.
 
   ## Example
-      iex> ShopifyApi.Rest.CustomCollection.all(token)
+      iex> ShopifyAPI.REST.CustomCollection.all(token)
       {:ok, %{ "custom_collections" => %{} }}
   """
   def all(%AuthToken{} = auth) do
@@ -21,7 +21,7 @@ defmodule ShopifyApi.Rest.CustomCollection do
   Get a count of all custom collections.
 
   ## Example
-      iex> ShopifyApi.Rest.CustomCollection.count(token)
+      iex> ShopifyAPI.REST.CustomCollection.count(token)
       {:ok, { "count": integer }}
   """
   def count(%AuthToken{} = auth) do
@@ -32,7 +32,7 @@ defmodule ShopifyApi.Rest.CustomCollection do
   Return a single custom collection.
 
   ## Example
-      iex> ShopifyApi.Rest.CustomCollection.get(token, string)
+      iex> ShopifyAPI.REST.CustomCollection.get(token, string)
       {:ok, %{ "custom_collections" => %{} }}
   """
   def get(%AuthToken{} = auth, custom_collection_id) do
@@ -43,7 +43,7 @@ defmodule ShopifyApi.Rest.CustomCollection do
   Create a custom collection.
 
   ## Example
-      iex> ShopifyApi.Rest.CustomCollection.create(token, map)
+      iex> ShopifyAPI.REST.CustomCollection.create(token, map)
       {:ok, %{ "custom_collection" => %{} }}
   """
   def create(%AuthToken{} = auth, %{custom_collection: %{}} = custom_collection) do
@@ -54,7 +54,7 @@ defmodule ShopifyApi.Rest.CustomCollection do
   Update an existing custom collection.
 
   ## Example
-      iex> ShopifyApi.Rest.CustomCollection.update(token, string, map)
+      iex> ShopifyAPI.REST.CustomCollection.update(token, string, map)
       {:ok, %{ "custom_collection" => %{} }}
   """
   def update(
@@ -68,7 +68,7 @@ defmodule ShopifyApi.Rest.CustomCollection do
   Delete a custom collection.
 
   ## Example
-      iex> ShopifyApi.Rest.CustomCollection.delete(token, string)
+      iex> ShopifyAPI.REST.CustomCollection.delete(token, string)
       {:ok, %{ "response": 200 }}
   """
   def delete(%AuthToken{} = auth, custom_collection_id) do

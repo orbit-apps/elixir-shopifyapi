@@ -1,7 +1,7 @@
-defmodule ShopifyApi.ShopServer do
+defmodule ShopifyAPI.ShopServer do
   use GenServer
   import Logger, only: [info: 1]
-  alias ShopifyApi.Shop
+  alias ShopifyAPI.Shop
 
   @name :shopify_api_shop_server
 

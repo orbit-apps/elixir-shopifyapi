@@ -1,4 +1,4 @@
-defmodule Plug.ShopifyApi.MixProject do
+defmodule Plug.ShopifyAPI.MixProject do
   use Mix.Project
 
   @version "0.1.7"
@@ -17,7 +17,7 @@ defmodule Plug.ShopifyApi.MixProject do
       name: "Shopify API",
       source_url: "https://github.com/pixelunion/elixir-shopifyapi",
       docs: [
-        main: "ShopifyApi.App",
+        main: "ShopifyAPI.App",
         extras: ["README.md"]
       ]
     ]
@@ -26,7 +26,7 @@ defmodule Plug.ShopifyApi.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {ShopifyApi.Application, []},
+      mod: {ShopifyAPI.Application, []},
       extra_applications: [:logger]
     ]
   end

@@ -1,4 +1,4 @@
-defmodule ShopifyApi.Application do
+defmodule ShopifyAPI.Application do
   use Application
 
   # See https://hexdocs.pm/elixir/Application.html
@@ -8,15 +8,15 @@ defmodule ShopifyApi.Application do
 
     # Define workers and child supervisors to be supervised
     children = [
-      supervisor(ShopifyApi.ShopServer, []),
-      supervisor(ShopifyApi.AppServer, []),
-      supervisor(ShopifyApi.AuthTokenServer, []),
-      supervisor(ShopifyApi.EventPipe.Supervisor, [%{}])
+      supervisor(ShopifyAPI.ShopServer, []),
+      supervisor(ShopifyAPI.AppServer, []),
+      supervisor(ShopifyAPI.AuthTokenServer, []),
+      supervisor(ShopifyAPI.EventPipe.Supervisor, [%{}])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: ShopifyApi.Supervisor]
+    opts = [strategy: :one_for_one, name: ShopifyAPI.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

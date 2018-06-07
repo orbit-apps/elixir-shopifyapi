@@ -1,4 +1,4 @@
-defmodule ShopifyApi.AppServer do
+defmodule ShopifyAPI.AppServer do
   use GenServer
   require Logger
 
@@ -6,8 +6,8 @@ defmodule ShopifyApi.AppServer do
 
   def start_link do
     Logger.info(fn -> "Starting #{__MODULE__}..." end)
-    state = Application.get_env(:shopify_api, ShopifyApi.App)
-    state = for {k, v} <- state, into: %{}, do: {k, struct(ShopifyApi.App, v)}
+    state = Application.get_env(:shopify_api, ShopifyAPI.App)
+    state = for {k, v} <- state, into: %{}, do: {k, struct(ShopifyAPI.App, v)}
     GenServer.start_link(__MODULE__, state, name: @name)
   end
 
@@ -39,7 +39,7 @@ defmodule ShopifyApi.AppServer do
     new_state =
       update_in(state, [name], fn t ->
         case t do
-          nil -> Map.merge(%ShopifyApi.App{}, new_values)
+          nil -> Map.merge(%ShopifyAPI.App{}, new_values)
           _ -> Map.merge(t, new_values)
         end
       end)

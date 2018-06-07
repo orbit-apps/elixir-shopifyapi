@@ -1,18 +1,18 @@
-defmodule ShopifyApi.Rest.Customer do
+defmodule ShopifyAPI.REST.Customer do
   @moduledoc """
   Shopify REST API Customer resource
   """
 
   require Logger
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Returns all the customers.
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.all(auth)
+      iex> ShopifyAPI.REST.Customer.all(auth)
       {:ok, {"customers" => []}
   """
   def all(%AuthToken{} = auth) do
@@ -24,7 +24,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.get(auth, integer)
+      iex> ShopifyAPI.REST.Customer.get(auth, integer)
       {:ok, {"customer" = > %{}}
   """
   def get(%AuthToken{} = auth, customer_id) do
@@ -38,7 +38,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.getQuery()
+      iex> ShopifyAPI.REST.Customer.getQuery()
       {:error, "Not implemented"}
   """
   def get_query do
@@ -51,7 +51,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.create(auth, map)
+      iex> ShopifyAPI.REST.Customer.create(auth, map)
       {:ok, {"customer" => %{}}
   """
   def create(%AuthToken{} = auth, %{customer: %{}} = customer) do
@@ -63,7 +63,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.update(auth, map)
+      iex> ShopifyAPI.REST.Customer.update(auth, map)
       {:ok, {"customer" => %{}}
   """
   def update(%AuthToken{} = auth, %{customer: %{id: customer_id}} = customer) do
@@ -75,7 +75,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.CreateActivationUrl(auth, integer)
+      iex> ShopifyAPI.REST.Customer.CreateActivationUrl(auth, integer)
       {:ok, {"account_activation_url" => "" }
   """
   def create_activation_url(
@@ -90,7 +90,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.sendInvite(auth, integer)
+      iex> ShopifyAPI.REST.Customer.sendInvite(auth, integer)
       {:ok, {"customer_invite" => %{}}
   """
   def send_invite(%AuthToken{} = auth, customer_id) do
@@ -102,7 +102,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.delete(auth, integer)
+      iex> ShopifyAPI.REST.Customer.delete(auth, integer)
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, customer_id) do
@@ -114,7 +114,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.count(auth)
+      iex> ShopifyAPI.REST.Customer.count(auth)
       {:ok, {"count" => integer }}
   """
   def count(%AuthToken{} = auth) do
@@ -126,7 +126,7 @@ defmodule ShopifyApi.Rest.Customer do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Customer.GetOrder(auth, integer)
+      iex> ShopifyAPI.REST.Customer.GetOrder(auth, integer)
       {:ok, {"orders" => [] }}
   """
   def get_orders(%AuthToken{} = auth, customer_id) do

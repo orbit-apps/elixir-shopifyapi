@@ -1,9 +1,9 @@
-defmodule ShopifyApi.EventPipe.EventQueue do
+defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
 
   def enqueue(%{destination: :shopify, object: %{product: %{}}} = event) do
     Logger.info("Enqueueing #{inspect(event)}")
-    Toniq.enqueue(ShopifyApi.EventPipe.ProductWorker, event)
+    Toniq.enqueue(ShopifyAPI.EventPipe.ProductWorker, event)
   end
 
   def enqueue(event),

@@ -1,10 +1,10 @@
-defmodule ShopifyApi.Rest.InventoryItem do
+defmodule ShopifyAPI.REST.InventoryItem do
   @moduledoc """
-  ShopifyApi REST API InventoryItem resource
+  ShopifyAPI REST API InventoryItem resource
   """
   require Logger
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of inventory items.
@@ -13,7 +13,7 @@ defmodule ShopifyApi.Rest.InventoryItem do
 
   ## Example
 
-      iex> ShopifyApi.Rest.InventoryItem.all(auth)
+      iex> ShopifyAPI.REST.InventoryItem.all(auth)
       {:error, "Not implemented" }
   """
   def all do
@@ -26,7 +26,7 @@ defmodule ShopifyApi.Rest.InventoryItem do
 
   ## Example
 
-      iex> ShopifyApi.Rest.InventoryItem.get(auth, integer)
+      iex> ShopifyAPI.REST.InventoryItem.get(auth, integer)
       {:ok, { "inventory_item" => %{} }}
   """
   def get(%AuthToken{} = auth, inventory_item_id) do
@@ -38,7 +38,7 @@ defmodule ShopifyApi.Rest.InventoryItem do
 
   ## Example
 
-      iex> ShopifyApi.Rest.InventoryItem.update(auth, map)
+      iex> ShopifyAPI.REST.InventoryItem.update(auth, map)
       {:ok, { "inventory_item" => %{} }}
   """
   def update(%AuthToken{} = auth, %{inventory_item: %{id: inventory_item_id}} = inventory_item) do

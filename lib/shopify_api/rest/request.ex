@@ -1,7 +1,7 @@
-defmodule ShopifyApi.Rest.Request do
+defmodule ShopifyAPI.REST.Request do
   @moduledoc """
   Provides basic REST actions for hitting the Shopify API. Don't use this
-  directly instead use one of the helper modules such as `ShopifyApi.Rest.Product`.
+  directly instead use one of the helper modules such as `ShopifyAPI.REST.Product`.
 
   Actons provided, the names correspond to the HTTP Action called.
     - get
@@ -11,7 +11,7 @@ defmodule ShopifyApi.Rest.Request do
   """
 
   use HTTPoison.Base
-  alias ShopifyApi.AuthToken
+  alias ShopifyAPI.AuthToken
 
   @transport "https://"
   if Mix.env() == :test do
