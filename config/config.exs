@@ -22,8 +22,8 @@ use Mix.Config
 #
 
 # Provider out server with a min of an empty Map
-config :shopify_api, ShopifyApi.Shop, %{}
-config :shopify_api, ShopifyApi.App, %{}
+config :shopify_api, ShopifyAPI.Shop, %{}
+config :shopify_api, ShopifyAPI.App, %{}
 
 config :toniq, redis_url: "redis://localhost:6379/0"
 

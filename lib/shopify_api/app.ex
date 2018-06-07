@@ -1,6 +1,6 @@
-defmodule ShopifyApi.App do
+defmodule ShopifyAPI.App do
   @moduledoc """
-    ShopifyApi.App contains logic and a struct for representing a Shopify App.
+    ShopifyAPI.App contains logic and a struct for representing a Shopify App.
   """
   defstruct name: "",
             client_id: "",
@@ -22,7 +22,7 @@ defmodule ShopifyApi.App do
         }
 
   require Logger
-  alias ShopifyApi.AuthRequest
+  alias ShopifyAPI.AuthRequest
 
   @doc """
     Generates the install URL for an App and a Shop.
@@ -41,7 +41,7 @@ defmodule ShopifyApi.App do
 
   @doc """
     After an App is installed and the Shop owner ends up back on ourside of the fence we
-    need to request an AuthToken. This function uses ShopifyApi.AuthRequest.post/3 to
+    need to request an AuthToken. This function uses ShopifyAPI.AuthRequest.post/3 to
     fetch and parse the AuthToken.
   """
   @spec fetch_token(__MODULE__.t(), String.t(), String.t()) :: {:ok, map()} | {:error, String.t()}
@@ -63,7 +63,7 @@ defmodule ShopifyApi.App do
   end
 end
 
-defmodule ShopifyApi.AuthRequest do
+defmodule ShopifyAPI.AuthRequest do
   @moduledoc """
     AuthRequest.post/3 contains logic to request AuthTokens from Shopify given an App,
     Shop domain, and the auth code from the App install.
@@ -80,8 +80,8 @@ defmodule ShopifyApi.AuthRequest do
     "#{@transport}#{domain}/admin/oauth/access_token"
   end
 
-  @spec post(ShopifyApi.App.t(), String.t(), String.t()) :: {:ok, any()} | {:error, any()}
-  def post(%ShopifyApi.App{} = app, domain, auth_code) do
+  @spec post(ShopifyAPI.App.t(), String.t(), String.t()) :: {:ok, any()} | {:error, any()}
+  def post(%ShopifyAPI.App{} = app, domain, auth_code) do
     http_body = %{
       client_id: app.client_id,
       client_secret: app.client_secret,

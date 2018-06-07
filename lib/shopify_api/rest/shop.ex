@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.Shop do
+defmodule ShopifyAPI.REST.Shop do
   @moduledoc """
-  ShopifyApi REST API Shop resource
+  ShopifyAPI REST API Shop resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Get a shop's configuration.
 
   ## Example
 
-      iex> ShopifyApi.Rest.Shop.get(auth)
+      iex> ShopifyAPI.REST.Shop.get(auth)
       {:ok, { "shop" => %{} }}
   """
   def get(%AuthToken{} = auth) do

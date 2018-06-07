@@ -1,4 +1,4 @@
-# ShopifyApi and Plug.ShopifyApi
+# ShopifyAPI and Plug.ShopifyAPI
 
 ## Installation
 
@@ -24,7 +24,7 @@ Add it to your phoenix routes.
 
 ```
 scope "/shop" do
-  forward("/", ShopifyApi.Router)
+  forward("/", ShopifyAPI.Router)
 end
 ```
 

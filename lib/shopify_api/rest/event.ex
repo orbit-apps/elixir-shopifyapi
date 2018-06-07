@@ -1,19 +1,19 @@
-defmodule ShopifyApi.Rest.Event do
+defmodule ShopifyAPI.REST.Event do
   @moduledoc """
-  ShopifyApi REST API Event resource
+  ShopifyAPI REST API Event resource
 
   More via: https://help.shopify.com/api/reference/events/event#index
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of all Events.
 
   ## Example
 
-      iex> ShopifyApi.Rest.Event.all(auth)
+      iex> ShopifyAPI.REST.Event.all(auth)
       {:ok, { "events" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -25,7 +25,7 @@ defmodule ShopifyApi.Rest.Event do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Event.get(auth, integer)
+      iex> ShopifyAPI.REST.Event.get(auth, integer)
       {:ok, { "event" => %{} }}
   """
   def get(%AuthToken{} = auth, event_id) do
@@ -37,7 +37,7 @@ defmodule ShopifyApi.Rest.Event do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Event.count(auth)
+      iex> ShopifyAPI.REST.Event.count(auth)
       {:ok, { "events" => integer }}
   """
   def count(%AuthToken{} = auth) do

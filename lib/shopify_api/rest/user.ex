@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.User do
+defmodule ShopifyAPI.REST.User do
   @moduledoc """
-  ShopifyApi REST API User resource
+  ShopifyAPI REST API User resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Get a single user.
 
   ## Example
 
-      iex> ShopifyApi.Rest.User.get(auth, integer)
+      iex> ShopifyAPI.REST.User.get(auth, integer)
       {:ok, { "user" => %{} }}
   """
   def get(%AuthToken{} = auth, user_id) do
@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.User do
 
   ## Example
 
-      iex> ShopifyApi.Rest.User.all(auth)
+      iex> ShopifyAPI.REST.User.all(auth)
       {:ok, { "users" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Rest.User do
 
   ## Example
 
-      iex> ShopifyApi.Rest.User.current(auth)
+      iex> ShopifyAPI.REST.User.current(auth)
       {:ok, { "user" => %{} }}
   """
   def current(%AuthToken{} = auth) do

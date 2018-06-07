@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.PriceRule do
+defmodule ShopifyAPI.REST.PriceRule do
   @moduledoc """
-  ShopifyApi REST API PriceRule resource
+  ShopifyAPI REST API PriceRule resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Create a price rule.
 
   ## Example
 
-      iex> ShopifyApi.Rest.PriceRule.create(auth, map)
+      iex> ShopifyAPI.REST.PriceRule.create(auth, map)
       {:ok, { "price_rule" => %{} }}
   """
   def create(%AuthToken{} = auth, %{price_rule: %{}} = price_rule) do
@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.PriceRule do
 
   ## Example
 
-      iex> ShopifyApi.Rest.PriceRule.update(auth, map)
+      iex> ShopifyAPI.REST.PriceRule.update(auth, map)
       {:ok, { "price_rule" => %{} }}
   """
   def update(%AuthToken{} = auth, %{price_rule: %{id: price_rule_id}} = price_rule) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Rest.PriceRule do
 
   ## Example
 
-      iex> ShopifyApi.Rest.PriceRule.all(auth)
+      iex> ShopifyAPI.REST.PriceRule.all(auth)
       {:ok, { "price_rules" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -47,7 +47,7 @@ defmodule ShopifyApi.Rest.PriceRule do
 
   ## Example
 
-      iex> ShopifyApi.Rest.PriceRule.get(auth, integer)
+      iex> ShopifyAPI.REST.PriceRule.get(auth, integer)
       {:ok, { "price_rule" => %{} }}
   """
   def get(%AuthToken{} = auth, price_rule_id) do
@@ -59,7 +59,7 @@ defmodule ShopifyApi.Rest.PriceRule do
 
   ## Example
 
-      iex> ShopifyApi.Rest.PriceRule.delete(auth, string)
+      iex> ShopifyAPI.REST.PriceRule.delete(auth, string)
       {:ok, 204 }}
   """
   def delete(%AuthToken{} = auth, price_rule_id) do

@@ -1,11 +1,11 @@
-defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
+defmodule Test.ShopifyAPI.EventPipe.WebhookEventProcessor do
   @moduledoc """
   Test processor for webhook events.
   """
   require Logger
   use GenStage
 
-  alias ShopifyApi.EventPipe.WebhookEventQueue
+  alias ShopifyAPI.EventPipe.WebhookEventQueue
 
   @doc "Starts the consumer."
   def start_link do
@@ -32,13 +32,13 @@ defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
   end
 end
 
-defmodule Test.ShopifyApi.WebhookRouterTest do
+defmodule Test.ShopifyAPI.WebhookRouterTest do
   use ExUnit.Case
   use Plug.Test
 
   alias Plug.{Conn, Parsers}
-  alias ShopifyApi.{AppServer, ShopServer, Security, WebhookRouter}
-  alias Test.ShopifyApi.EventPipe.WebhookEventProcessor
+  alias ShopifyAPI.{AppServer, ShopServer, Security, WebhookRouter}
+  alias Test.ShopifyAPI.EventPipe.WebhookEventProcessor
 
   def parse(conn, opts \\ []) do
     opts = Keyword.put_new(opts, :parsers, [Parsers.URLENCODED, Parsers.MULTIPART])

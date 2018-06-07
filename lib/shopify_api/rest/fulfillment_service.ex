@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.FulfillmentService do
+defmodule ShopifyAPI.REST.FulfillmentService do
   @moduledoc """
-  ShopifyApi REST API FulfillmentService resource
+  ShopifyAPI REST API FulfillmentService resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of all the fulfillment services.
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentService.all(auth)
+      iex> ShopifyAPI.REST.FulfillmentService.all(auth)
       {:ok, { "fulfillment_services" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.FulfillmentService do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentService.get(auth, string)
+      iex> ShopifyAPI.REST.FulfillmentService.get(auth, string)
       {:ok, { "fulfillment_service" => %{} }}
   """
   def get(%AuthToken{} = auth, fulfillment_service_id) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Rest.FulfillmentService do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentService.create(auth)
+      iex> ShopifyAPI.REST.FulfillmentService.create(auth)
       {:ok, { "fulfillment_service" => %{} }}
   """
   def create(%AuthToken{} = auth, %{fulfillment_service: %{}} = fulfillment_service) do
@@ -47,7 +47,7 @@ defmodule ShopifyApi.Rest.FulfillmentService do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentService.update(auth)
+      iex> ShopifyAPI.REST.FulfillmentService.update(auth)
       {:ok, { "fulfillment_service" => %{} }}
   """
   def update(
@@ -62,7 +62,7 @@ defmodule ShopifyApi.Rest.FulfillmentService do
 
   ## Example
 
-      iex> ShopifyApi.Rest.FulfillmentService.delete(auth, string)
+      iex> ShopifyAPI.REST.FulfillmentService.delete(auth, string)
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, fulfillment_service_id) do

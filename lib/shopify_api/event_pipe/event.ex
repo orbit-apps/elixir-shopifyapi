@@ -1,4 +1,4 @@
-defmodule ShopifyApi.EventPipe.Event do
+defmodule ShopifyAPI.EventPipe.Event do
   defstruct destination: :nowhere,
             token: %{},
             object: nil,

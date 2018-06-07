@@ -1,4 +1,4 @@
-defmodule ShopifyApi.EventPipe.WebhookEventQueue do
+defmodule ShopifyAPI.EventPipe.WebhookEventQueue do
   require Logger
   use GenStage
 

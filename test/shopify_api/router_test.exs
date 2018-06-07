@@ -1,9 +1,9 @@
-defmodule Test.ShopifyApi.RouterTest do
+defmodule Test.ShopifyAPI.RouterTest do
   use ExUnit.Case
   use Plug.Test
 
   alias Plug.{Conn, Parsers}
-  alias ShopifyApi.{AppServer, AuthTokenServer, Router, ShopServer, Security}
+  alias ShopifyAPI.{AppServer, AuthTokenServer, Router, ShopServer, Security}
 
   def parse(conn, opts \\ []) do
     opts = Keyword.put_new(opts, :parsers, [Plug.Parsers.URLENCODED, Plug.Parsers.MULTIPART])

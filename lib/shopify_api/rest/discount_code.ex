@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.DiscountCode do
+defmodule ShopifyAPI.REST.DiscountCode do
   @moduledoc """
-  ShopifyApi REST API DiscountCode resource
+  ShopifyAPI REST API DiscountCode resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Create a discount code.
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.create(auth, map)
+      iex> ShopifyAPI.REST.DiscountCode.create(auth, map)
       {:ok, { "discount_code" => %{} }}
   """
   def create(
@@ -26,7 +26,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.update(auth, integer, map)
+      iex> ShopifyAPI.REST.DiscountCode.update(auth, integer, map)
       {:ok, { "discount_code" => %{} }}
   """
   def update(
@@ -46,7 +46,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.all(auth, integer)
+      iex> ShopifyAPI.REST.DiscountCode.all(auth, integer)
       {:ok, { "discount_codes" => [] }}
   """
   def all(%AuthToken{} = auth, price_rule_id) do
@@ -58,7 +58,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.get(auth, integer, integer)
+      iex> ShopifyAPI.REST.DiscountCode.get(auth, integer, integer)
       {:ok, { "discount_code" => %{} }}
   """
   def get(%AuthToken{} = auth, price_rule_id, discount_code_id) do
@@ -70,7 +70,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.query(auth, string)
+      iex> ShopifyAPI.REST.DiscountCode.query(auth, string)
       {:ok, { "location" => "" }}
   """
   def query(%AuthToken{} = auth, coupon_code) do
@@ -82,7 +82,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.delete(auth, integer, integer)
+      iex> ShopifyAPI.REST.DiscountCode.delete(auth, integer, integer)
       {:ok, 204 }}
   """
   def delete(%AuthToken{} = auth, price_rule_id, discount_code_id) do
@@ -94,7 +94,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.createBatch(auth, list)
+      iex> ShopifyAPI.REST.DiscountCode.createBatch(auth, list)
       {:ok, "discount_codes" => [] }}
   """
   def create_batch(auth, price_rule_id, %{discount_codes: []} = discount_codes) do
@@ -106,7 +106,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.get_batch(auth, integer, integer)
+      iex> ShopifyAPI.REST.DiscountCode.get_batch(auth, integer, integer)
       {:ok, "discount_code_creation" => %{} }
   """
   def get_batch(%AuthToken{} = auth, price_rule_id, batch_id) do
@@ -118,7 +118,7 @@ defmodule ShopifyApi.Rest.DiscountCode do
 
   ## Example
 
-      iex> ShopifyApi.Rest.DiscountCode.all_batch(auth, integer, integer)
+      iex> ShopifyAPI.REST.DiscountCode.all_batch(auth, integer, integer)
       {:ok, "discount_codes" => [] }
   """
   def all_batch(%AuthToken{} = auth, price_rule_id, batch_id) do

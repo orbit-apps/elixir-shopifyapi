@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.Product do
+defmodule ShopifyAPI.REST.Product do
   @moduledoc """
   Shopify REST API Product resources
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Get a list of all the products.
 
   ## Example
 
-    iex> ShopifyApi.Rest.Product.all(auth)
+    iex> ShopifyAPI.REST.Product.all(auth)
     {:ok, %{ "products" => [] }}
   """
   def all(%AuthToken{} = auth), do: Request.get(auth, "products.json")
@@ -21,7 +21,7 @@ defmodule ShopifyApi.Rest.Product do
 
   ## Example
 
-    iex> ShopifyApi.Rest.Product.get(auth, integer)
+    iex> ShopifyAPI.REST.Product.get(auth, integer)
     {:ok, %{ "product" => %{} }}
   """
   def get(%AuthToken{} = auth, product_id), do: Request.get(auth, "products/#{product_id}.json")
@@ -31,7 +31,7 @@ defmodule ShopifyApi.Rest.Product do
 
   ## Example
 
-    iex> ShopifyApi.Rest.Product.count(auth)
+    iex> ShopifyAPI.REST.Product.count(auth)
     {:ok, %{ "count" => integer }}
   """
   def count(%AuthToken{} = auth), do: Request.get(auth, "products/count.json")
@@ -41,7 +41,7 @@ defmodule ShopifyApi.Rest.Product do
 
   ## Example
 
-    iex> ShopifyApi.Rest.Product.update(auth, map)
+    iex> ShopifyAPI.REST.Product.update(auth, map)
     {:ok, %{ "product" => %{} }}
   """
   def update(%AuthToken{} = auth, %{"product" => %{"id" => product_id} = product}),
@@ -55,7 +55,7 @@ defmodule ShopifyApi.Rest.Product do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Product.delete(auth, integer)
+      iex> ShopifyAPI.REST.Product.delete(auth, integer)
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, product_id),
@@ -66,7 +66,7 @@ defmodule ShopifyApi.Rest.Product do
 
   ## Example
 
-      iex> ShopifyApi.Rest.Product.create(auth, map)
+      iex> ShopifyAPI.REST.Product.create(auth, map)
       {:ok, %{ "product" => %{} }}
   """
   def create(%AuthToken{} = auth, %{"product" => %{} = product}),

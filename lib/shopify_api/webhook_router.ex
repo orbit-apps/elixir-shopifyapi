@@ -1,10 +1,10 @@
-defmodule ShopifyApi.WebhookRouter do
+defmodule ShopifyAPI.WebhookRouter do
   require Logger
   use Plug.Router
 
   alias Plug.Conn
-  alias ShopifyApi.EventPipe.{Event, WebhookEventQueue}
-  alias ShopifyApi.{App, AppServer, ShopServer, Security}
+  alias ShopifyAPI.EventPipe.{Event, WebhookEventQueue}
+  alias ShopifyAPI.{App, AppServer, ShopServer, Security}
 
   plug(:match)
   plug(:dispatch)

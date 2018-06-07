@@ -1,17 +1,17 @@
-defmodule ShopifyApi.Rest.ApplicationCredit do
+defmodule ShopifyAPI.REST.ApplicationCredit do
   @moduledoc """
-  ShopifyApi REST API ApplicationCredit resource
+  ShopifyAPI REST API ApplicationCredit resource
   """
 
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Create an application credit.
 
   ## Example
 
-      iex> ShopifyApi.Rest.ApplicationCredit.create(auth, map)
+      iex> ShopifyAPI.REST.ApplicationCredit.create(auth, map)
       {:ok, { "application_credit" => %{} }}
   """
   def create(%AuthToken{} = auth, %{application_credit: {}} = application_credit) do
@@ -23,7 +23,7 @@ defmodule ShopifyApi.Rest.ApplicationCredit do
 
   ## Example
 
-      iex> ShopifyApi.Rest.ApplicationCredit.get(auth, integer)
+      iex> ShopifyAPI.REST.ApplicationCredit.get(auth, integer)
       {:ok, { "application_credit" => %{} }}
   """
   def get(%AuthToken{} = auth, application_credit_id) do
@@ -35,7 +35,7 @@ defmodule ShopifyApi.Rest.ApplicationCredit do
 
   ## Example
 
-      iex> ShopifyApi.Rest.ApplicationCredit.all(auth)
+      iex> ShopifyAPI.REST.ApplicationCredit.all(auth)
       {:ok, { "application_credits" => [] }}
   """
   def all(%AuthToken{} = auth) do

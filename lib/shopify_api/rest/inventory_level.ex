@@ -1,16 +1,16 @@
-defmodule ShopifyApi.Rest.InventoryLevel do
+defmodule ShopifyAPI.REST.InventoryLevel do
   @moduledoc """
-  ShopifyApi REST API InventoryLevel resource
+  ShopifyAPI REST API InventoryLevel resource
   """
-  alias ShopifyApi.AuthToken
-  alias ShopifyApi.Rest.Request
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST.Request
 
   @doc """
   Return a list of inventory levels.
 
   ## Example
 
-      iex> ShopifyApi.Rest.InventoryLevel.all(auth)
+      iex> ShopifyAPI.REST.InventoryLevel.all(auth)
       {:ok, { "inventory_level" => [] }}
   """
   def all(%AuthToken{} = auth) do
@@ -22,7 +22,7 @@ defmodule ShopifyApi.Rest.InventoryLevel do
 
   ## Example
 
-      iex> ShopifyApi.Rest.InventoryLevel.delete(auth, integer, integer)
+      iex> ShopifyAPI.REST.InventoryLevel.delete(auth, integer, integer)
       {:ok, 200 }}
   """
   def delete(%AuthToken{} = auth, inventory_item_id, location_id) do

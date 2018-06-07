@@ -1,5 +1,5 @@
 # TODO has multiple auth structs
-defmodule ShopifyApi.Shop do
+defmodule ShopifyAPI.Shop do
   defstruct domain: ""
 
   @typedoc """

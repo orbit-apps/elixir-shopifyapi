@@ -1,4 +1,4 @@
-defmodule ShopifyApi.AuthTokenServer do
+defmodule ShopifyAPI.AuthTokenServer do
   use GenServer
   require Logger
 
@@ -46,7 +46,7 @@ defmodule ShopifyApi.AuthTokenServer do
     new_state =
       update_in(state, [key], fn t ->
         case t do
-          nil -> Map.merge(%ShopifyApi.AuthToken{}, new_values)
+          nil -> Map.merge(%ShopifyAPI.AuthToken{}, new_values)
           _ -> Map.merge(t, new_values)
         end
       end)

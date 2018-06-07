@@ -1,4 +1,4 @@
-defmodule ShopifyApi.EventPipe.Worker do
+defmodule ShopifyAPI.EventPipe.Worker do
   @moduledoc """
   Collection of helpful functions for Shopify workers.
   """
@@ -15,7 +15,7 @@ defmodule ShopifyApi.EventPipe.Worker do
   end
 
   def fire_callback(%{callback: callback}) when is_nil(callback), do: {:ok, "no callback to call"}
-  def fire_callback(event), do: {:ok, ""}
+  def fire_callback(_event), do: {:ok, ""}
 
   def fetch_token(event) do
     Map.fetch(event, :token)
