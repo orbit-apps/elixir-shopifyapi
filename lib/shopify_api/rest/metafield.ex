@@ -1,6 +1,5 @@
 defmodule ShopifyApi.Rest.Metafield do
   @enforce_keys [:key, :namespace, :value, :value_type]
-
   defstruct key: "",
             namespace: "",
             value: 0,
@@ -10,8 +9,8 @@ defmodule ShopifyApi.Rest.Metafield do
   ShopifyApi REST API Metafield resource
   """
 
-  alias ShopifyApi.Rest.Metafield
   alias ShopifyApi.AuthToken
+  alias ShopifyApi.Rest.Metafield
   alias ShopifyApi.Rest.Request
 
   @doc """
@@ -70,7 +69,7 @@ defmodule ShopifyApi.Rest.Metafield do
     iex> ShopifyApi.Rest.Metafields.create(token, atom, integer, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def create(%AuthToken{} = auth, type, resource_id, %Metafield{} = metafield) do
+  def create(%AuthToken{} = auth, type, resource_id, %__MODULE__{} = metafield) do
     Request.post(auth, path_from_resource(type, resource_id), metafield)
   end
 
@@ -82,7 +81,7 @@ defmodule ShopifyApi.Rest.Metafield do
     iex> ShopifyApi.Rest.Metafields.update(token, atom, integer, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def update(%AuthToken{} = auth, type, resource_id, %Metafield{} = metafield) do
+  def update(%AuthToken{} = auth, type, resource_id, %__MODULE__{} = metafield) do
     Request.put(auth, path_from_resource(type, resource_id), metafield)
   end
 
