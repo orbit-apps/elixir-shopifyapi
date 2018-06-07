@@ -2,9 +2,12 @@ defmodule Test.ShopifyApi.RouterTest do
   use ExUnit.Case
   use Plug.Test
 
+  alias Plug.{Conn, Parsers}
+  alias ShopifyApi.{AppServer, AuthTokenServer, Router, ShopServer, Security}
+
   def parse(conn, opts \\ []) do
     opts = Keyword.put_new(opts, :parsers, [Plug.Parsers.URLENCODED, Plug.Parsers.MULTIPART])
-    Plug.Parsers.call(conn, Plug.Parsers.init(opts))
+    Parsers.call(conn, Parsers.init(opts))
   end
 
   @app_name "test"
@@ -14,7 +17,7 @@ defmodule Test.ShopifyApi.RouterTest do
   @shop_domain "shop.example.com"
 
   setup do
-    ShopifyApi.AppServer.set(@app_name, %{
+    AppServer.set(@app_name, %{
       auth_redirect_uri: @redirect_uri,
       client_secret: @client_secret,
       name: @app_name,
@@ -22,7 +25,7 @@ defmodule Test.ShopifyApi.RouterTest do
       scope: "nothing"
     })
 
-    ShopifyApi.ShopServer.set(%{domain: @shop_domain})
+    ShopServer.set(%{domain: @shop_domain})
   end
 
   describe "/install" do
@@ -30,7 +33,7 @@ defmodule Test.ShopifyApi.RouterTest do
       conn =
         conn(:get, "/install?app=#{@app_name}&shop=#{@shop_domain}")
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 302
 
@@ -44,7 +47,7 @@ defmodule Test.ShopifyApi.RouterTest do
       conn =
         conn(:get, "/install?app=not-an-app&shop=#{@shop_domain}")
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 404
     end
@@ -57,7 +60,7 @@ defmodule Test.ShopifyApi.RouterTest do
     setup _contxt do
       bypass = Bypass.open()
       shop_domain = "localhost:#{bypass.port}"
-      ShopifyApi.ShopServer.set(%{domain: shop_domain})
+      ShopServer.set(%{domain: shop_domain})
 
       {:ok, %{bypass: bypass, shop_domain: shop_domain}}
     end
@@ -69,7 +72,7 @@ defmodule Test.ShopifyApi.RouterTest do
           "/authorized/#{@app_name}?shop=#{shop_domain}&code=#{@code}&timestamp=1234&hmac=invalid"
         )
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 404
     end
@@ -77,7 +80,7 @@ defmodule Test.ShopifyApi.RouterTest do
     test "fetches the token", %{bypass: bypass, shop_domain: shop_domain} do
       Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
         {:ok, body} = Poison.encode(@token)
-        Plug.Conn.resp(conn, 200, body)
+        Conn.resp(conn, 200, body)
       end)
 
       conn =
@@ -87,10 +90,10 @@ defmodule Test.ShopifyApi.RouterTest do
             add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=#{@nonce}&timestamp=1234")
         )
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 200
-      {:ok, %{token: auth_token}} = ShopifyApi.AuthTokenServer.get(shop_domain, @app_name)
+      {:ok, %{token: auth_token}} = AuthTokenServer.get(shop_domain, @app_name)
       assert auth_token == @token.access_token
     end
 
@@ -102,7 +105,7 @@ defmodule Test.ShopifyApi.RouterTest do
             add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=invalid&timestamp=1234")
         )
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 404
     end
@@ -115,7 +118,7 @@ defmodule Test.ShopifyApi.RouterTest do
             add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=#{@nonce}&timestamp=1234")
         )
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 404
     end
@@ -128,13 +131,13 @@ defmodule Test.ShopifyApi.RouterTest do
             add_hmac_to_params("code=#{@code}&shop=invalid-shop&state=#{@nonce}&timestamp=1234")
         )
         |> parse
-        |> ShopifyApi.Router.call(%{})
+        |> Router.call(%{})
 
       assert conn.status == 404
     end
 
     def add_hmac_to_params(params) do
-      params <> "&hmac=" <> ShopifyApi.Security.base16_sha256_hmac(params, @client_secret)
+      params <> "&hmac=" <> Security.base16_sha256_hmac(params, @client_secret)
     end
   end
 end

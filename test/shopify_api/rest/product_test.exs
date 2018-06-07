@@ -1,16 +1,19 @@
 defmodule ShopifyApi.Rest.ProductTest do
   use ExUnit.Case
+
+  alias Plug.Conn
   alias ShopifyApi.Rest.Product
+  alias ShopifyApi.{AuthToken, Shop}
 
   setup _context do
     bypass = Bypass.open()
 
-    token = %ShopifyApi.AuthToken{
+    token = %AuthToken{
       token: "token",
       shop_name: "localhost:#{bypass.port}"
     }
 
-    shop = %ShopifyApi.Shop{domain: "localhost:#{bypass.port}"}
+    shop = %Shop{domain: "localhost:#{bypass.port}"}
 
     {:ok, %{shop: shop, auth_token: token, bypass: bypass}}
   end
@@ -24,7 +27,7 @@ defmodule ShopifyApi.Rest.ProductTest do
 
     Bypass.expect_once(bypass, "GET", "/admin/products.json", fn conn ->
       {:ok, body} = Poison.encode(products)
-      Plug.Conn.resp(conn, 200, body)
+      Conn.resp(conn, 200, body)
     end)
 
     assert {:ok, products} = Product.all(token)

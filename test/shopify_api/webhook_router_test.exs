@@ -5,6 +5,8 @@ defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
   require Logger
   use GenStage
 
+  alias ShopifyApi.EventPipe.WebhookEventQueue
+
   @doc "Starts the consumer."
   def start_link() do
     Logger.info("Starting #{__MODULE__}...")
@@ -17,7 +19,7 @@ defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
     {
       :consumer,
       :ok,
-      subscribe_to: [ShopifyApi.EventPipe.WebhookEventQueue]
+      subscribe_to: [WebhookEventQueue]
     }
   end
 
@@ -34,9 +36,13 @@ defmodule Test.ShopifyApi.WebhookRouterTest do
   use ExUnit.Case
   use Plug.Test
 
+  alias Plug.{Conn, Parsers}
+  alias ShopifyApi.{AppServer, ShopServer, Security, WebhookRouter}
+  alias Test.ShopifyApi.EventPipe.WebhookEventProcessor
+
   def parse(conn, opts \\ []) do
-    opts = Keyword.put_new(opts, :parsers, [Plug.Parsers.URLENCODED, Plug.Parsers.MULTIPART])
-    Plug.Parsers.call(conn, Plug.Parsers.init(opts))
+    opts = Keyword.put_new(opts, :parsers, [Parsers.URLENCODED, Parsers.MULTIPART])
+    Parsers.call(conn, Parsers.init(opts))
   end
 
   @app_name "test"
@@ -46,29 +52,29 @@ defmodule Test.ShopifyApi.WebhookRouterTest do
   @shopify_topic "test"
 
   setup do
-    Test.ShopifyApi.EventPipe.WebhookEventProcessor.start_link()
+    WebhookEventProcessor.start_link()
 
-    ShopifyApi.AppServer.set(@app_name, %{
+    AppServer.set(@app_name, %{
       name: @app_name,
       client_secret: @client_secret
     })
 
-    ShopifyApi.ShopServer.set(%{domain: @shop_domain})
+    ShopServer.set(%{domain: @shop_domain})
   end
 
   describe "with App and Store" do
     setup do
       conn =
         conn(:post, "/" <> @app_name, @post_body)
-        |> Plug.Conn.put_req_header("x-shopify-shop-domain", @shop_domain)
-        |> Plug.Conn.put_req_header("x-shopify-topic", @shopify_topic)
-        |> Plug.Conn.put_req_header(
+        |> Conn.put_req_header("x-shopify-shop-domain", @shop_domain)
+        |> Conn.put_req_header("x-shopify-topic", @shopify_topic)
+        |> Conn.put_req_header(
           "x-shopify-hmac-sha256",
-          ShopifyApi.Security.base64_sha256_hmac(@post_body, @client_secret)
+          Security.base64_sha256_hmac(@post_body, @client_secret)
         )
         |> parse
 
-      conn = call(ShopifyApi.WebhookRouter, conn)
+      conn = call(WebhookRouter, conn)
 
       %{conn: conn}
     end

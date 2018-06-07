@@ -2,29 +2,38 @@ defmodule ShopifyApi.Router do
   require Logger
   use Plug.Router
 
+  alias Plug.Conn
+  alias Plug.Debugger
+  alias Absinthe.Plug
+  alias GraphQL.Config.Schema
+  alias ShopifyApi.App
+  alias ShopifyApi.{AppServer, AuthTokenServer}
+  alias ShopifyApi.WebhookRouter
+  alias ShopifyApi.Security
+
   plug(:match)
   plug(:dispatch)
 
   if Mix.env() == :dev do
-    use Plug.Debugger
+    use Debugger
   end
 
   get "/install" do
     case fetch_shopify_app(conn) do
       {:ok, app} ->
-        install_url = ShopifyApi.App.install_url(app, shop_domain(conn))
+        install_url = App.install_url(app, shop_domain(conn))
 
         conn
-        |> Plug.Conn.put_resp_header("location", install_url)
-        |> Plug.Conn.resp(unquote(302), "You are being redirected.")
-        |> Plug.Conn.halt()
+        |> Conn.put_resp_header("location", install_url)
+        |> Conn.resp(unquote(302), "You are being redirected.")
+        |> Conn.halt()
 
       res ->
         Logger.info("#{__MODULE__} failed install with: #{res}")
 
         conn
-        |> Plug.Conn.resp(404, "Not Found.")
-        |> Plug.Conn.halt()
+        |> Conn.resp(404, "Not Found.")
+        |> Conn.halt()
     end
   end
 
@@ -35,8 +44,8 @@ defmodule ShopifyApi.Router do
     with {:ok, app} <- fetch_shopify_app(conn),
          true <- verify_nonce(app, conn.query_params),
          true <- verify_hmac(app, conn.query_params),
-         {:ok, token} <- ShopifyApi.App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
-      ShopifyApi.AuthTokenServer.set(shop_domain(conn), app_name(conn), %{
+         {:ok, token} <- App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
+      AuthTokenServer.set(shop_domain(conn), app_name(conn), %{
         code: auth_code(conn),
         timestamp: String.to_integer(conn.query_params["timestamp"]),
         token: token,
@@ -44,27 +53,27 @@ defmodule ShopifyApi.Router do
       })
 
       conn
-      |> Plug.Conn.resp(200, "Authenticated.")
-      |> Plug.Conn.halt()
+      |> Conn.resp(200, "Authenticated.")
+      |> Conn.halt()
     else
       res ->
         Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
 
         conn
-        |> Plug.Conn.resp(404, "Not Found.")
-        |> Plug.Conn.halt()
+        |> Conn.resp(404, "Not Found.")
+        |> Conn.halt()
     end
   end
 
-  forward("/webhook", to: ShopifyApi.WebhookRouter)
+  forward("/webhook", to: WebhookRouter)
 
   # TODO this should be behind a api token authorization
-  forward("/graphql/config", to: Absinthe.Plug, schema: GraphQL.Config.Schema)
+  forward("/graphql/config", to: Plug, schema: Schema)
 
   defp fetch_shopify_app(conn) do
     conn
     |> app_name()
-    |> ShopifyApi.AppServer.get()
+    |> AppServer.get()
   end
 
   defp app_name(conn) do
@@ -79,17 +88,17 @@ defmodule ShopifyApi.Router do
     conn.params["code"]
   end
 
-  defp verify_nonce(%ShopifyApi.App{nonce: nonce}, params) do
+  defp verify_nonce(%App{nonce: nonce}, params) do
     nonce == params["state"]
   end
 
-  defp verify_hmac(%ShopifyApi.App{client_secret: secret}, params) do
+  defp verify_hmac(%App{client_secret: secret}, params) do
     params["hmac"] ==
       params
       |> Enum.reject(fn x -> elem(x, 0) == "hmac" end)
       |> Enum.sort_by(&elem(&1, 0))
       |> Enum.map_every(1, &(elem(&1, 0) <> "=" <> elem(&1, 1)))
       |> Enum.map_join("&", & &1)
-      |> ShopifyApi.Security.base16_sha256_hmac(secret)
+      |> Security.base16_sha256_hmac(secret)
   end
 end
