@@ -16,7 +16,7 @@ defmodule ShopifyApi.Rest.InventoryItem do
       iex> ShopifyApi.Rest.InventoryItem.all(auth)
       {:error, "Not implemented" }
   """
-  def all() do
+  def all do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end

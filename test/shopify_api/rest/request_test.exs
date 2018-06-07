@@ -1,13 +1,16 @@
 defmodule ShopifyApi.Rest.RequestTest do
   use ExUnit.Case
+
+  alias Plug.Conn
   alias ShopifyApi.Rest.Request
+  alias ShopifyApi.{AuthToken, Shop}
 
   setup _context do
     bypass = Bypass.open()
 
-    shop = %ShopifyApi.Shop{domain: "localhost:#{bypass.port}"}
+    shop = %Shop{domain: "localhost:#{bypass.port}"}
 
-    token = %ShopifyApi.AuthToken{
+    token = %AuthToken{
       token: "token",
       shop_name: shop.domain
     }
@@ -24,7 +27,7 @@ defmodule ShopifyApi.Rest.RequestTest do
       Bypass.expect_once(bypass, "GET", "/admin/example", fn conn ->
         headers = conn.req_headers |> Enum.into(%{})
         assert headers["x-shopify-access-token"] == "token"
-        Plug.Conn.resp(conn, 200, "{}")
+        Conn.resp(conn, 200, "{}")
       end)
 
       assert {:ok, _} = Request.get(token, "example")
@@ -38,7 +41,7 @@ defmodule ShopifyApi.Rest.RequestTest do
       auth_token: token
     } do
       Bypass.expect_once(bypass, "GET", "/admin/example", fn conn ->
-        Plug.Conn.resp(conn, 200, "{}")
+        Conn.resp(conn, 200, "{}")
       end)
 
       assert {:ok, _} = Request.get(token, "example")
@@ -52,7 +55,7 @@ defmodule ShopifyApi.Rest.RequestTest do
       auth_token: token
     } do
       Bypass.expect_once(bypass, "POST", "/admin/example", fn conn ->
-        Plug.Conn.resp(conn, 201, "{}")
+        Conn.resp(conn, 201, "{}")
       end)
 
       assert {:ok, _} = Request.post(token, "example", %{})

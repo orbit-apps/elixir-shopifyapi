@@ -1,6 +1,8 @@
 defmodule GraphQL.Config.Schema do
   use Absinthe.Schema
 
+  alias GraphQL.Config.Resolver
+
   object :shop do
     field(:domain, :string)
   end
@@ -14,7 +16,7 @@ defmodule GraphQL.Config.Schema do
     field(:nonce, :string)
 
     field :auth_tokens, list_of(:auth_token) do
-      resolve(&GraphQL.Config.Resolver.tokens_for_app/3)
+      resolve(&Resolver.tokens_for_app/3)
     end
   end
 
@@ -28,22 +30,22 @@ defmodule GraphQL.Config.Schema do
 
   query do
     field :all_shops, non_null(list_of(non_null(:shop))) do
-      resolve(&GraphQL.Config.Resolver.all_shops/3)
+      resolve(&Resolver.all_shops/3)
     end
 
     field :all_apps, non_null(list_of(non_null(:app))) do
-      resolve(&GraphQL.Config.Resolver.all_apps/3)
+      resolve(&Resolver.all_apps/3)
     end
 
     field :all_auth_tokens, non_null(list_of(non_null(:auth_token))) do
-      resolve(&GraphQL.Config.Resolver.all_auth_tokens/3)
+      resolve(&Resolver.all_auth_tokens/3)
     end
   end
 
   mutation do
     field :update_shop, :shop do
       arg(:domain, non_null(:string))
-      resolve(&GraphQL.Config.Resolver.update_shop/3)
+      resolve(&Resolver.update_shop/3)
     end
 
     field :update_app, :app do
@@ -53,7 +55,7 @@ defmodule GraphQL.Config.Schema do
       arg(:scope, non_null(:string))
       arg(:auth_redirect_uri, non_null(:string))
       arg(:nonce, non_null(:string))
-      resolve(&GraphQL.Config.Resolver.update_app/3)
+      resolve(&Resolver.update_app/3)
     end
 
     field :update_auth_token, :auth_token do
@@ -62,7 +64,7 @@ defmodule GraphQL.Config.Schema do
       arg(:shop_name, non_null(:string))
       arg(:app_name, non_null(:string))
       arg(:timestamp, :integer)
-      resolve(&GraphQL.Config.Resolver.update_auth_token/3)
+      resolve(&Resolver.update_auth_token/3)
     end
   end
 end

@@ -45,7 +45,7 @@ defmodule ShopifyApi.Rest.Product do
     {:ok, %{ "product" => %{} }}
   """
   def update(%AuthToken{} = auth, %{"product" => %{"id" => product_id} = product}),
-    do: ShopifyApi.Rest.Product.update(auth, %{product: product |> Map.put(:id, product_id)})
+    do: update(auth, %{product: product |> Map.put(:id, product_id)})
 
   def update(%AuthToken{} = auth, %{product: %{id: product_id}} = product),
     do: Request.put(auth, "products/#{product_id}.json", product)
@@ -70,7 +70,7 @@ defmodule ShopifyApi.Rest.Product do
       {:ok, %{ "product" => %{} }}
   """
   def create(%AuthToken{} = auth, %{"product" => %{} = product}),
-    do: ShopifyApi.Rest.Product.create(auth, %{product: product})
+    do: create(auth, %{product: product})
 
   def create(%AuthToken{} = auth, %{product: %{}} = product),
     do: Request.post(auth, "products.json", product)

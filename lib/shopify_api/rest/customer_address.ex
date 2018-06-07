@@ -85,7 +85,7 @@ defmodule ShopifyApi.Rest.CustomerAddress do
       iex> ShopifyApi.Rest.CustomerAddress.action()
       {:error, "Not implemented" }
   """
-  def action() do
+  def action do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
