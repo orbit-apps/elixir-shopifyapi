@@ -5,7 +5,7 @@ defmodule ShopifyApi.Router do
   alias Plug.{Conn, Debugger}
   alias Absinthe.Plug
   alias GraphQL.Config.Schema
-  alias ShopifyApi.{App, AppServer, AuthTokenServer, WebhookRouter, Secret}
+  alias ShopifyApi.{App, AppServer, AuthTokenServer, WebhookRouter, Security}
 
   plug(:match)
   plug(:dispatch)

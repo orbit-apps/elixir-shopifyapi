@@ -1,6 +1,6 @@
 defmodule ShopifyApi.AppServer do
   use GenServer
-  import Logger
+  require Logger
 
   @name :shopify_api_app_server
 
