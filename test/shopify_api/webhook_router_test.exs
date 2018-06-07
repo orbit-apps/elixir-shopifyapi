@@ -8,7 +8,7 @@ defmodule Test.ShopifyApi.EventPipe.WebhookEventProcessor do
   alias ShopifyApi.EventPipe.WebhookEventQueue
 
   @doc "Starts the consumer."
-  def start_link() do
+  def start_link do
     Logger.info("Starting #{__MODULE__}...")
     GenStage.start_link(__MODULE__, :ok)
   end
@@ -47,7 +47,7 @@ defmodule Test.ShopifyApi.WebhookRouterTest do
 
   @app_name "test"
   @client_secret "test"
-  @post_body "{\"test\": \"test\"}"
+  @post_body ~S({"test": "test"})
   @shop_domain "shop.example.com"
   @shopify_topic "test"
 

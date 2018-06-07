@@ -81,7 +81,7 @@ defmodule ShopifyApi.Rest.RecurringApplicationCharge do
       iex> ShopifyApi.Rest.RecurringApplicationCharge.update()
       {:error, "Not implemented" }
   """
-  def update() do
+  def update do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end

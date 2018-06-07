@@ -36,7 +36,6 @@ defmodule ShopifyApi.App do
       state: app.nonce
     ]
 
-    # "https://#{shop}.myshopify.com/admin/oauth/authorize?client_id=#{api_key}&scope=#{scopes}&redirect_uri=#{URI.encode(redirect_uri)}&state=#{nonce}"
     "https://#{domain}/admin/oauth/authorize?#{URI.encode_query(query_params)}"
   end
 
@@ -47,7 +46,6 @@ defmodule ShopifyApi.App do
   """
   @spec fetch_token(__MODULE__.t(), String.t(), String.t()) :: {:ok, map()} | {:error, String.t()}
   def fetch_token(%__MODULE__{} = app, domain, auth_code) do
-    # > body: "{\"access_token\":\"3e6ea1b6dc727cccc1ad50fff19e7908\",\"scope\":\"read_orders,write_products\"}",
     case AuthRequest.post(app, domain, auth_code) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Logger.info(fn -> "#{__MODULE__} [#{domain}] fetched token" end)

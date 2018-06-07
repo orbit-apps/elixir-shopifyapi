@@ -41,7 +41,7 @@ defmodule ShopifyApi.Rest.Customer do
       iex> ShopifyApi.Rest.Customer.getQuery()
       {:error, "Not implemented"}
   """
-  def get_query() do
+  def get_query do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end

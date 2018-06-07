@@ -30,6 +30,6 @@ defmodule ShopifyApi.Rest.ProductTest do
       Conn.resp(conn, 200, body)
     end)
 
-    assert {:ok, products} = Product.all(token)
+    assert {:ok, ^products} = Product.all(token)
   end
 end

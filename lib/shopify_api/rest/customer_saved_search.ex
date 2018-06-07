@@ -13,7 +13,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.all()
       {:error, "Not implemented" }
   """
-  def all() do
+  def all do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
@@ -26,7 +26,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.count()
       {:error, "Not implemented" }
   """
-  def count() do
+  def count do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
@@ -39,7 +39,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.get()
       {:error, "Not implemented" }
   """
-  def get() do
+  def get do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
@@ -52,7 +52,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.query()
       {:error, "Not implemented" }
   """
-  def query() do
+  def query do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
@@ -65,7 +65,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.create()
       {:error, "Not implemented" }
   """
-  def create() do
+  def create do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
@@ -78,7 +78,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.update()
       {:error, "Not implemented" }
   """
-  def update() do
+  def update do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
@@ -91,7 +91,7 @@ defmodule ShopifyApi.Rest.CustomerSavedSearch do
       iex> ShopifyApi.Rest.CustomerSavedSearch.delete()
       {:error, "Not implemented" }
   """
-  def delete() do
+  def delete do
     Logger.warn("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
