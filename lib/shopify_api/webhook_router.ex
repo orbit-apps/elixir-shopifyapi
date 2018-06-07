@@ -3,10 +3,8 @@ defmodule ShopifyApi.WebhookRouter do
   use Plug.Router
 
   alias Plug.Conn
-  alias ShopifyApi.App
   alias ShopifyApi.EventPipe.{Event, WebhookEventQueue}
-  alias ShopifyApi.Security
-  alias ShopifyApi.{AppServer, ShopServer}
+  alias ShopifyApi.{App, AppServer, ShopServer, Security}
 
   plug(:match)
   plug(:dispatch)
