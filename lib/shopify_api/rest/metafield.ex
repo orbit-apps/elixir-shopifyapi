@@ -10,7 +10,6 @@ defmodule ShopifyAPI.REST.Metafield do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Metafield
   alias ShopifyAPI.REST.Request
 
   @doc """
