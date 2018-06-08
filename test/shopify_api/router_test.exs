@@ -5,6 +5,8 @@ defmodule Test.ShopifyAPI.RouterTest do
   alias Plug.{Conn, Parsers}
   alias ShopifyAPI.{AppServer, AuthTokenServer, Router, ShopServer, Security}
 
+  @moduletag :capture_log
+
   def parse(conn, opts \\ []) do
     opts = Keyword.put_new(opts, :parsers, [Plug.Parsers.URLENCODED, Plug.Parsers.MULTIPART])
     Parsers.call(conn, Parsers.init(opts))
