@@ -5,7 +5,7 @@ defmodule ShopifyAPI.ShopServer do
 
   @name :shopify_api_shop_server
 
-  def start_link do
+  def start_link(_opts) do
     info("Starting #{__MODULE__}...")
     # TODO have some sane way to handle this config not existing
     state = Application.get_env(:shopify_api, Shop)
