@@ -21,7 +21,7 @@ defmodule ShopifyAPI.REST.Metafield do
     {:ok, %{ "metafields" => [] }}
   """
   def all(%AuthToken{} = auth, type, id) do
-    Request.get(auth, path_from_resource(type, id))
+    Request.get(auth, resource_path(type, id))
   end
 
   @doc """
@@ -45,7 +45,7 @@ defmodule ShopifyAPI.REST.Metafield do
     {:ok, %{ "count" => integer }}
   """
   def count(%AuthToken{} = auth, type, resource_id) do
-    Request.get(auth, path_from_resource(type, resource_id))
+    Request.get(auth, resource_path(type, resource_id))
   end
 
   @doc """
@@ -57,7 +57,7 @@ defmodule ShopifyAPI.REST.Metafield do
     {:ok, %{ "metafields" => [] }}
   """
   def get(%AuthToken{} = auth, type, resource_id) do
-    Request.get(auth, path_from_resource(type, resource_id))
+    Request.get(auth, resource_path(type, resource_id))
   end
 
   @doc """
@@ -69,7 +69,7 @@ defmodule ShopifyAPI.REST.Metafield do
     {:ok, %{ "metafield" => %{} }}
   """
   def create(%AuthToken{} = auth, type, resource_id, %__MODULE__{} = metafield) do
-    Request.post(auth, path_from_resource(type, resource_id), metafield)
+    Request.post(auth, resource_path(type, resource_id), metafield)
   end
 
   @doc """
@@ -81,7 +81,7 @@ defmodule ShopifyAPI.REST.Metafield do
     {:ok, %{ "metafield" => %{} }}
   """
   def update(%AuthToken{} = auth, type, resource_id, %__MODULE__{} = metafield) do
-    Request.put(auth, path_from_resource(type, resource_id), metafield)
+    Request.put(auth, resource_path(type, resource_id), metafield)
   end
 
   @doc """
@@ -93,48 +93,29 @@ defmodule ShopifyAPI.REST.Metafield do
     {:ok, %{ "metafield" => %{} }}
   """
   def delete(%AuthToken{} = auth, metafield_id) do
-    Request.delete(auth, path_from_resource(:metafield, metafield_id))
+    Request.delete(auth, resource_path(:metafield, metafield_id))
   end
 
   ## Private
+  defp resource_path(:article, id), do: "blogs/#{id}/articles/#{id}/metafields.json"
+  defp resource_path(:blog, id), do: "blogs/#{id}/metafields.json"
 
-  defp path_from_resource(resource, id) do
-    case resource do
-      :article ->
-        "blogs/#{id}/articles/#{id}/metafields.json"
+  defp resource_path(:collection, id), do: "collections/#{id}/metafields.json"
 
-      :blog ->
-        "blogs/#{id}/metafields.json"
+  defp resource_path(:draft_order, id), do: "draft_orders/#{id}/metafields.json"
 
-      :collection ->
-        "collections/#{id}/metafields.json"
+  defp resource_path(:metafield, id), do: "metafields/#{id}.json"
 
-      :draft_order ->
-        "draft_orders/#{id}/metafields.json"
+  defp resource_path(:order, id), do: "orders/#{id}/metafields.json"
 
-      :metafield ->
-        "metafields/#{id}.json"
+  defp resource_path(:page, id), do: "pages/#{id}/metafields.json"
 
-      :order ->
-        "orders/#{id}/metafields.json"
+  defp resource_path(:product, id), do: "products/#{id}/metafields.json"
 
-      :page ->
-        "pages/#{id}/metafields.json"
+  defp resource_path(:product_variant), do: "Not implemented."
 
-      :product ->
-        "products/#{id}/metafields.json"
+  # TODO: Update this when PR for ProductImage closes.
+  defp resource_path(:product_image), do: "Not implemented."
 
-      :product_variant ->
-        "Not implemented."
-
-      :product_image ->
-        "Not implemented."
-
-      :shop ->
-        "metafields.json"
-
-      _ ->
-        "Resource not found"
-    end
-  end
+  defp resource_path(:shop), do: "metafields.json"
 end
