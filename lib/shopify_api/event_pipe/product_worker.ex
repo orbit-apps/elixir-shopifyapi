@@ -1,8 +1,7 @@
 defmodule ShopifyAPI.EventPipe.ProductWorker do
   @moduledoc """
-  Worker for procecessing Products
+  Worker for processing Products
   """
-  use Toniq.Worker, max_concurrency: 10
   require Logger
   import ShopifyAPI.EventPipe.Worker
   alias ShopifyAPI.REST.Product
