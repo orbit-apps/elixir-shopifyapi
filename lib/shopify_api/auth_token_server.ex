@@ -4,9 +4,12 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   @name :shopify_api_auth_token_server
 
-  def start_link do
-    Logger.info(fn -> "Starting #{__MODULE__}..." end)
-    GenServer.start_link(__MODULE__, %{}, name: @name)
+  def start_link(_opts) do
+    Logger.info(fn -> "Starting #{__MODULE__} ..." end)
+
+    p = GenServer.start_link(__MODULE__, %{}, name: @name)
+    call_initializer(auth_token_server_config(:initializer))
+    p
   end
 
   def all do
@@ -26,14 +29,30 @@ defmodule ShopifyAPI.AuthTokenServer do
     GenServer.call(@name, :count)
   end
 
-  def set(shop, app, new_values) do
+  def set(shop, app, new_values, call_persist \\ true) do
     token = Map.merge(%{app_name: app, shop_name: shop}, new_values)
+
+    if call_persist do
+      Task.start(fn ->
+        __MODULE__.persist(auth_token_server_config(:persistance), create_key(shop, app), token)
+      end)
+    end
+
     GenServer.cast(@name, {:set, create_key(shop, app), token})
   end
 
   defp create_key(shop, app) do
     "#{shop}:#{app}"
   end
+
+  def auth_token_server_config(key) do
+    Application.get_env(:shopify_api, ShopifyAPI.AuthTokenServer)[key]
+  end
+
+  def call_initializer(fun) when is_function(fun), do: fun.()
+  def call_initializer(_), do: %{}
+  def persist(fun, key, value) when is_function(fun), do: fun.(key, value)
+  def persist(_, _, _), do: nil
 
   #
   # Callbacks
