@@ -4,16 +4,18 @@
 
 There is a GraphQL interface to get and update configuration, this is the recommended way of pushing configuration in to your server.
 
-Optional, add GraphiQL to your Phoenix config:
+Add it to your phoenix routes, and optional, add GraphiQL to your Phoenix config:
 
 ```elixir
-if Mix.env == :dev do
-  forward(
-    "/graphiql",
-    to: Absinthe.Plug.GraphiQL,
-    schema: GraphQL.Config.Schema,
-    interface: :playground
-  )
+scope "/shop" do
+  if Mix.env == :dev do
+    forward(
+      "/graphiql",
+      to: Absinthe.Plug.GraphiQL,
+      schema: GraphQL.Config.Schema,
+      interface: :playground
+    )
+  end
 end
 ```
 
