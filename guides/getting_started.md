@@ -4,21 +4,20 @@
 
 ### 1. Setup ngrok
 
-We use ngrok to tunnel public requests to locahost endpoints for testing.
+We use ngrok to tunnel public requests to localhost endpoints for testing.
 
-1.  Download ngrok app.
-2.  Create an account, sign up with your PXU Google account.
-3.  Run the "Connect your account" terminal command to set your authtoken.
+1.  Download ngrok app and create an ngrok account.
+2.  Run the "Connect your account" terminal command to set your authtoken.
 
 
     ```sh
       ./ngrok authtoken ExampleCHANGEmeTOtheREALdealOk
     ```
 
-4.  After account creation, go to the dashboard, click "Reserved".
-5.  Add new reserved domain to make it simplier to access your domain.
+3.  After account creation, go to the dashboard, click "Reserved".
+4.  Add new reserved domain to make it simpler to access your domain.
     `http://geneparmesan.ngrok.io`
-6.  Run ngrok from the command line and start the process:
+5.  Run ngrok from the command line and start the process:
     `$ ./ngrok http -subdomain=geneparmesan 4000`
 
 ### 2. Create new Shopify app
@@ -34,7 +33,7 @@ Use the Shopify Partners dashboard to create new app to test against.
 - Click Save button (top-right)
 - Notice your "API key" and "API secret key" further down the page, we will be using these in the next step.
 
-### 3. Create or use exisiting Shopify dev store
+### 3. Create or use existing Shopify dev store
 
 Create a use another Development store to test against, this is the store that you wish to use the app with.
 
