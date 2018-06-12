@@ -25,7 +25,21 @@ use Mix.Config
 config :shopify_api, ShopifyAPI.Shop, %{}
 config :shopify_api, ShopifyAPI.App, %{}
 
-config :toniq, redis_url: "redis://localhost:6379/0"
+config :exq,
+  host: "127.0.0.1",
+  port: 6379,
+  namespace: "shopify",
+  concurrency: :infinite,
+  queues: ["default"],
+  poll_timeout: 50,
+  shutdown_timeout: 5000,
+  middleware: [
+    Exq.Middleware.Stats,
+    Exq.Middleware.Job,
+    Exq.Middleware.Manager,
+    Exq.Middleware.Logger,
+    Exq.Middleware.AtomizeJobArguments
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
