@@ -7,9 +7,9 @@ defmodule ShopifyAPI.AuthTokenServer do
   def start_link(_opts) do
     Logger.info(fn -> "Starting #{__MODULE__} ..." end)
 
-    p = GenServer.start_link(__MODULE__, %{}, name: @name)
+    pid = GenServer.start_link(__MODULE__, %{}, name: @name)
     call_initializer(auth_token_server_config(:initializer))
-    p
+    pid
   end
 
   def all do
