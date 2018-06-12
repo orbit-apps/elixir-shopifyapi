@@ -30,7 +30,7 @@ config :exq,
   port: 6379,
   namespace: "shopify",
   concurrency: :infinite,
-  queues: ["default"],
+  queues: [{"outbound", 10}, {"inbound", 10}],
   poll_timeout: 50,
   shutdown_timeout: 5000,
   middleware: [
