@@ -41,6 +41,10 @@ defmodule ShopifyAPI.AuthTokenServer do
     GenServer.cast(@name, {:set, create_key(shop, app), token})
   end
 
+  def drop_all do
+    GenServer.cast(@name, :drop_all)
+  end
+
   defp create_key(shop, app) do
     "#{shop}:#{app}"
   end
@@ -60,7 +64,7 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   def init(state), do: {:ok, state}
 
-  @callback handle_cast(map, map) :: tuple
+  @callback handle_cast(any, map) :: tuple
   def handle_cast({:set, key, new_values}, %{} = state) do
     new_state =
       update_in(state, [key], fn t ->
@@ -71,6 +75,10 @@ defmodule ShopifyAPI.AuthTokenServer do
       end)
 
     {:noreply, new_state}
+  end
+
+  def handle_cast(:drop_all, _) do
+    {:noreply, %{}}
   end
 
   def handle_call(:all, _caller, state) do
