@@ -9,14 +9,13 @@ We use ngrok to tunnel public requests to localhost endpoints for testing.
 1.  Download ngrok app and create an ngrok account.
 2.  Run the "Connect your account" terminal command to set your authtoken.
 
-
     ```sh
       ./ngrok authtoken ExampleCHANGEmeTOtheREALdealOk
     ```
 
 3.  After account creation, go to the dashboard, click "Reserved".
 4.  Add new reserved domain to make it simpler to access your domain.
-    `http://geneparmesan.ngrok.io`
+    `https://geneparmesan.ngrok.io`
 5.  Run ngrok from the command line and start the process:
     `$ ./ngrok http -subdomain=geneparmesan 4000`
 
@@ -28,8 +27,8 @@ Use the Shopify Partners dashboard to create new app to test against.
 - Apps > Create App
 - Fill in with generic info
 - When App open, click App Info
-- Use your ngrok URL as the App url. eg: `http://geneparmesan.ngrok.io`
-- Under "Whitelisted redirection URL(s)" add your ngrok URL, but append `/shop/authorized`, like so: `http://geneparmesan.ngrok.io/shop/authorized`
+- Use your ngrok URL as the App URL. eg: `https://geneparmesan.ngrok.io`
+- Under "Whitelisted redirection URL(s)" add your ngrok URL, but append `/shop/authorized`, like so: `https://geneparmesan.ngrok.io/shop/authorized`
 - Click Save button (top-right)
 - Notice your "API key" and "API secret key" further down the page, we will be using these in the next step.
 
@@ -54,17 +53,17 @@ $ cp config/dev.sample.exs dev.local.exs
 # Update config/dev.local.exs from to match your store URI and your app's API and secret key.
 
 config :shopify_api, ShopifyApi.Shop, %{
-  "store.myshopify.com" => %{
-    domain: "store.myshopify.com"
+  "<SHOP_URL>.myshopify.com" => %{
+    domain: "<SHOP_URL>.myshopify.com"
   }
 }
 
 config :shopify_api, ShopifyApi.App, %{
-  "testapp" => %{
-    name: "testapp",
+  "<APP_NAME>" => %{
+    name: "<APP_NAME>",
     client_id: "<APP_API_key>",
     client_secret: "<APP_secret_key>",
-    auth_redirect_uri: "http://hez1.ngrok.io/shop/authorized/testapp"
+    auth_redirect_uri: "https://geneparmesan.ngrok.io/shop/authorized/<APP_NAME>"
     nonce: "test"
   }
 }
@@ -81,5 +80,5 @@ $ mix phx.server
 ### 6. Visit the install URL
 
 ```sh
-$ open http://localhost:4000/shop/install?shop=<SHOP-URL>.myshopify.com&app=<APP-NANE>
+$ open http://localhost:4000/shop/install?shop=<SHOP_URL>.myshopify.com&app=<APP_NAME>
 ```
