@@ -11,7 +11,8 @@ defmodule ShopifyAPI.EventPipe.Supervisor do
   def init(_) do
     Supervisor.init(
       [
-        supervisor(WebhookEventQueue, [])
+        supervisor(WebhookEventQueue, []),
+        supervisor(Exq, [])
       ],
       strategy: :one_for_one
     )
