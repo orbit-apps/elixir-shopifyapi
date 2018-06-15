@@ -14,7 +14,7 @@ defmodule ShopifyAPI.EventPipe.ProductWorker do
     |> fire_callback
   end
 
-  defp call_shopify(%{action: :create, object: product} = event) do
+  defp call_shopify(%{action: "create", object: product} = event) do
     case fetch_token(event) do
       {:ok, token} ->
         Product.create(token, product)
@@ -24,7 +24,7 @@ defmodule ShopifyAPI.EventPipe.ProductWorker do
     end
   end
 
-  defp call_shopify(%{action: :update, object: product} = event) do
+  defp call_shopify(%{action: "update", object: product} = event) do
     case fetch_token(event) do
       {:ok, token} ->
         Product.update(token, product)
