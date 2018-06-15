@@ -35,7 +35,7 @@ defmodule ShopifyAPI.REST.Variant do
   @doc """
     Delete a Product Variant.
 
-  iex> ShopifyAPI.REST.Variant.delete(token, product_it, variant_id)
+  iex> ShopifyAPI.REST.Variant.delete(token, product_id, variant_id)
   {:ok, %{}}
   """
   def delete(%AuthToken{} = auth, product_id, variant_id) do
