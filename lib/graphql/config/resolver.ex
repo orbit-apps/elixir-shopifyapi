@@ -46,9 +46,9 @@ defmodule GraphQL.Config.Resolver do
     {:ok, tokens}
   end
 
-  def update_auth_token(_root, args, _info) do
-    with :ok <- AuthTokenServer.set(args.shop_name, args.app_name, args),
-         {:ok, token} <- AuthTokenServer.get(args.shop_name, args.app_name) do
+  def update_auth_token(_root, %{shop_name: shop, app_name: app} = args, _info) do
+    with :ok <- AuthTokenServer.set(args),
+         {:ok, token} <- AuthTokenServer.get(shop, app) do
       {:ok, token}
     else
       _ ->

@@ -1,6 +1,7 @@
 defmodule ShopifyAPI.AuthTokenServer do
   use GenServer
   require Logger
+  alias ShopifyAPI.AuthToken
 
   @name :shopify_api_auth_token_server
 
@@ -29,17 +30,22 @@ defmodule ShopifyAPI.AuthTokenServer do
     GenServer.call(@name, :count)
   end
 
-  def set(shop, app, new_values, call_persist \\ true) do
-    token = Map.merge(%{app_name: app, shop_name: shop}, new_values)
+  def set(token, call_persist \\ true)
 
-    if call_persist do
-      Task.start(fn ->
-        __MODULE__.persist(auth_token_server_config(:persistance), create_key(shop, app), token)
-      end)
-    end
-
+  def set(%AuthToken{shop_name: shop, app_name: app} = token, false) do
     GenServer.cast(@name, {:set, create_key(shop, app), token})
   end
+
+  def set(%AuthToken{shop_name: shop, app_name: app} = token, true) do
+    set(token, false)
+
+    Task.start(fn ->
+      __MODULE__.persist(auth_token_server_config(:persistance), create_key(shop, app), token)
+    end)
+  end
+
+  def set(token, call_persist) when is_map(token),
+    do: set(struct(AuthToken, Map.to_list(token)), call_persist)
 
   def drop_all do
     GenServer.cast(@name, :drop_all)
