@@ -5,7 +5,7 @@ defmodule ShopifyAPI.Router do
   alias Plug.{Conn, Debugger}
   alias Absinthe.Plug
   alias GraphQL.Config.Schema
-  alias ShopifyAPI.{App, AppServer, AuthTokenServer, Security, WebhookRouter}
+  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security, WebhookRouter}
 
   plug(:match)
   plug(:dispatch)
@@ -41,11 +41,12 @@ defmodule ShopifyAPI.Router do
          true <- verify_nonce(app, conn.query_params),
          true <- verify_hmac(app, conn.query_params),
          {:ok, token} <- App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
-      AuthTokenServer.set(shop_domain(conn), app_name(conn), %{
+      AuthTokenServer.set(%AuthToken{
+        app_name: app_name(conn),
+        shop_name: shop_domain(conn),
         code: auth_code(conn),
         timestamp: String.to_integer(conn.query_params["timestamp"]),
-        token: token,
-        shop: shop_domain(conn)
+        token: token
       })
 
       conn
