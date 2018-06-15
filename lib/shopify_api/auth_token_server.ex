@@ -38,6 +38,7 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   def set(%AuthToken{shop_name: shop, app_name: app} = token, true) do
     set(token, false)
+
     Task.start(fn ->
       __MODULE__.persist(auth_token_server_config(:persistance), create_key(shop, app), token)
     end)
