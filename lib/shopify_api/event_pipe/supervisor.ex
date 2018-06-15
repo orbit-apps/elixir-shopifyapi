@@ -9,12 +9,8 @@ defmodule ShopifyAPI.EventPipe.Supervisor do
   end
 
   def init(_) do
-    Supervisor.init(
-      [
-        supervisor(WebhookEventQueue, []),
-        supervisor(Exq, [])
-      ],
-      strategy: :one_for_one
-    )
+    children = [WebhookEventQueue]
+
+    Supervisor.init(children, strategy: :one_for_one)
   end
 end
