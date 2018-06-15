@@ -4,6 +4,7 @@ defmodule ShopifyAPI.EventPipe.ProductWorker do
   """
   require Logger
   import ShopifyAPI.EventPipe.Worker
+  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST.Product
 
   def perform(%{action: _, object: _, token: _} = event) do
@@ -14,20 +15,20 @@ defmodule ShopifyAPI.EventPipe.ProductWorker do
     |> fire_callback
   end
 
-  defp call_shopify(%{action: :create, object: product} = event) do
+  defp call_shopify(%{action: "create", object: product} = event) do
     case fetch_token(event) do
       {:ok, token} ->
-        Product.create(token, product)
+        Product.create(struct(AuthToken, token), product)
 
       msg ->
         msg
     end
   end
 
-  defp call_shopify(%{action: :update, object: product} = event) do
+  defp call_shopify(%{action: "update", object: product} = event) do
     case fetch_token(event) do
       {:ok, token} ->
-        Product.update(token, product)
+        Product.update(struct(AuthToken, token), product)
 
       msg ->
         msg

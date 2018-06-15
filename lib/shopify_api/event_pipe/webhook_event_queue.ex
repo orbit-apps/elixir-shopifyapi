@@ -3,7 +3,7 @@ defmodule ShopifyAPI.EventPipe.WebhookEventQueue do
   use GenStage
 
   @doc "Starts the broadcaster."
-  def start_link do
+  def start_link(_opts) do
     Logger.info("Starting #{__MODULE__}...")
     GenStage.start_link(__MODULE__, :ok, name: __MODULE__)
   end
