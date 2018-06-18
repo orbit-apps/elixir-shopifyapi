@@ -15,7 +15,9 @@ defmodule ShopifyAPI.EventPipe.VariantWorker do
     |> fire_callback
   end
 
-  defp call_shopify(%{action: "create", object: %{product_id: product_id} = variant} = event) do
+  defp call_shopify(
+         %{action: "create", object: %{variant: %{product_id: product_id}} = variant} = event
+       ) do
     case fetch_token(event) do
       {:ok, token} ->
         Variant.create(struct(AuthToken, token), product_id, variant)
