@@ -28,7 +28,12 @@ scope "/shop" do
 end
 ```
 
-Optional, add graphiql to your phoenix config
+If you want to be able to handle webhooks you need to add this to your endpoint before the parsers section
+```
+plug(ShopifyAPI.Plugs.Webhook, mount: "/shop/webhooks")
+```
+
+Optional, add graphiql to your phoenix routes
 ```
 if Mix.env == :dev do
   forward(
