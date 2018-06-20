@@ -22,7 +22,7 @@ defmodule ShopifyAPI.REST.InventoryLevel do
 
   ## Example
 
-      iex> ShopifyAPI.REST.InventoryLevel.all(auth, %{inventory_item_id: integer, location_id: integer, available: integer})
+      iex> ShopifyAPI.REST.InventoryLevel.set(auth, %{inventory_item_id: integer, location_id: integer, available: integer})
       {:ok, { "inventory_level" => [] }}
   """
   def set(
