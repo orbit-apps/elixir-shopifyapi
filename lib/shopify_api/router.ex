@@ -5,7 +5,7 @@ defmodule ShopifyAPI.Router do
   alias Plug.{Conn, Debugger}
   alias Absinthe.Plug
   alias GraphQL.Config.Schema
-  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security, WebhookRouter}
+  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security}
 
   plug(:match)
   plug(:dispatch)
@@ -61,8 +61,6 @@ defmodule ShopifyAPI.Router do
         |> Conn.halt()
     end
   end
-
-  forward("/webhook", to: WebhookRouter)
 
   # TODO this should be behind a api token authorization
   forward("/graphql/config", to: Plug, schema: Schema)

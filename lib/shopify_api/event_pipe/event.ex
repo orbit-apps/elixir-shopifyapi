@@ -1,5 +1,7 @@
 defmodule ShopifyAPI.EventPipe.Event do
   defstruct destination: :nowhere,
+            app: %{},
+            shop: %{},
             token: %{},
             object: nil,
             callback: nil,
