@@ -1,5 +1,6 @@
 defmodule ShopifyAPI.Plugs.Webhook do
   import Plug.Conn
+  require Logger
   alias Plug.Conn
   alias ShopifyAPI.{AppServer, ShopServer, Security}
   alias ShopifyAPI.EventPipe.Event
@@ -81,8 +82,14 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
   defp verify_and_parse(conn) do
     with %{client_secret: secret} <- conn.assigns.app,
-         {:ok, content, _} <- read_body(conn),
+         {:ok, content, conn} <- read_body(conn),
          signature <- List.first(get_req_header(conn, "x-shopify-hmac-sha256")),
+         _ <-
+           Logger.info(fn ->
+             "#{__MODULE__} actual body hmac is: #{
+               inspect(Security.base64_sha256_hmac(content, secret))
+             }"
+           end),
          ^signature <- Security.base64_sha256_hmac(content, secret),
          {:ok, params} <- Poison.decode(content) do
       {:ok, Map.put(conn, :body_params, params)}
