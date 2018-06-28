@@ -6,6 +6,18 @@ defmodule ShopifyAPI.EventPipe.Worker do
 
   def perform(event), do: Logger.warn("Failed to process event: #{inspect(event)}")
 
+  def stuff(event, work) do
+    case fetch_token(event) do
+      {:ok, token} ->
+        event
+        |> Map.put(:response, worker.(struct(AuthToken, token), event))
+        |> fire_callback
+
+      msg ->
+        msg
+    end
+  end
+
   def fire_callback(%{callback: callback} = event) when is_binary(callback) do
     Task.start(fn ->
       Logger.info(fn -> "Firing call back to #{callback} with #{inspect(event)}" end)
