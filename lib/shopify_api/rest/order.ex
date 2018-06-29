@@ -21,6 +21,15 @@ defmodule ShopifyAPI.REST.Order do
   end
 
   @doc """
+    Return all of a shops Orders filtered by query parameters.
+
+  iex> ShopifyAPI.REST.Order.all(token, %{param1: "value", param2: "value2"})
+  """
+  def all(%AuthToken{} = auth, params) do
+    Request.get(auth, "orders.json?" <> URI.encode_query(params))
+  end
+
+  @doc """
     Delete an Order.
 
   iex> ShopifyAPI.REST.Order.delete(token, order_id)
