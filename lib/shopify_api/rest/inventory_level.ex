@@ -22,12 +22,13 @@ defmodule ShopifyAPI.REST.InventoryLevel do
 
   ## Example
 
-      iex> ShopifyAPI.REST.InventoryLevel.set(auth, %{inventory_item_id: integer, location_id: integer, available: integer})
+      iex> ShopifyAPI.REST.InventoryLevel.set(auth, %{ inventory_level: %{inventory_item_id: integer, location_id: integer, available: integer}})
       {:ok, { "inventory_level" => [] }}
   """
   def set(
         %AuthToken{} = auth,
-        %{inventory_item_id: _, location_id: _, available: _} = inventory_level
+        %{inventory_level: %{inventory_item_id: _, location_id: _, available: _}} =
+          inventory_level
       ) do
     Request.post(auth, "inventory_levels/set.json", inventory_level)
   end
