@@ -4,38 +4,19 @@ defmodule ShopifyAPI.EventPipe.VariantWorker do
   """
   require Logger
   import ShopifyAPI.EventPipe.Worker
-  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST.Variant
 
-  def perform(%{action: _, object: _, token: _} = event) do
-    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
-
+  def perform(%{action: "create", object: _, token: _} = event) do
     event
-    |> Map.put(:response, call_shopify(event))
-    |> fire_callback
+    |> log
+    |> execute_action(fn token, %{object: %{variant: %{product_id: product_id}} = variant} ->
+      Variant.create(token, product_id, variant)
+    end)
   end
 
-  defp call_shopify(
-         %{action: "create", object: %{variant: %{product_id: product_id}} = variant} = event
-       ) do
-    case fetch_token(event) do
-      {:ok, token} ->
-        Variant.create(struct(AuthToken, token), product_id, variant)
-
-      msg ->
-        msg
-    end
+  def perform(%{action: "update", object: _, token: _} = event) do
+    event
+    |> log
+    |> execute_action(fn token, %{object: variant} -> Variant.update(token, variant) end)
   end
-
-  defp call_shopify(%{action: "update", object: variant} = event) do
-    case fetch_token(event) do
-      {:ok, token} ->
-        Variant.update(struct(AuthToken, token), variant)
-
-      msg ->
-        msg
-    end
-  end
-
-  defp call_shopify(%{action: action}), do: {:error, "Unhandled action #{action}"}
 end

@@ -4,16 +4,17 @@ defmodule ShopifyAPI.EventPipe.ProductWorker do
   """
   require Logger
   import ShopifyAPI.EventPipe.Worker
-  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST.Product
 
   def perform(%{action: "create", object: _, token: _} = event) do
-    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
-    stuff(event, fn t, %{object: product} -> Product.create(t, product) end)
+    event
+    |> log
+    |> execute_action(fn token, %{object: product} -> Product.create(token, product) end)
   end
 
   def perform(%{action: "update", object: _, token: _} = event) do
-    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
-    stuff(event, fn t, %{object: product} -> Product.update(t, product) end)
+    event
+    |> log
+    |> execute_action(fn token, %{object: product} -> Product.update(token, product) end)
   end
 end
