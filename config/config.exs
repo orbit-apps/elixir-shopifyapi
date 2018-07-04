@@ -25,6 +25,11 @@ use Mix.Config
 config :shopify_api, ShopifyAPI.Shop, %{}
 config :shopify_api, ShopifyAPI.App, %{}
 
+#
+config :shopify_api, ShopifyAPI.Webhook, %{
+  uri: "https://example.com/shop/webhook"
+}
+
 config :exq,
   host: "127.0.0.1",
   port: 6379,

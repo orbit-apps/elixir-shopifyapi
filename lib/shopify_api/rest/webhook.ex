@@ -2,7 +2,7 @@ defmodule ShopifyAPI.REST.Webhook do
   @moduledoc """
   """
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.{Request, Webhook}
+  alias ShopifyAPI.REST.Request
 
   @doc """
   ## Helper method to generate the callback URI this server responds to.
@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Webhook do
   """
   def webhook_uri(%AuthToken{app_name: app}) do
     # TODO this is brittle, we need to leverage URI and build correct paths here
-    Application.get_env(:shopify_api, Webhook)[:uki] <> "/#{app}"
+    Application.get_env(:shopify_api, ShopifyAPI.Webhook)[:uri] <> "/#{app}"
   end
 
   @doc """
