@@ -32,7 +32,9 @@ defmodule ShopifyAPI.EventPipe.Worker do
     end)
   end
 
-  defp fire_callback(%{callback: callback}) when is_nil(callback), do: {:ok, "no callback to call"}
+  defp fire_callback(%{callback: callback}) when is_nil(callback),
+    do: {:ok, "no callback to call"}
+
   defp fire_callback(_event), do: {:ok, ""}
 
   defp fetch_token(event) do

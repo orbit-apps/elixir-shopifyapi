@@ -11,5 +11,4 @@ defmodule ShopifyAPI.EventPipe.LocationWorker do
     |> log
     |> execute_action(fn token, _ -> Location.all(token) end)
   end
-
 end
