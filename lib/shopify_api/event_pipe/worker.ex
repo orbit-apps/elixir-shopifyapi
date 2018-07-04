@@ -7,7 +7,7 @@ defmodule ShopifyAPI.EventPipe.Worker do
 
   def perform(event), do: Logger.warn(fn -> "Failed to process event: #{inspect(event)}" end)
 
-  def execute_action(event, work) do
+  def execute_action(event, work) when is_function(work) do
     case fetch_token(event) do
       {:ok, token} ->
         event
