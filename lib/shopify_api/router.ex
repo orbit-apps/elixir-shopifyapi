@@ -25,7 +25,7 @@ defmodule ShopifyAPI.Router do
         |> Conn.halt()
 
       res ->
-        Logger.info("#{__MODULE__} failed install with: #{res}")
+        Logger.info(fn -> "#{__MODULE__} failed install with: #{res}" end)
 
         conn
         |> Conn.resp(404, "Not Found.")
@@ -35,7 +35,7 @@ defmodule ShopifyAPI.Router do
 
   # Shopify Callback on App authorization
   get "/authorized/:app" do
-    Logger.info("Authorized #{shop_domain(conn)}")
+    Logger.info(fn -> "Authorized #{shop_domain(conn)}" end)
 
     with {:ok, app} <- fetch_shopify_app(conn),
          true <- verify_nonce(app, conn.query_params),
@@ -54,7 +54,7 @@ defmodule ShopifyAPI.Router do
       |> Conn.halt()
     else
       res ->
-        Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
+        Logger.info(fn -> "#{__MODULE__} failed authorized with: #{inspect(res)}" end)
 
         conn
         |> Conn.resp(404, "Not Found.")
