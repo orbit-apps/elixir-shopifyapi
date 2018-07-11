@@ -27,8 +27,9 @@ defmodule ShopifyAPI.REST.InventoryLevel do
   """
   def set(
         %AuthToken{} = auth,
-        %{inventory_level: %{inventory_item_id: _, location_id: _, available: _}} =
-          inventory_level
+        %{
+          inventory_level: %{inventory_item_id: _, location_id: _, available: _} = inventory_level
+        }
       ) do
     Request.post(auth, "inventory_levels/set.json", inventory_level)
   end
