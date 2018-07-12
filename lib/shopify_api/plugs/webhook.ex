@@ -19,7 +19,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
       case verify_and_parse(conn) do
         {:ok, conn} ->
-          Application.get_env(:shopify_api, :webhook_filter).(generate_event(conn))
+          {module, function, _} = Application.get_env(:shopify_api, :webhook_filter)
+          apply(module, function, [generate_event(conn)])
 
           conn
           |> Conn.resp(200, "ok.")
