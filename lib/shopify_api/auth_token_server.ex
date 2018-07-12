@@ -59,9 +59,9 @@ defmodule ShopifyAPI.AuthTokenServer do
     Application.get_env(:shopify_api, ShopifyAPI.AuthTokenServer)[key]
   end
 
-  def call_initializer(fun) when is_function(fun), do: fun.()
+  def call_initializer({module, function, _}), do: apply(module, function, [])
   def call_initializer(_), do: %{}
-  def persist(fun, key, value) when is_function(fun), do: fun.(key, value)
+  def persist({module, function, _}, key, value), do: apply(module, function, [key, value])
   def persist(_, _, _), do: nil
 
   #
