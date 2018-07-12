@@ -61,6 +61,18 @@ defmodule ShopifyAPI.REST.Metafield do
   end
 
   @doc """
+  Creates a new metafield.
+
+  ## Example
+
+    iex> ShopifyAPI.REST.Metafields.create(token, map)
+    {:ok, %{ "metafield" => %{} }}
+  """
+  def create(%AuthToken{} = auth, metafield) do
+    Request.post(auth, "metafields.json", metafield)
+  end
+
+  @doc """
   Creates a new metafield for a resource.
 
   ## Example
@@ -68,7 +80,7 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.create(token, atom, integer, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def create(%AuthToken{} = auth, type, resource_id, %__MODULE__{} = metafield) do
+  def create(%AuthToken{} = auth, type, resource_id, metafield) do
     Request.post(auth, resource_path(type, resource_id), metafield)
   end
 
@@ -80,8 +92,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.update(token, atom, integer, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def update(%AuthToken{} = auth, type, resource_id, %__MODULE__{} = metafield) do
-    Request.put(auth, resource_path(type, resource_id), metafield)
+  def update(%AuthToken{} = auth, type, resource_id, %{metafield: %{id: id}} = metafield) do
+    Request.put(auth, resource_path(type, resource_id, id), metafield)
   end
 
   @doc """
@@ -97,25 +109,39 @@ defmodule ShopifyAPI.REST.Metafield do
   end
 
   ## Private
-  defp resource_path(:article, id), do: "blogs/#{id}/articles/#{id}/metafields.json"
-  defp resource_path(:blog, id), do: "blogs/#{id}/metafields.json"
 
-  defp resource_path(:collection, id), do: "collections/#{id}/metafields.json"
+  defp resource_path(resource, id) when is_binary(resource),
+    do: resource_path(String.to_existing_atom(resource), id)
 
-  defp resource_path(:draft_order, id), do: "draft_orders/#{id}/metafields.json"
+  defp resource_path(:blog, blog_id), do: "blogs/#{blog_id}/metafields.json"
 
-  defp resource_path(:metafield, id), do: "metafields/#{id}.json"
+  defp resource_path(:collection, collection_id),
+    do: "collections/#{collection_id}/metafields.json"
 
-  defp resource_path(:order, id), do: "orders/#{id}/metafields.json"
+  defp resource_path(:draft_order, draft_id), do: "draft_orders/#{draft_id}/metafields.json"
+  defp resource_path(:metafield, metafield_id), do: "metafields/#{metafield_id}.json"
+  defp resource_path(:order, order_id), do: "orders/#{order_id}/metafields.json"
+  defp resource_path(:page, page_id), do: "pages/#{page_id}/metafields.json"
+  defp resource_path(:product, product_id), do: "products/#{product_id}/metafields.json"
 
-  defp resource_path(:page, id), do: "pages/#{id}/metafields.json"
+  defp resource_path(resource, id, meta_id) when is_binary(resource),
+    do: resource_path(String.to_existing_atom(resource), id, meta_id)
 
-  defp resource_path(:product, id), do: "products/#{id}/metafields.json"
+  defp resource_path(:blog, blog_id, id), do: "blogs/#{blog_id}/metafields/#{id}.json"
 
+  defp resource_path(:collection, collection_id, id),
+    do: "collections/#{collection_id}/metafields/#{id}.json"
+
+  defp resource_path(:draft_order, draft_id, id),
+    do: "draft_orders/#{draft_id}/metafields/#{id}.json"
+
+  defp resource_path(:order, order_id, id), do: "orders/#{order_id}/metafields/#{id}.json"
+  defp resource_path(:page, page_id, id), do: "pages/#{page_id}/metafields/#{id}.json"
+  defp resource_path(:product, product_id, id), do: "products/#{product_id}/metafields/#{id}.json"
+
+  defp resource_path(:article), do: "Not implemented."
   defp resource_path(:product_variant), do: "Not implemented."
-
   # TODO: Update this when PR for ProductImage closes.
   defp resource_path(:product_image), do: "Not implemented."
-
   defp resource_path(:shop), do: "metafields.json"
 end
