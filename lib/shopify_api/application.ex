@@ -9,6 +9,7 @@ defmodule ShopifyAPI.Application do
       ShopifyAPI.ShopServer,
       ShopifyAPI.AppServer,
       ShopifyAPI.AuthTokenServer,
+      ShopifyAPI.ThrottleServer,
       {ShopifyAPI.EventPipe.Supervisor, [%{}]}
     ]
 
