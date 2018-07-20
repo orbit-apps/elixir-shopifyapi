@@ -41,13 +41,14 @@ defmodule ShopifyAPI.REST.Request do
   defp shopify_request(action, url, body, headers) do
     case request(action, url, body, headers) do
       {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
+        # TODO probably have to return the response here if we want to use the headers
         {:ok, fetch_body(response)}
 
       {:ok, response} ->
-        {:error, fetch_body(response)}
+        {:error, response}
 
-      _ ->
-        {:error, %{}}
+      response ->
+        {:error, response}
     end
   end
 
