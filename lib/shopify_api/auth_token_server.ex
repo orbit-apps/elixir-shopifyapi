@@ -13,51 +13,39 @@ defmodule ShopifyAPI.AuthTokenServer do
     pid
   end
 
-  def all do
-    GenServer.call(@name, :all)
-  end
+  def all, do: GenServer.call(@name, :all)
 
-  def get(shop, app) do
-    GenServer.call(@name, {:get, create_key(shop, app)})
-  end
+  def get(shop, app), do: GenServer.call(@name, {:get, AuthToken.create_key(shop, app)})
 
-  def get_for_app(app) do
-    GenServer.call(@name, {:get_for_app, app})
-  end
+  def get_for_app(app), do: GenServer.call(@name, {:get_for_app, app})
 
   @spec count :: integer
-  def count do
-    GenServer.call(@name, :count)
-  end
+  def count, do: GenServer.call(@name, :count)
 
   def set(token, call_persist \\ true)
 
-  def set(%AuthToken{shop_name: shop, app_name: app} = token, false) do
-    GenServer.cast(@name, {:set, create_key(shop, app), token})
-  end
+  def set(%AuthToken{shop_name: shop, app_name: app} = token, false),
+    do: GenServer.cast(@name, {:set, AuthToken.create_key(shop, app), token})
 
   def set(%AuthToken{shop_name: shop, app_name: app} = token, true) do
     set(token, false)
 
     Task.start(fn ->
-      __MODULE__.persist(auth_token_server_config(:persistance), create_key(shop, app), token)
+      __MODULE__.persist(
+        auth_token_server_config(:persistance),
+        AuthToken.create_key(shop, app),
+        token
+      )
     end)
   end
 
   def set(token, call_persist) when is_map(token),
     do: set(struct(AuthToken, Map.to_list(token)), call_persist)
 
-  def drop_all do
-    GenServer.cast(@name, :drop_all)
-  end
+  def drop_all, do: GenServer.cast(@name, :drop_all)
 
-  defp create_key(shop, app) do
-    "#{shop}:#{app}"
-  end
-
-  def auth_token_server_config(key) do
-    Application.get_env(:shopify_api, ShopifyAPI.AuthTokenServer)[key]
-  end
+  def auth_token_server_config(key),
+    do: Application.get_env(:shopify_api, ShopifyAPI.AuthTokenServer)[key]
 
   def call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
     do: apply(module, function, [])
