@@ -1,21 +1,20 @@
 defmodule ShopifyAPI do
-  @sleep_time 0.2
-  @max_tries 10
-  @bad_status_code 429
+  alias ShopifyAPI.Throttled
 
-  def request(func, max_tries \\ @max_tries, depth \\ 1)
+  @plus_bucket 80
+  @nonplus_bucket 40
+  @plus_requests_per_second 4
+  @nonplus_requests_per_second 2
 
-  def request(func, max_tries, depth) when is_function(func) and max_tries == depth,
-    do: func.()
+  @over_limit_status_code 429
 
-  def request(func, max_tries, depth) when is_function(func) do
-    case func.() do
-      {:error, %{status_code: @bad_status_code}} ->
-        :timer.sleep(@sleep_time)
-        request(func, max_tries, depth)
+  def request(token, func), do: Throttled.request(func, token)
 
-      resp ->
-        resp
-    end
-  end
+  def over_limit_status_code, do: @over_limit_status_code
+
+  def request_bucket(%{plus: true}), do: @plus_bucket
+  def request_bucket(%{plus: false}), do: @nonplus_bucket
+
+  def requests_per_second(%{plus: true}), do: @plus_requests_per_second
+  def requests_per_second(%{plus: false}), do: @nonplus_requests_per_second
 end

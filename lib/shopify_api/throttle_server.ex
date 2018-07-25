@@ -5,9 +5,8 @@ defmodule ShopifyAPI.ThrottleServer do
   alias ShopifyAPI.AuthToken
 
   @name :shopify_api_throttle_server
-  @default_get_value 80
   @shopify_call_limit_header "X-Shopify-Shop-Api-Call-Limit"
-  @shopify_overlimit_status_code 429
+  @over_limit_status_code 429
 
   def start_link(_opts) do
     Logger.info(fn -> "Starting #{__MODULE__} ..." end)
@@ -17,7 +16,9 @@ defmodule ShopifyAPI.ThrottleServer do
 
   def all, do: GenServer.call(@name, :all)
 
-  def get(%AuthToken{} = token), do: GenServer.call(@name, {:get, AuthToken.create_key(token)})
+  def get(%AuthToken{} = token) do
+    GenServer.call(@name, {:get, AuthToken.create_key(token), ShopifyAPI.request_bucket(token)})
+  end
 
   # Do nothing
   def set(nil, _token), do: nil
@@ -33,7 +34,7 @@ defmodule ShopifyAPI.ThrottleServer do
   end
 
   # API Overlimit error code
-  defp limit_header_or_status_code(%{status_code: @shopify_overlimit_status_code}),
+  defp limit_header_or_status_code(%{status_code: @over_limit_status_code()}),
     do: :over_limit
 
   defp limit_header_or_status_code(%{headers: headers}),
@@ -64,11 +65,11 @@ defmodule ShopifyAPI.ThrottleServer do
     {:reply, state, state}
   end
 
-  def handle_call({:get, key}, _caller, state) do
-    {:reply, Map.get(state, key, @default_get_value), state}
+  def handle_call({:get, key, default}, _caller, state) do
+    {:reply, Map.get(state, key, {default, :no_time}), state}
   end
 
   def handle_cast({:set, key, new_value}, %{} = state) do
-    {:noreply, Map.put(state, key, {new_value, DateTime.utc_now()})}
+    {:noreply, Map.put(state, key, {new_value, NaiveDateTime.utc_now()})}
   end
 end
