@@ -11,7 +11,7 @@ defmodule ShopifyAPI.REST.Request do
   """
 
   use HTTPoison.Base
-  alias ShopifyAPI.{AuthToken, ThrottleServer}
+  alias ShopifyAPI.{AuthToken, ThrottleServer, Throttled}
 
   @transport "https://"
   if Mix.env() == :test do
@@ -39,19 +39,24 @@ defmodule ShopifyAPI.REST.Request do
   end
 
   defp shopify_request(action, url, body, headers, token) do
-    case request(action, url, body, headers) do
-      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
-        # TODO probably have to return the response here if we want to use the headers
-        ThrottleServer.update_api_call_limit(response, token)
-        {:ok, fetch_body(response)}
+    Throttled.request(
+      fn ->
+        case request(action, url, body, headers) do
+          {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
+            # TODO probably have to return the response here if we want to use the headers
+            ThrottleServer.update_api_call_limit(response, token)
+            {:ok, fetch_body(response)}
 
-      {:ok, response} ->
-        ThrottleServer.update_api_call_limit(response, token)
-        {:error, response}
+          {:ok, response} ->
+            ThrottleServer.update_api_call_limit(response, token)
+            {:error, response}
 
-      response ->
-        {:error, response}
-    end
+          response ->
+            {:error, response}
+        end
+      end,
+      token
+    )
   end
 
   defp url(%{shop_name: domain}, path) do

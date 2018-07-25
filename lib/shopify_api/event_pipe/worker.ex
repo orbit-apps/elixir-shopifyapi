@@ -10,7 +10,7 @@ defmodule ShopifyAPI.EventPipe.Worker do
   def execute_action(event, work) when is_function(work) do
     with {:ok, token} <- fetch_token(event),
          auth_token <- struct(AuthToken, token),
-         response <- ShopifyAPI.request(auth_token, fn -> work.(auth_token, event) end),
+         response <- work.(auth_token, event),
          event_with_response <- Map.put(event, :response, response) do
       fire_callback(event_with_response)
     else
