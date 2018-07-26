@@ -8,14 +8,13 @@ defmodule ShopifyAPI.EventPipe.Worker do
   def perform(event), do: Logger.warn(fn -> "Failed to process event: #{inspect(event)}" end)
 
   def execute_action(event, work) when is_function(work) do
-    case fetch_token(event) do
-      {:ok, token} ->
-        event
-        |> Map.put(:response, work.(struct(AuthToken, token), event))
-        |> fire_callback
-
-      msg ->
-        msg
+    with {:ok, token} <- fetch_token(event),
+         auth_token <- struct(AuthToken, token),
+         response <- work.(auth_token, event),
+         event_with_response <- Map.put(event, :response, response) do
+      fire_callback(event_with_response)
+    else
+      msg -> msg
     end
   end
 

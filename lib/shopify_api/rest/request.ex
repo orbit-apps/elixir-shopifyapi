@@ -11,7 +11,7 @@ defmodule ShopifyAPI.REST.Request do
   """
 
   use HTTPoison.Base
-  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.{AuthToken, ThrottleServer, Throttled}
 
   @transport "https://"
   if Mix.env() == :test do
@@ -20,36 +20,43 @@ defmodule ShopifyAPI.REST.Request do
 
   @spec get(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
   def get(auth, path) do
-    shopify_request(:get, url(auth, path), "", headers(auth))
+    shopify_request(:get, url(auth, path), "", headers(auth), auth)
   end
 
   @spec put(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
   def put(auth, path, object) do
-    shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth))
+    shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth), auth)
   end
 
   @spec post(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
   def post(auth, path, object \\ %{}) do
-    shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth))
+    shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth), auth)
   end
 
   @spec delete(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
   def delete(auth, path) do
-    shopify_request(:delete, url(auth, path), "", headers(auth))
+    shopify_request(:delete, url(auth, path), "", headers(auth), auth)
   end
 
-  defp shopify_request(action, url, body, headers) do
-    case request(action, url, body, headers) do
-      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
-        # TODO probably have to return the response here if we want to use the headers
-        {:ok, fetch_body(response)}
+  defp shopify_request(action, url, body, headers, token) do
+    Throttled.request(
+      fn ->
+        case request(action, url, body, headers) do
+          {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
+            # TODO probably have to return the response here if we want to use the headers
+            ThrottleServer.update_api_call_limit(response, token)
+            {:ok, fetch_body(response)}
 
-      {:ok, response} ->
-        {:error, response}
+          {:ok, response} ->
+            ThrottleServer.update_api_call_limit(response, token)
+            {:error, response}
 
-      response ->
-        {:error, response}
-    end
+          response ->
+            {:error, response}
+        end
+      end,
+      token
+    )
   end
 
   defp url(%{shop_name: domain}, path) do

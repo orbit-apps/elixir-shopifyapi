@@ -3,7 +3,8 @@ defmodule ShopifyAPI.AuthToken do
             app_name: "",
             shop_name: "",
             token: "",
-            timestamp: 0
+            timestamp: 0,
+            plus: false
 
   @typedoc """
       Type that represents a Shopify Auth Token with
@@ -16,7 +17,8 @@ defmodule ShopifyAPI.AuthToken do
           app_name: String.t(),
           shop_name: String.t(),
           token: String.t(),
-          timestamp: 0
+          timestamp: 0,
+          plus: Boolean.t()
         }
 
   def create_key(%__MODULE__{shop_name: shop, app_name: app}), do: create_key(shop, app)
