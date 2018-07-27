@@ -1,5 +1,6 @@
 defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
+  alias ShopifyAPI.AuthToken
 
   def enqueue(%{destination: :shopify, object: %{product: %{}}} = event) do
     enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event)
@@ -22,10 +23,23 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   end
 
   def enqueue(event),
-    do: Logger.warn("#{__MODULE__} does not know what worker should handle #{inspect(event)}")
+    do:
+      Logger.warn(fn ->
+        "#{__MODULE__} does not know what worker should handle #{inspect(event)}"
+      end)
+
+  defp enqueue_event(worker, %{token: token} = event) do
+    Logger.info(fn -> "Enqueueing[#{AuthToken.create_key(token)}] #{inspect(event)}" end)
+    Exq.enqueue(Exq, AuthToken.create_key(token), worker, [event])
+  end
 
   defp enqueue_event(worker, event) do
-    Logger.info(fn -> "Enqueueing #{inspect(event)}" end)
-    Exq.enqueue(Exq, "outbound", worker, [event])
+    Logger.warn(fn -> "Enqueueing in default queue #{inspect(event)}" end)
+    Exq.enqueue(Exq, "default", worker, [event])
+  end
+
+  def register(token) do
+    Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
+    Exq.subscribe(Exq, AuthToken.create_key(token), 1)
   end
 end
