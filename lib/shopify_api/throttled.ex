@@ -17,7 +17,7 @@ defmodule ShopifyAPI.Throttled do
          |> ThrottleServer.get()
          |> make_request(func, ShopifyAPI.requests_per_second(token)) do
       {:error, %{status_code: ^over_limit_status_code}} ->
-        request(func, max_tries, depth)
+        request(func, token, max_tries, depth + 1)
 
       resp ->
         resp
