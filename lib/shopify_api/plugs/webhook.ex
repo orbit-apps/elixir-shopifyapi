@@ -58,7 +58,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   end
 
   defp fetch_shop(conn) do
-    case ShopServer.get(fetch_shop_name(conn)) do
+    case conn |> fetch_shop_name |> ShopServer.get() do
       {:ok, shop} ->
         Conn.assign(conn, :shop, shop)
 
@@ -72,7 +72,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   end
 
   defp fetch_app(conn) do
-    case AppServer.get(fetch_app_name(conn)) do
+    case conn |> fetch_app_name |> AppServer.get() do
       {:ok, app} ->
         Conn.assign(conn, :app, app)
 

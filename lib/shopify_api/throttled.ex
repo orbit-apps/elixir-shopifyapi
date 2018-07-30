@@ -36,14 +36,14 @@ defmodule ShopifyAPI.Throttled do
         func.()
 
       _ ->
-        :timer.sleep(1_000 / req_sec)
+        :timer.sleep(round(1_000 / req_sec))
         func.()
     end
   end
 
   defp compare_last_check(last_check, req_sec) do
     last_check
-    |> NaiveDateTime.add(1_000 / req_sec, :millisecond)
+    |> NaiveDateTime.add(round(1_000 / req_sec), :millisecond)
     |> NaiveDateTime.compare(NaiveDateTime.utc_now())
   end
 end
