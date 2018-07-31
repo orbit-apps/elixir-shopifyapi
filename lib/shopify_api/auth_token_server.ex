@@ -2,6 +2,7 @@ defmodule ShopifyAPI.AuthTokenServer do
   use GenServer
   require Logger
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.EventPipe.EventQueue
 
   @name :shopify_api_auth_token_server
 
@@ -36,6 +37,10 @@ defmodule ShopifyAPI.AuthTokenServer do
         AuthToken.create_key(shop, app),
         token
       )
+    end)
+
+    Task.start(fn ->
+      EventQueue.register(token)
     end)
   end
 
