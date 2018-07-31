@@ -40,6 +40,14 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   def register(token) do
     Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
-    Exq.subscribe(Exq, AuthToken.create_key(token), 1)
+
+    case GenServer.whereis(Exq) do
+      nil ->
+        :timer.sleep(500)
+        register(token)
+
+      _ ->
+        Exq.subscribe(Exq, AuthToken.create_key(token), 1)
+    end
   end
 end
