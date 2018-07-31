@@ -24,24 +24,26 @@ defmodule ShopifyAPI.Throttled do
     end
   end
 
+  def make_request(t, func, req_sec, sleep_impl \\ &:timer.sleep/1)
+
   # No limit found in the store, make a request
-  defp make_request({_limit, last_check}, func, _req_sec) when last_check == :no_time, do: func.()
+  def make_request({_, last_check}, func, _, _) when last_check == :no_time, do: func.()
 
   # Haven't hit our limit yet, make a request
-  defp make_request({limit, _last_check}, func, _req_sec) when limit > 0, do: func.()
+  def make_request({limit, _}, func, _, _) when limit > 0, do: func.()
 
-  defp make_request({_limit, last_check}, func, req_sec) do
-    case compare_last_check(last_check, req_sec) do
-      :gt ->
+  def make_request({_, last_check}, func, req_sec, sleep_impl) do
+    case last_check_is_stale?(last_check, req_sec) do
+      :lt ->
         func.()
 
       _ ->
-        :timer.sleep(round(1_000 / req_sec))
+        sleep_impl.(round(1_000 / req_sec))
         func.()
     end
   end
 
-  defp compare_last_check(last_check, req_sec) do
+  defp last_check_is_stale?(last_check, req_sec) do
     last_check
     |> NaiveDateTime.add(round(1_000 / req_sec), :millisecond)
     |> NaiveDateTime.compare(NaiveDateTime.utc_now())
