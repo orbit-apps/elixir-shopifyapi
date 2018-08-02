@@ -8,6 +8,8 @@ defmodule ShopifyAPI.EventPipe.Worker do
   def perform(event), do: Logger.warn(fn -> "Failed to process event: #{inspect(event)}" end)
 
   def execute_action(event, work) when is_function(work) do
+    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
+
     with {:ok, token} <- fetch_token(event),
          auth_token <- struct(AuthToken, token),
          response <- work.(auth_token, event),
@@ -16,11 +18,6 @@ defmodule ShopifyAPI.EventPipe.Worker do
     else
       msg -> msg
     end
-  end
-
-  def log(event) do
-    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
-    event
   end
 
   defp fire_callback(%{callback: callback} = event) when is_binary(callback) do
