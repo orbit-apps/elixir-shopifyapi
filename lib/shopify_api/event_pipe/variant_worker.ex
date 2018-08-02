@@ -7,16 +7,11 @@ defmodule ShopifyAPI.EventPipe.VariantWorker do
   alias ShopifyAPI.REST.Variant
 
   def perform(%{action: "create", object: _, token: _} = event) do
-    event
-    |> log
-    |> execute_action(fn token, %{object: %{variant: %{product_id: product_id}} = variant} ->
+    execute_action(event, fn token, %{object: %{variant: %{product_id: product_id}} = variant} ->
       Variant.create(token, product_id, variant)
     end)
   end
 
-  def perform(%{action: "update", object: _, token: _} = event) do
-    event
-    |> log
-    |> execute_action(fn token, %{object: variant} -> Variant.update(token, variant) end)
-  end
+  def perform(%{action: "update", object: _, token: _} = event),
+    do: execute_action(event, fn token, %{object: variant} -> Variant.update(token, variant) end)
 end
