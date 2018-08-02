@@ -25,8 +25,10 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   def set(token, call_persist \\ true)
 
-  def set(%AuthToken{shop_name: shop, app_name: app} = token, false),
-    do: GenServer.cast(@name, {:set, AuthToken.create_key(shop, app), token})
+  def set(%AuthToken{shop_name: shop, app_name: app} = token, false) do
+    GenServer.cast(@name, {:set, AuthToken.create_key(shop, app), token})
+    Task.start(fn -> EventQueue.register(token) end)
+  end
 
   def set(%AuthToken{shop_name: shop, app_name: app} = token, true) do
     set(token, false)
@@ -37,10 +39,6 @@ defmodule ShopifyAPI.AuthTokenServer do
         AuthToken.create_key(shop, app),
         token
       )
-    end)
-
-    Task.start(fn ->
-      EventQueue.register(token)
     end)
   end
 
