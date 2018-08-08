@@ -13,47 +13,37 @@ defmodule ShopifyAPI.ShopServer do
     GenServer.start_link(__MODULE__, state, name: @name)
   end
 
-  def all do
-    GenServer.call(@name, :all)
-  end
+  def all, do: GenServer.call(@name, :all)
 
-  def get(domain) do
-    GenServer.call(@name, {:get, domain})
-  end
+  def get(domain), do: GenServer.call(@name, {:get, domain})
 
   @spec count :: integer
-  def count do
-    GenServer.call(@name, :count)
-  end
+  def count, do: GenServer.call(@name, :count)
 
   @spec set(%{:domain => any, any => any}) :: atom
-  def set(%{domain: domain} = new_values) do
-    GenServer.cast(@name, {:set, domain, new_values})
-  end
+  def set(%{domain: domain} = new_values), do: GenServer.cast(@name, {:set, domain, new_values})
 
   #
   # Callbacks
   #
 
+  @impl true
   def init(state), do: {:ok, state}
 
+  @impl true
   @callback handle_cast(map, map) :: tuple
   def handle_cast({:set, domain, new_values}, %{} = state) do
-    new_state =
-      Map.update(state, domain, %Shop{domain: domain}, fn t -> Map.merge(t, new_values) end)
+    new_state = Map.update(state, domain, %Shop{domain: domain}, &Map.merge(&1, new_values))
 
     {:noreply, new_state}
   end
 
-  def handle_call(:all, _caller, state) do
-    {:reply, state, state}
-  end
+  @impl true
+  def handle_call(:all, _caller, state), do: {:reply, state, state}
 
-  def handle_call({:get, domain}, _caller, state) do
-    {:reply, Map.fetch(state, domain), state}
-  end
+  @impl true
+  def handle_call({:get, domain}, _caller, state), do: {:reply, Map.fetch(state, domain), state}
 
-  def handle_call(:count, _caller, state) do
-    {:reply, Enum.count(state), state}
-  end
+  @impl true
+  def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
 end

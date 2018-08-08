@@ -64,8 +64,10 @@ defmodule ShopifyAPI.AuthTokenServer do
   # Callbacks
   #
 
+  @impl true
   def init(state), do: {:ok, state}
 
+  @impl true
   @callback handle_cast(any, map) :: tuple
   def handle_cast({:set, key, new_values}, %{} = state) do
     new_state =
@@ -79,18 +81,16 @@ defmodule ShopifyAPI.AuthTokenServer do
     {:noreply, new_state}
   end
 
-  def handle_cast(:drop_all, _) do
-    {:noreply, %{}}
-  end
+  @impl true
+  def handle_cast(:drop_all, _), do: {:noreply, %{}}
 
-  def handle_call(:all, _caller, state) do
-    {:reply, state, state}
-  end
+  @impl true
+  def handle_call(:all, _caller, state), do: {:reply, state, state}
 
-  def handle_call({:get, key}, _caller, state) do
-    {:reply, Map.fetch(state, key), state}
-  end
+  @impl true
+  def handle_call({:get, key}, _caller, state), do: {:reply, Map.fetch(state, key), state}
 
+  @impl true
   def handle_call({:get_for_app, app}, _caller, state) do
     vals =
       state
@@ -100,7 +100,6 @@ defmodule ShopifyAPI.AuthTokenServer do
     {:reply, vals, state}
   end
 
-  def handle_call(:count, _caller, state) do
-    {:reply, Enum.count(state), state}
-  end
+  @impl true
+  def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
 end
