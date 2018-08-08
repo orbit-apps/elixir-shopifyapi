@@ -59,17 +59,25 @@ defmodule ShopifyAPI.ThrottleServer do
 
   defp calculate_available([used, total]), do: total - used
 
+  #
+  # Callbacks
+  #
+
+  @impl true
   def init(state), do: {:ok, state}
 
   def handle_call(:all, _caller, state) do
     {:reply, state, state}
   end
+  @impl true
 
   def handle_call({:get, key, default}, _caller, state) do
     {:reply, Map.get(state, key, {default, :no_time}), state}
   end
+  @impl true
 
   def handle_cast({:set, key, new_value}, %{} = state) do
     {:noreply, Map.put(state, key, {new_value, NaiveDateTime.utc_now()})}
   end
+  @impl true
 end

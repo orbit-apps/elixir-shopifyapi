@@ -35,8 +35,10 @@ defmodule ShopifyAPI.ShopServer do
   # Callbacks
   #
 
+  @impl true
   def init(state), do: {:ok, state}
 
+  @impl true
   @callback handle_cast(map, map) :: tuple
   def handle_cast({:set, domain, new_values}, %{} = state) do
     new_state =
@@ -48,12 +50,15 @@ defmodule ShopifyAPI.ShopServer do
   def handle_call(:all, _caller, state) do
     {:reply, state, state}
   end
+  @impl true
 
   def handle_call({:get, domain}, _caller, state) do
     {:reply, Map.fetch(state, domain), state}
   end
+  @impl true
 
   def handle_call(:count, _caller, state) do
     {:reply, Enum.count(state), state}
   end
+  @impl true
 end
