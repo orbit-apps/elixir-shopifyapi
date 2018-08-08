@@ -11,22 +11,14 @@ defmodule ShopifyAPI.AppServer do
     GenServer.start_link(__MODULE__, state, name: @name)
   end
 
-  def all do
-    GenServer.call(@name, :all)
-  end
+  def all, do: GenServer.call(@name, :all)
 
-  def get(name) do
-    GenServer.call(@name, {:get, name})
-  end
+  def get(name), do: GenServer.call(@name, {:get, name})
 
   @spec count :: integer
-  def count do
-    GenServer.call(@name, :count)
-  end
+  def count, do: GenServer.call(@name, :count)
 
-  def set(name, new_values) do
-    GenServer.cast(@name, {:set, name, new_values})
-  end
+  def set(name, new_values), do: GenServer.cast(@name, {:set, name, new_values})
 
   #
   # Callbacks
@@ -49,18 +41,12 @@ defmodule ShopifyAPI.AppServer do
     {:noreply, new_state}
   end
 
-  def handle_call(:all, _caller, state) do
-    {:reply, state, state}
-  end
   @impl true
+  def handle_call(:all, _caller, state), do: {:reply, state, state}
 
-  def handle_call({:get, name}, _caller, state) do
-    {:reply, Map.fetch(state, name), state}
-  end
   @impl true
+  def handle_call({:get, name}, _caller, state), do: {:reply, Map.fetch(state, name), state}
 
-  def handle_call(:count, _caller, state) do
-    {:reply, Enum.count(state), state}
-  end
   @impl true
+  def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
 end

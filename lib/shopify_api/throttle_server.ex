@@ -16,9 +16,9 @@ defmodule ShopifyAPI.ThrottleServer do
 
   def all, do: GenServer.call(@name, :all)
 
-  def get(%AuthToken{} = token) do
-    GenServer.call(@name, {:get, AuthToken.create_key(token), ShopifyAPI.request_bucket(token)})
-  end
+  def get(%AuthToken{} = token),
+    do:
+      GenServer.call(@name, {:get, AuthToken.create_key(token), ShopifyAPI.request_bucket(token)})
 
   # Do nothing
   def set(nil, _token), do: nil
@@ -66,18 +66,14 @@ defmodule ShopifyAPI.ThrottleServer do
   @impl true
   def init(state), do: {:ok, state}
 
-  def handle_call(:all, _caller, state) do
-    {:reply, state, state}
-  end
   @impl true
+  def handle_call(:all, _caller, state), do: {:reply, state, state}
 
-  def handle_call({:get, key, default}, _caller, state) do
-    {:reply, Map.get(state, key, {default, :no_time}), state}
-  end
   @impl true
+  def handle_call({:get, key, default}, _caller, state),
+    do: {:reply, Map.get(state, key, {default, :no_time}), state}
 
-  def handle_cast({:set, key, new_value}, %{} = state) do
-    {:noreply, Map.put(state, key, {new_value, NaiveDateTime.utc_now()})}
-  end
   @impl true
+  def handle_cast({:set, key, new_value}, %{} = state),
+    do: {:noreply, Map.put(state, key, {new_value, NaiveDateTime.utc_now()})}
 end
