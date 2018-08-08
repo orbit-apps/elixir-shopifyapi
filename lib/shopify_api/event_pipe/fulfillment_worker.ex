@@ -7,7 +7,8 @@ defmodule ShopifyAPI.EventPipe.FulfillmentWorker do
   alias ShopifyAPI.REST.Fulfillment
 
   def perform(%{action: "create", object: _, token: _} = event) do
-    execute_action(event, fn token, %{object: {order_id: order_id} = fulfillment} ->
+    execute_action(event, fn token,
+                             %{object: %{fulfillment: %{order_id: order_id}} = fulfillment} ->
       Fulfillment.create(token, order_id, fulfillment)
     end)
   end
