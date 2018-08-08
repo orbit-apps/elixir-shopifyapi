@@ -22,6 +22,10 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event)
   end
 
+  def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event) do
+    enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event)
+  end
+
   def enqueue(event),
     do:
       Logger.warn(fn ->
