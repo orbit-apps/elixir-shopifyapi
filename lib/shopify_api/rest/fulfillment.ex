@@ -51,7 +51,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillment" => %{} }}
   """
   def create(%AuthToken{} = auth, order_id, %{fulfillment: %{}} = fulfillment) do
-    Request.post(auth, "orders/#{order_id}/fulfillment.json", fulfillment)
+    Request.post(auth, "orders/#{order_id}/fulfillments.json", fulfillment)
   end
 
   @doc """
