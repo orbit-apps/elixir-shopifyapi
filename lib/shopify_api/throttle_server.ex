@@ -11,20 +11,23 @@ defmodule ShopifyAPI.ThrottleServer do
   def start_link(_opts) do
     Logger.info(fn -> "Starting #{__MODULE__} ..." end)
 
-    GenServer.start_link(__MODULE__, %{}, name: @name)
+    GenServer.start_link(__MODULE__, @name, name: @name)
   end
 
-  def all, do: GenServer.call(@name, :all)
+  def all, do: :ets.tab2list(@name)
 
-  def get(%AuthToken{} = token),
-    do:
-      GenServer.call(@name, {:get, AuthToken.create_key(token), ShopifyAPI.request_bucket(token)})
+  def get(%AuthToken{} = token) do
+    case :ets.lookup(@name, AuthToken.create_key(token)) do
+      [] -> {ShopifyAPI.request_bucket(token), :no_time}
+      result -> result |> List.first() |> Tuple.delete_at(0)
+    end
+  end
 
   # Do nothing
   def set(nil, _token), do: nil
 
   def set(availble_count, %AuthToken{} = token),
-    do: GenServer.cast(@name, {:set, AuthToken.create_key(token), availble_count})
+    do: :ets.insert(@name, {AuthToken.create_key(token), availble_count, NaiveDateTime.utc_now()})
 
   def update_api_call_limit(http_response, token) do
     http_response
@@ -64,16 +67,8 @@ defmodule ShopifyAPI.ThrottleServer do
   #
 
   @impl true
-  def init(state), do: {:ok, state}
-
-  @impl true
-  def handle_call(:all, _caller, state), do: {:reply, state, state}
-
-  @impl true
-  def handle_call({:get, key, default}, _caller, state),
-    do: {:reply, Map.get(state, key, {default, :no_time}), state}
-
-  @impl true
-  def handle_cast({:set, key, new_value}, %{} = state),
-    do: {:noreply, Map.put(state, key, {new_value, NaiveDateTime.utc_now()})}
+  def init(state) do
+    :ets.new(@name, [:named_table, :public])
+    {:ok, state}
+  end
 end
