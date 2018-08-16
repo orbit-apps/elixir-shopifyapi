@@ -52,7 +52,7 @@ defmodule ShopifyAPI.REST.Order do
 
   iex> ShopifyAPI.REST.Order.update(token, order_id)
   """
-  def update(%AuthToken{} = auth, %{order: %{order_id: order_id}} = order) do
+  def update(%AuthToken{} = auth, %{order: %{id: order_id}} = order) do
     Request.put(auth, "orders/#{order_id}.json", order)
   end
 
