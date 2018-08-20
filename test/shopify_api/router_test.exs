@@ -3,7 +3,8 @@ defmodule Test.ShopifyAPI.RouterTest do
   use Plug.Test
 
   alias Plug.{Conn, Parsers}
-  alias ShopifyAPI.{AppServer, AuthTokenServer, Router, ShopServer, Security}
+
+  alias ShopifyAPI.{AppServer, AuthTokenServer, Router, Security, ShopServer}
 
   @moduletag :capture_log
 
