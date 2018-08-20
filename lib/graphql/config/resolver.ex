@@ -1,5 +1,5 @@
 defmodule GraphQL.Config.Resolver do
-  alias ShopifyAPI.{AuthTokenServer, AppServer, ShopServer}
+  alias ShopifyAPI.{AppServer, AuthTokenServer, ShopServer}
 
   def all_shops(_root, _args, _info) do
     shops = Enum.map(ShopServer.all(), fn x -> elem(x, 1) end)

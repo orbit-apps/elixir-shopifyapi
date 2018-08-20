@@ -1,8 +1,11 @@
 defmodule ShopifyAPI.Plugs.Webhook do
   import Plug.Conn
   require Logger
+
   alias Plug.Conn
-  alias ShopifyAPI.{AppServer, ShopServer, Security}
+
+  alias ShopifyAPI.{AppServer, Security, ShopServer}
+
   alias ShopifyAPI.EventPipe.Event
 
   def init(opts), do: opts

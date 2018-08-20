@@ -1,7 +1,7 @@
 defmodule Test.ShopifyAPI.ThrottledTest do
   use ExUnit.Case
 
-  alias ShopifyAPI.{AuthToken, ThrottleServer, Throttled}
+  alias ShopifyAPI.{AuthToken, Throttled, ThrottleServer}
 
   @token %AuthToken{app_name: "test", shop_name: "throttled", plus: false}
 

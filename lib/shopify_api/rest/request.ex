@@ -11,7 +11,8 @@ defmodule ShopifyAPI.REST.Request do
   """
 
   use HTTPoison.Base
-  alias ShopifyAPI.{AuthToken, ThrottleServer, Throttled}
+
+  alias ShopifyAPI.{AuthToken, Throttled, ThrottleServer}
 
   @transport "https://"
   if Mix.env() == :test do
