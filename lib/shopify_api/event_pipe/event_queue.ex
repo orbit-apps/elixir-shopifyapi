@@ -2,29 +2,26 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
   alias ShopifyAPI.AuthToken
 
-  def enqueue(%{destination: :shopify, object: %{product: %{}}} = event) do
-    enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event)
-  end
+  def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event)
 
-  def enqueue(%{destination: :shopify, object: %{variant: %{}}} = event) do
-    enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event)
-  end
+  def enqueue(%{destination: :shopify, object: %{inventory_level: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.InventoryLevelWorker, event)
 
-  def enqueue(%{destination: :shopify, object: %{inventory_level: %{}}} = event) do
-    enqueue_event(ShopifyAPI.EventPipe.InventoryLevelWorker, event)
-  end
+  def enqueue(%{destination: :shopify, object: %{location: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.LocationWorker, event)
 
-  def enqueue(%{destination: :shopify, object: %{location: %{}}} = event) do
-    enqueue_event(ShopifyAPI.EventPipe.LocationWorker, event)
-  end
+  def enqueue(%{destination: :shopify, object: %{metafield: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event)
 
-  def enqueue(%{destination: :shopify, object: %{metafield: %{}}} = event) do
-    enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event)
-  end
+  def enqueue(%{destination: :shopify, object: %{product: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event)
 
-  def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event) do
-    enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event)
-  end
+  def enqueue(%{destination: :shopify, object: %{transaction: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.TransactionWorker, event)
+
+  def enqueue(%{destination: :shopify, object: %{variant: %{}}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event)
 
   def enqueue(event),
     do:
