@@ -2,7 +2,6 @@ defmodule ShopifyAPI.EventPipe.FulfillmentWorker do
   @moduledoc """
   Worker for processing Fulfillments
   """
-  require Logger
   import ShopifyAPI.EventPipe.Worker
   alias ShopifyAPI.REST.Fulfillment
 
