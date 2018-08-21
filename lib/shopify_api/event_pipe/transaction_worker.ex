@@ -2,7 +2,6 @@ defmodule ShopifyAPI.EventPipe.TransactionWorker do
   @moduledoc """
   Worker for processing Transactions
   """
-  require Logger
   import ShopifyAPI.EventPipe.Worker
   alias ShopifyAPI.REST.Transaction
 
