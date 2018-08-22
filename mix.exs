@@ -39,7 +39,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:bypass, "~> 0.8", only: :test},
       {:credo, "~> 0.3", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
-      {:excoveralls, only: [:dev, :test]},
+      {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
       {:ex_doc, "~> 0.19.1", only: [:dev], runtime: false},
       {:exq, "~> 0.12.0"},
       {:exq_atomize_job_arguments,
