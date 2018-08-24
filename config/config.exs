@@ -22,8 +22,8 @@ use Mix.Config
 #
 
 # Provider out server with a min of an empty Map
-config :shopify_api, ShopifyAPI.Shop, %{}
-config :shopify_api, ShopifyAPI.App, %{}
+config :shopify_api, ShopifyAPI.ShopServer, %{}
+config :shopify_api, ShopifyAPI.AppServer, %{}
 
 #
 config :shopify_api, ShopifyAPI.Webhook, %{
