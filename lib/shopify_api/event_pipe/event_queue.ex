@@ -2,6 +2,9 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
   alias ShopifyAPI.AuthToken
 
+  def enqueue(%{destination: :application} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event)
+
   def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event),
     do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event)
 
