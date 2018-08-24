@@ -2,6 +2,9 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
   alias ShopifyAPI.AuthToken
 
+  def enqueue(%{destination: :application} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event)
+
   def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event),
     do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event)
 
@@ -47,7 +50,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
         :timer.sleep(500)
         register(token)
 
-      _ ->
+      _res ->
         Exq.subscribe(Exq, AuthToken.create_key(token), 1)
     end
   end

@@ -9,6 +9,8 @@ defmodule ShopifyAPI.Router do
 
   alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security}
 
+  alias ShopifyAPI.EventPipe.EventQueue
+
   plug(:match)
   plug(:dispatch)
 
@@ -42,14 +44,9 @@ defmodule ShopifyAPI.Router do
     with {:ok, app} <- fetch_shopify_app(conn),
          true <- verify_nonce(app, conn.query_params),
          true <- verify_hmac(app, conn.query_params),
-         {:ok, token} <- App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
-      AuthTokenServer.set(%AuthToken{
-        app_name: app_name(conn),
-        shop_name: shop_domain(conn),
-        code: auth_code(conn),
-        timestamp: String.to_integer(conn.query_params["timestamp"]),
-        token: token
-      })
+         {:ok, auth_token} <- fetch_auth_token(conn, app) do
+      enqueue_post_install(auth_token)
+      AuthTokenServer.set(auth_token)
 
       conn
       |> Conn.resp(200, "Authenticated.")
@@ -66,6 +63,31 @@ defmodule ShopifyAPI.Router do
 
   # TODO this should be behind a api token authorization
   forward("/graphql/config", to: Plug, schema: Schema)
+
+  defp fetch_auth_token(conn, app) do
+    case App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
+      {:ok, token} ->
+        {:ok,
+         %AuthToken{
+           app_name: app_name(conn),
+           shop_name: shop_domain(conn),
+           code: auth_code(conn),
+           timestamp: String.to_integer(conn.query_params["timestamp"]),
+           token: token
+         }}
+
+      _msg ->
+        {:error, "unable to fetch token"}
+    end
+  end
+
+  defp enqueue_post_install(token) do
+    EventQueue.enqueue(%{
+      destination: :application,
+      token: token,
+      action: "post_install"
+    })
+  end
 
   defp fetch_shopify_app(conn) do
     conn

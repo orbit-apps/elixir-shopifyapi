@@ -8,7 +8,7 @@ defmodule ShopifyAPI.ShopServer do
   def start_link(_opts) do
     info("Starting #{__MODULE__}...")
     # TODO have some sane way to handle this config not existing
-    state = Application.get_env(:shopify_api, Shop)
+    state = Application.get_env(:shopify_api, ShopifyAPI.ShopServer)
     state = for {k, v} <- state, into: %{}, do: {k, struct(Shop, v)}
     GenServer.start_link(__MODULE__, state, name: @name)
   end
