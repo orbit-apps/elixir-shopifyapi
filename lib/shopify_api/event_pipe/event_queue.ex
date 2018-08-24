@@ -47,7 +47,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
         :timer.sleep(500)
         register(token)
 
-      _ ->
+      _res ->
         Exq.subscribe(Exq, AuthToken.create_key(token), 1)
     end
   end
