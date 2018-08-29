@@ -118,6 +118,7 @@ defmodule ShopifyAPI.REST.Metafield do
   defp resource_path(:collection, collection_id),
     do: "collections/#{collection_id}/metafields.json"
 
+  defp resource_path(:customer, customer_id), do: "customers/#{customer_id}/metafields.json"
   defp resource_path(:draft_order, draft_id), do: "draft_orders/#{draft_id}/metafields.json"
   defp resource_path(:metafield, metafield_id), do: "metafields/#{metafield_id}.json"
   defp resource_path(:order, order_id), do: "orders/#{order_id}/metafields.json"
