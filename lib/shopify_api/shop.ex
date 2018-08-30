@@ -22,5 +22,5 @@ defmodule ShopifyAPI.Shop do
     do: Application.get_env(:shopify_api, ShopifyAPI.Shop)[key]
 
   defp call_post_install({module, function, _}, token), do: apply(module, function, [token])
-  defp call_post_install(nil, token), do: nil
+  defp call_post_install(nil, _token), do: nil
 end

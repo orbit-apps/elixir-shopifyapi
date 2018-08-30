@@ -26,20 +26,29 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   def enqueue(%{destination: :shopify, object: %{variant: %{}}} = event),
     do: enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event)
 
-  def enqueue(event),
-    do:
-      Logger.warn(fn ->
-        "#{__MODULE__} does not know what worker should handle #{inspect(event)}"
-      end)
+  def enqueue(event) do
+    Logger.warn(fn ->
+      "#{__MODULE__} does not know what worker should handle #{inspect(event)}"
+    end)
+
+    {:error, "No worker to handle this event"}
+  end
+
+  defp enqueue_event(worker, %{token: %AuthToken{} = token} = event) do
+    Logger.info(fn -> "Enqueueing[#{inspect(token)}] #{inspect(event)}" end)
+    Exq.enqueue(Exq, AuthToken.create_key(token), worker, [event])
+    {:ok}
+  end
 
   defp enqueue_event(worker, %{token: token} = event) do
-    Logger.info(fn -> "Enqueueing[#{AuthToken.create_key(token)}] #{inspect(event)}" end)
-    Exq.enqueue(Exq, AuthToken.create_key(token), worker, [event])
+    Logger.error(fn -> "Unable to create token from #{inspect(token)}" end)
+    {:error, "Token needs to be an AuthToken.t"}
   end
 
   defp enqueue_event(worker, event) do
     Logger.warn(fn -> "Enqueueing in default queue #{inspect(event)}" end)
     Exq.enqueue(Exq, "default", worker, [event])
+    {:ok}
   end
 
   def register(token) do
