@@ -40,7 +40,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     {:ok}
   end
 
-  defp enqueue_event(worker, %{token: token} = event) do
+  defp enqueue_event(_worker, %{token: token} = _event) do
     Logger.error(fn -> "Unable to create token from #{inspect(token)}" end)
     {:error, "Token needs to be an AuthToken.t"}
   end
