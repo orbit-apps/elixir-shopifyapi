@@ -1,15 +1,18 @@
 defmodule ShopifyAPI.ShopServer do
   use GenServer
-  import Logger, only: [info: 1]
+
+  require Logger
+
   alias ShopifyAPI.Shop
 
   @name :shopify_api_shop_server
 
   def start_link(_opts) do
-    info("Starting #{__MODULE__}...")
+    Logger.info(fn -> "Starting #{__MODULE__}..." end)
     # TODO have some sane way to handle this config not existing
     state = Application.get_env(:shopify_api, ShopifyAPI.ShopServer)
     state = for {k, v} <- state, into: %{}, do: {k, struct(Shop, v)}
+    Logger.info(fn -> "#{__MODULE__} started with #{inspect(state)}" end)
     GenServer.start_link(__MODULE__, state, name: @name)
   end
 

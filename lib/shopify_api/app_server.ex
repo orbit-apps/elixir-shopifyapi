@@ -8,6 +8,7 @@ defmodule ShopifyAPI.AppServer do
     Logger.info(fn -> "Starting #{__MODULE__}..." end)
     state = Application.get_env(:shopify_api, ShopifyAPI.AppServer)
     state = for {k, v} <- state, into: %{}, do: {k, struct(ShopifyAPI.App, v)}
+    Logger.info(fn -> "#{__MODULE__} loaded with #{inspect(state)}" end)
     GenServer.start_link(__MODULE__, state, name: @name)
   end
 
