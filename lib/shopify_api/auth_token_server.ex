@@ -19,6 +19,7 @@ defmodule ShopifyAPI.AuthTokenServer do
   def get(shop, app), do: GenServer.call(@name, {:get, AuthToken.create_key(shop, app)})
 
   def get_for_app(app), do: GenServer.call(@name, {:get_for_app, app})
+  def get_for_shop(shop), do: GenServer.call(@name, {:get_for_shop, shop})
 
   @spec count :: integer
   def count, do: GenServer.call(@name, :count)
@@ -96,6 +97,16 @@ defmodule ShopifyAPI.AuthTokenServer do
       state
       |> Map.values()
       |> Enum.filter(fn t -> t.app_name == app end)
+
+    {:reply, vals, state}
+  end
+
+  @impl true
+  def handle_call({:get_for_shop, shop}, _caller, state) do
+    vals =
+      state
+      |> Map.values()
+      |> Enum.filter(fn t -> t.shop_name == shop end)
 
     {:reply, vals, state}
   end
