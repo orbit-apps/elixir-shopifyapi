@@ -1,7 +1,7 @@
 defmodule Plug.ShopifyAPI.MixProject do
   use Mix.Project
 
-  @version "0.1.38"
+  @version "0.1.39"
 
   def project do
     [
