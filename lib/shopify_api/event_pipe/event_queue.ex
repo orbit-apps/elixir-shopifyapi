@@ -20,6 +20,9 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   def enqueue(%{destination: :shopify, object: %{product: %{}}} = event),
     do: enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event)
 
+  def enqueue(%{destination: :shopify, object: %{tender_transaction: _}} = event),
+    do: enqueue_event(ShopifyAPI.EventPipe.TenderTransactionWorker, event)
+
   def enqueue(%{destination: :shopify, object: %{transaction: %{}}} = event),
     do: enqueue_event(ShopifyAPI.EventPipe.TransactionWorker, event)
 
