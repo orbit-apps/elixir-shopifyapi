@@ -17,9 +17,8 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
   def create(
         %AuthToken{} = auth,
         %{application_charge: %{}} = application_charge
-      ) do
-    Request.post(auth, "application_charges.json", application_charge)
-  end
+      ),
+      do: Request.post(auth, "application_charges.json", application_charge)
 
   @doc """
   Get a single application charge.
@@ -29,9 +28,8 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
       iex> ShopifyAPI.REST.ApplicationCharge.get(auth, integer)
       {:ok, { "application_charge" => %{} }}
   """
-  def get(%AuthToken{} = auth, application_charge_id) do
-    Request.get(auth, "application_charges/#{application_charge_id}.json")
-  end
+  def get(%AuthToken{} = auth, application_charge_id),
+    do: Request.get(auth, "application_charges/#{application_charge_id}.json")
 
   @doc """
   Get a list of all application charges.
@@ -41,9 +39,7 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
       iex> ShopifyAPI.REST.ApplicationCharge.all(auth)
       {:ok, { "application_charges" => [] }}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "application_charges.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "application_charges.json")
 
   @doc """
   Active an application charge.

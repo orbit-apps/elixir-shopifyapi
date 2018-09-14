@@ -23,17 +23,12 @@ defmodule ShopifyAPI.REST.Webhook do
   iex> ShopifyAPI.REST.Webhook.all(auth)
   {:ok, %{"webhooks" => [%{"webhook_id" => "_", "address" => "https://example.com"}]}}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "webhooks.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "webhooks.json")
 
-  def get(%AuthToken{} = auth, webhook_id) do
-    Request.get(auth, "webhooks/#{webhook_id}.json")
-  end
+  def get(%AuthToken{} = auth, webhook_id), do: Request.get(auth, "webhooks/#{webhook_id}.json")
 
-  def update(%AuthToken{} = auth, %{webhook: %{webhook_id: webhook_id}} = webhook) do
-    Request.put(auth, "webhooks/#{webhook_id}.json", webhook)
-  end
+  def update(%AuthToken{} = auth, %{webhook: %{webhook_id: webhook_id}} = webhook),
+    do: Request.put(auth, "webhooks/#{webhook_id}.json", webhook)
 
   @doc """
   ## Example
@@ -41,9 +36,8 @@ defmodule ShopifyAPI.REST.Webhook do
   iex> ShopifyAPI.REST.Webhook.delete(auth, webhook_id)
   {:ok, %{}}
   """
-  def delete(%AuthToken{} = auth, webhook_id) do
-    Request.delete(auth, "webhooks/#{webhook_id}.json")
-  end
+  def delete(%AuthToken{} = auth, webhook_id),
+    do: Request.delete(auth, "webhooks/#{webhook_id}.json")
 
   @doc """
   ## Example
@@ -51,7 +45,6 @@ defmodule ShopifyAPI.REST.Webhook do
   iex> ShopifyAPI.REST.Webhook.create(auth, %{webhook: %{address: "https://example.com"}})
   {:ok, %{"webhook" => %{"webhook_id" => "_", "address" => "https://example.com"}}}
   """
-  def create(%AuthToken{} = auth, %{webhook: %{}} = webhook) do
-    Request.post(auth, "webhooks.json", webhook)
-  end
+  def create(%AuthToken{} = auth, %{webhook: %{}} = webhook),
+    do: Request.post(auth, "webhooks.json", webhook)
 end

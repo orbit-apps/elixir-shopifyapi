@@ -13,9 +13,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
       iex> ShopifyAPI.REST.SmartCollection.all(token)
       {:ok, %{ "smart_collections" => [] }}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "admin/smart_collections.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "admin/smart_collections.json")
 
   @doc """
   Get a count of all SmartCollections.
@@ -24,9 +22,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
       iex> ShopifyAPI.REST.SmartCollection.count(token)
       {:ok, { "count": integer }}
   """
-  def count(%AuthToken{} = auth) do
-    Request.get(auth, "smart_collections/count.json")
-  end
+  def count(%AuthToken{} = auth), do: Request.get(auth, "smart_collections/count.json")
 
   @doc """
   Return a single SmartCollection.
@@ -35,9 +31,8 @@ defmodule ShopifyAPI.REST.SmartCollection do
       iex> ShopifyAPI.REST.SmartCollection.get(token, string)
       {:ok, %{ "smart_collection" => %{} }}
   """
-  def get(%AuthToken{} = auth, smart_collection_id) do
-    Request.get(auth, "smart_collections/#{smart_collection_id}.json")
-  end
+  def get(%AuthToken{} = auth, smart_collection_id),
+    do: Request.get(auth, "smart_collections/#{smart_collection_id}.json")
 
   @doc """
   Create a SmartCollection.
@@ -46,9 +41,8 @@ defmodule ShopifyAPI.REST.SmartCollection do
       iex> ShopifyAPI.REST.SmartCollection.create(token, map)
       {:ok, %{ "smart_collection" => %{} }}
   """
-  def create(%AuthToken{} = auth, %{smart_collection: %{}} = smart_collection) do
-    Request.post(auth, "smart_collections.json", smart_collection)
-  end
+  def create(%AuthToken{} = auth, %{smart_collection: %{}} = smart_collection),
+    do: Request.post(auth, "smart_collections.json", smart_collection)
 
   @doc """
   Update an existing SmartCollection.
@@ -60,9 +54,8 @@ defmodule ShopifyAPI.REST.SmartCollection do
   def update(
         %AuthToken{} = auth,
         %{smart_collection: %{id: smart_collection_id}} = smart_collection
-      ) do
-    Request.put(auth, "smart_collections/#{smart_collection_id}.json", smart_collection)
-  end
+      ),
+      do: Request.put(auth, "smart_collections/#{smart_collection_id}.json", smart_collection)
 
   @doc """
   Delete a SmartCollection.
@@ -71,7 +64,6 @@ defmodule ShopifyAPI.REST.SmartCollection do
       iex> ShopifyAPI.REST.SmartCollection.delete(token, string)
       {:ok, %{ "response": 200 }}
   """
-  def delete(%AuthToken{} = auth, smart_collection_id) do
-    Request.delete(auth, "smart_collections/#{smart_collection_id}.json")
-  end
+  def delete(%AuthToken{} = auth, smart_collection_id),
+    do: Request.delete(auth, "smart_collections/#{smart_collection_id}.json")
 end

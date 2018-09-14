@@ -14,9 +14,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.all(auth, integer)
       {:ok, { "images" => [] }}
   """
-  def all(%AuthToken{} = auth, product_id) do
-    Request.get(auth, "products/#{product_id}/images.json")
-  end
+  def all(%AuthToken{} = auth, product_id),
+    do: Request.get(auth, "products/#{product_id}/images.json")
 
   @doc """
   Get a count of all product images.
@@ -26,9 +25,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.count(auth)
       {:ok, { "count" => integer }}
   """
-  def count(%AuthToken{} = auth, product_id) do
-    Request.get(auth, "products/#{product_id}/images/count.json")
-  end
+  def count(%AuthToken{} = auth, product_id),
+    do: Request.get(auth, "products/#{product_id}/images/count.json")
 
   @doc """
   Get all images for a single product.
@@ -38,9 +36,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.get(auth, map)
       {:ok, { "image" => %{} }}
   """
-  def get(%AuthToken{} = auth, product_id) do
-    Request.get(auth, "products/#{product_id}/images.json")
-  end
+  def get(%AuthToken{} = auth, product_id),
+    do: Request.get(auth, "products/#{product_id}/images.json")
 
   @doc """
   Get a single product image.
@@ -50,9 +47,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.get(auth, map)
       {:ok, { "image" => %{} }}
   """
-  def get(%AuthToken{} = auth, product_id, image_id) do
-    Request.get(auth, "products/#{product_id}/images/#{image_id}.json")
-  end
+  def get(%AuthToken{} = auth, product_id, image_id),
+    do: Request.get(auth, "products/#{product_id}/images/#{image_id}.json")
 
   @doc """
   Create a new product image.
@@ -62,9 +58,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.create(auth, integer, map)
       {:ok, { "image" => %{} }}
   """
-  def create(%AuthToken{} = auth, product_id, %{image: %{}} = image) do
-    Request.post(auth, "products/#{product_id}/images.json", image)
-  end
+  def create(%AuthToken{} = auth, product_id, %{image: %{}} = image),
+    do: Request.post(auth, "products/#{product_id}/images.json", image)
 
   @doc """
   Update an existing product image.
@@ -74,9 +69,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.update(auth, integer, map)
       {:ok, { "image" => %{} }}
   """
-  def update(%AuthToken{} = auth, product_id, %{image: %{id: image_id}} = image) do
-    Request.put(auth, "products/#{product_id}/images/#{image_id}.json", image)
-  end
+  def update(%AuthToken{} = auth, product_id, %{image: %{id: image_id}} = image),
+    do: Request.put(auth, "products/#{product_id}/images/#{image_id}.json", image)
 
   @doc """
   Delete a product image.
@@ -86,7 +80,6 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.delete(auth, integer, integer)
       {:ok, 200 }}
   """
-  def delete(%AuthToken{} = auth, product_id, image_id) do
-    Request.delete(auth, "products/#{product_id}/images/#{image_id}.json")
-  end
+  def delete(%AuthToken{} = auth, product_id, image_id),
+    do: Request.delete(auth, "products/#{product_id}/images/#{image_id}.json")
 end

@@ -13,9 +13,7 @@ defmodule ShopifyAPI.REST.InventoryLevel do
       iex> ShopifyAPI.REST.InventoryLevel.all(auth)
       {:ok, { "inventory_level" => [] }}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "inventory_levels.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "inventory_levels.json")
 
   @doc """
   Sets the inventory level for an inventory item at a location.
