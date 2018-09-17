@@ -30,9 +30,8 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
       iex> ShopifyAPI.REST.RecurringApplicationCharge.get(auth, integer)
       {:ok, { "recurring_application_charge" => %{} }}
   """
-  def get(%AuthToken{} = auth, recurring_application_charge_id) do
-    Request.get(auth, "recurring_application_charges/#{recurring_application_charge_id}.json")
-  end
+  def get(%AuthToken{} = auth, recurring_application_charge_id),
+    do: Request.get(auth, "recurring_application_charges/#{recurring_application_charge_id}.json")
 
   @doc """
   Get a list of all recurring application charges.
@@ -42,9 +41,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
       iex> ShopifyAPI.REST.RecurringApplicationCharge.all(auth)
       {:ok, { "recurring_application_charges" => [] }}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "recurring_application_charges.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "recurring_application_charges.json")
 
   @doc """
   Activates a recurring application charge.
@@ -69,9 +66,12 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
       iex> ShopifyAPI.REST.RecurringApplicationCharge.cancel(auth, integer)
       {:ok, 200 }
   """
-  def cancel(%AuthToken{} = auth, recurring_application_charge_id) do
-    Request.delete(auth, "recurring_application_charges/#{recurring_application_charge_id}.json")
-  end
+  def cancel(%AuthToken{} = auth, recurring_application_charge_id),
+    do:
+      Request.delete(
+        auth,
+        "recurring_application_charges/#{recurring_application_charge_id}.json"
+      )
 
   @doc """
   Updates a capped amount of recurring application charge.

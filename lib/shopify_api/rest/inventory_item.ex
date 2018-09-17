@@ -29,9 +29,8 @@ defmodule ShopifyAPI.REST.InventoryItem do
       iex> ShopifyAPI.REST.InventoryItem.get(auth, integer)
       {:ok, { "inventory_item" => %{} }}
   """
-  def get(%AuthToken{} = auth, inventory_item_id) do
-    Request.get(auth, "inventory_items/#{inventory_item_id}.json")
-  end
+  def get(%AuthToken{} = auth, inventory_item_id),
+    do: Request.get(auth, "inventory_items/#{inventory_item_id}.json")
 
   @doc """
   Update an existing inventory item.
@@ -41,7 +40,6 @@ defmodule ShopifyAPI.REST.InventoryItem do
       iex> ShopifyAPI.REST.InventoryItem.update(auth, map)
       {:ok, { "inventory_item" => %{} }}
   """
-  def update(%AuthToken{} = auth, %{inventory_item: %{id: inventory_item_id}} = inventory_item) do
-    Request.put(auth, "inventory_items/#{inventory_item_id}.json", inventory_item)
-  end
+  def update(%AuthToken{} = auth, %{inventory_item: %{id: inventory_item_id}} = inventory_item),
+    do: Request.put(auth, "inventory_items/#{inventory_item_id}.json", inventory_item)
 end

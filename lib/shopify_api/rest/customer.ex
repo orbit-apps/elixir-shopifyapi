@@ -15,9 +15,7 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.all(auth)
       {:ok, {"customers" => []}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "customers.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "customers.json")
 
   @doc """
   Return a single customer.
@@ -27,9 +25,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.get(auth, integer)
       {:ok, {"customer" = > %{}}
   """
-  def get(%AuthToken{} = auth, customer_id) do
-    Request.get(auth, "customers/#{customer_id}.json")
-  end
+  def get(%AuthToken{} = auth, customer_id),
+    do: Request.get(auth, "customers/#{customer_id}.json")
 
   @doc """
   Return a customers that match supplied query.
@@ -54,9 +51,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.create(auth, map)
       {:ok, {"customer" => %{}}
   """
-  def create(%AuthToken{} = auth, %{customer: %{}} = customer) do
-    Request.post(auth, "customers.json", customer)
-  end
+  def create(%AuthToken{} = auth, %{customer: %{}} = customer),
+    do: Request.post(auth, "customers.json", customer)
 
   @doc """
   Updates a customer.
@@ -66,9 +62,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.update(auth, map)
       {:ok, {"customer" => %{}}
   """
-  def update(%AuthToken{} = auth, %{customer: %{id: customer_id}} = customer) do
-    Request.put(auth, "customers/#{customer_id}.json", customer)
-  end
+  def update(%AuthToken{} = auth, %{customer: %{id: customer_id}} = customer),
+    do: Request.put(auth, "customers/#{customer_id}.json", customer)
 
   @doc """
   Create an account activation URL.
@@ -81,9 +76,8 @@ defmodule ShopifyAPI.REST.Customer do
   def create_activation_url(
         %AuthToken{} = auth,
         %{customer: %{id: customer_id}} = customer
-      ) do
-    Request.post(auth, "customers/#{customer_id}/account_activation.json", customer)
-  end
+      ),
+      do: Request.post(auth, "customers/#{customer_id}/account_activation.json", customer)
 
   @doc """
   Send an account invite to customer.
@@ -93,9 +87,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.sendInvite(auth, integer)
       {:ok, {"customer_invite" => %{}}
   """
-  def send_invite(%AuthToken{} = auth, customer_id) do
-    Request.post(auth, "customers/#{customer_id}/send_invite.json")
-  end
+  def send_invite(%AuthToken{} = auth, customer_id),
+    do: Request.post(auth, "customers/#{customer_id}/send_invite.json")
 
   @doc """
   Delete a customer.
@@ -105,9 +98,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.delete(auth, integer)
       {:ok, 200 }
   """
-  def delete(%AuthToken{} = auth, customer_id) do
-    Request.delete(auth, "customers/#{customer_id}")
-  end
+  def delete(%AuthToken{} = auth, customer_id),
+    do: Request.delete(auth, "customers/#{customer_id}")
 
   @doc """
   Return a count of all customers.
@@ -117,9 +109,7 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.count(auth)
       {:ok, {"count" => integer }}
   """
-  def count(%AuthToken{} = auth) do
-    Request.get(auth, "customers/count.json")
-  end
+  def count(%AuthToken{} = auth), do: Request.get(auth, "customers/count.json")
 
   @doc """
   Return all orders from a customer.
@@ -129,7 +119,6 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.GetOrder(auth, integer)
       {:ok, {"orders" => [] }}
   """
-  def get_orders(%AuthToken{} = auth, customer_id) do
-    Request.get(auth, "customers/#{customer_id}/orders.json")
-  end
+  def get_orders(%AuthToken{} = auth, customer_id),
+    do: Request.get(auth, "customers/#{customer_id}/orders.json")
 end

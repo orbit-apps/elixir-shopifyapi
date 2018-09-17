@@ -14,9 +14,7 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.all(auth)
       {:ok, { "reports" => [] }}
   """
-  def all(%AuthToken{} = auth) do
-    Request.get(auth, "reports.json")
-  end
+  def all(%AuthToken{} = auth), do: Request.get(auth, "reports.json")
 
   @doc """
   Return a single report.
@@ -26,9 +24,7 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.get(auth, integer)
       {:ok, { "report" => %{} }}
   """
-  def get(%AuthToken{} = auth, report_id) do
-    Request.get(auth, "reports/#{report_id}.json")
-  end
+  def get(%AuthToken{} = auth, report_id), do: Request.get(auth, "reports/#{report_id}.json")
 
   @doc """
   Create a new report.
@@ -38,9 +34,8 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.create(auth, map)
       {:ok, { "report" => %{} }}
   """
-  def create(%AuthToken{} = auth, %{report: %{}} = report) do
-    Request.post(auth, "reports.json", report)
-  end
+  def create(%AuthToken{} = auth, %{report: %{}} = report),
+    do: Request.post(auth, "reports.json", report)
 
   @doc """
   Update a report.
@@ -50,9 +45,8 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.update(auth, map)
       {:ok, { "report" => %{} }}
   """
-  def update(%AuthToken{} = auth, %{report: %{id: report_id}} = report) do
-    Request.put(auth, "reports/#{report_id}.json", report)
-  end
+  def update(%AuthToken{} = auth, %{report: %{id: report_id}} = report),
+    do: Request.put(auth, "reports/#{report_id}.json", report)
 
   @doc """
   Delete.
@@ -62,7 +56,6 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.Delete(auth)
       {:ok, 200 }}
   """
-  def delete(%AuthToken{} = auth, report_id) do
-    Request.delete(auth, "reports/#{report_id}.json")
-  end
+  def delete(%AuthToken{} = auth, report_id),
+    do: Request.delete(auth, "reports/#{report_id}.json")
 end

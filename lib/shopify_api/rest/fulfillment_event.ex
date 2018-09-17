@@ -14,9 +14,8 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
       iex> ShopifyAPI.REST.FulfillmentEvent.all(auth, string, string)
       {:ok, { "fulfillment_events" => [] }}
   """
-  def all(%AuthToken{} = auth, order_id, fulfillment_id) do
-    Request.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}/events.json")
-  end
+  def all(%AuthToken{} = auth, order_id, fulfillment_id),
+    do: Request.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}/events.json")
 
   @doc """
   Get a single fulfillment event.
@@ -26,9 +25,12 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
       iex> ShopifyAPI.REST.FulfillmentEvent.get(auth, string, string, string)
       {:ok, { "fulfillment_event" => %{} }}
   """
-  def get(%AuthToken{} = auth, order_id, fulfillment_id, event_id) do
-    Request.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}/events/#{event_id}.json")
-  end
+  def get(%AuthToken{} = auth, order_id, fulfillment_id, event_id),
+    do:
+      Request.get(
+        auth,
+        "orders/#{order_id}/fulfillments/#{fulfillment_id}/events/#{event_id}.json"
+      )
 
   @doc """
   Create a new fulfillment event.

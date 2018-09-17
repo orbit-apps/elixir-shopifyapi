@@ -15,9 +15,8 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       iex> ShopifyAPI.REST.CustomerAddress.all(auth, string)
       {:ok, %{ "addresses" => [] }}
   """
-  def all(%AuthToken{} = auth, customer_id) do
-    Request.get(auth, "customers/#{customer_id}/addresses.json")
-  end
+  def all(%AuthToken{} = auth, customer_id),
+    do: Request.get(auth, "customers/#{customer_id}/addresses.json")
 
   @doc """
   Return a single address for a customer.
@@ -27,9 +26,8 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       iex> ShopifyAPI.REST.CustomerAddress.get(auth, string, string)
       {:ok, %{ "customer_address" => %{} }}
   """
-  def get(%AuthToken{} = auth, customer_id, address_id) do
-    Request.get(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
-  end
+  def get(%AuthToken{} = auth, customer_id, address_id),
+    do: Request.get(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
 
   @doc """
   Create a new address for a customer.
@@ -39,9 +37,8 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       iex> ShopifyAPI.REST.CustomerAddress.create(auth, string, map)
       {:ok, %{ "customer_address" => %{} }}
   """
-  def create(%AuthToken{} = auth, customer_id, %{address: %{}} = address) do
-    Request.post(auth, "customers/#{customer_id}/addresses.json", address)
-  end
+  def create(%AuthToken{} = auth, customer_id, %{address: %{}} = address),
+    do: Request.post(auth, "customers/#{customer_id}/addresses.json", address)
 
   @doc """
   Update an existing customer address.
@@ -71,9 +68,8 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       iex> ShopifyAPI.REST.CustomerAddress.delete(auth, string, string)
       {:ok, 200 }
   """
-  def delete(%AuthToken{} = auth, customer_id, address_id) do
-    Request.delete(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
-  end
+  def delete(%AuthToken{} = auth, customer_id, address_id),
+    do: Request.delete(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
 
   @doc """
   Perform bulk operations for multiple customer addresses.

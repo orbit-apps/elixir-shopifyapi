@@ -20,9 +20,7 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.all(token, atom, integer)
     {:ok, %{ "metafields" => [] }}
   """
-  def all(%AuthToken{} = auth, type, id) do
-    Request.get(auth, resource_path(type, id))
-  end
+  def all(%AuthToken{} = auth, type, id), do: Request.get(auth, resource_path(type, id))
 
   @doc """
   Return a count of metafields that belong to a Shop resource.
@@ -32,9 +30,7 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.count(token)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth) do
-    Request.get(auth, "metafields/count.json")
-  end
+  def count(%AuthToken{} = auth), do: Request.get(auth, "metafields/count.json")
 
   @doc """
   Return a count that belong to a resource and its metafields.
@@ -44,9 +40,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.count(token, atom, integer)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth, type, resource_id) do
-    Request.get(auth, resource_path(type, resource_id))
-  end
+  def count(%AuthToken{} = auth, type, resource_id),
+    do: Request.get(auth, resource_path(type, resource_id))
 
   @doc """
   Return a list of metafields for a resource by it's ID.
@@ -56,9 +51,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.get(token, atom, integer)
     {:ok, %{ "metafields" => [] }}
   """
-  def get(%AuthToken{} = auth, type, resource_id) do
-    Request.get(auth, resource_path(type, resource_id))
-  end
+  def get(%AuthToken{} = auth, type, resource_id),
+    do: Request.get(auth, resource_path(type, resource_id))
 
   @doc """
   Creates a new metafield.
@@ -68,9 +62,7 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.create(token, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def create(%AuthToken{} = auth, metafield) do
-    Request.post(auth, "metafields.json", metafield)
-  end
+  def create(%AuthToken{} = auth, metafield), do: Request.post(auth, "metafields.json", metafield)
 
   @doc """
   Creates a new metafield for a resource.
@@ -80,9 +72,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.create(token, atom, integer, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def create(%AuthToken{} = auth, type, resource_id, metafield) do
-    Request.post(auth, resource_path(type, resource_id), metafield)
-  end
+  def create(%AuthToken{} = auth, type, resource_id, metafield),
+    do: Request.post(auth, resource_path(type, resource_id), metafield)
 
   @doc """
   Update a metafield.
@@ -92,9 +83,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.update(token, atom, integer, map)
     {:ok, %{ "metafield" => %{} }}
   """
-  def update(%AuthToken{} = auth, type, resource_id, %{metafield: %{id: id}} = metafield) do
-    Request.put(auth, resource_path(type, resource_id, id), metafield)
-  end
+  def update(%AuthToken{} = auth, type, resource_id, %{metafield: %{id: id}} = metafield),
+    do: Request.put(auth, resource_path(type, resource_id, id), metafield)
 
   @doc """
   Delete a metafield by its Metafield ID.
@@ -104,9 +94,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.update(token, integer)
     {:ok, %{ "metafield" => %{} }}
   """
-  def delete(%AuthToken{} = auth, metafield_id) do
-    Request.delete(auth, resource_path(:metafield, metafield_id))
-  end
+  def delete(%AuthToken{} = auth, metafield_id),
+    do: Request.delete(auth, resource_path(:metafield, metafield_id))
 
   ## Private
 
