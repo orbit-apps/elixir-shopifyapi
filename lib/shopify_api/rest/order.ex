@@ -4,6 +4,8 @@ defmodule ShopifyAPI.REST.Order do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST.Request
 
+  @shopify_per_page_max 2
+
   @doc """
     Return a single Order.
   """
@@ -71,4 +73,6 @@ defmodule ShopifyAPI.REST.Order do
   """
   def cancel(%AuthToken{} = auth, order_id),
     do: Request.post(auth, "orders/#{order_id}/cancel.json")
+
+  def max_per_page, do: @shopify_per_page_max
 end
