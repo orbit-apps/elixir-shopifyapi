@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.Order do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST.Request
 
-  @shopify_per_page_max 2
+  @shopify_per_page_max 25
 
   @doc """
     Return a single Order.
