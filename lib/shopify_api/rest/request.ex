@@ -19,6 +19,8 @@ defmodule ShopifyAPI.REST.Request do
     @transport "http://"
   end
 
+  @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
+
   @spec get(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
   def get(auth, path), do: shopify_request(:get, url(auth, path), "", headers(auth), auth)
 
@@ -36,7 +38,7 @@ defmodule ShopifyAPI.REST.Request do
   defp shopify_request(action, url, body, headers, token) do
     Throttled.request(
       fn ->
-        case request(action, url, body, headers) do
+        case request(action, url, body, headers, recv_timeout: @http_receive_timeout) do
           {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
             # TODO probably have to return the response here if we want to use the headers
             ThrottleServer.update_api_call_limit(response, token)
