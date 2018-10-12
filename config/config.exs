@@ -30,6 +30,8 @@ config :shopify_api, ShopifyAPI.Webhook, %{
   uri: "https://example.com/shop/webhook"
 }
 
+config :shopify_api, http_timeout: 5000
+
 config :exq,
   host: "127.0.0.1",
   port: 6379,
