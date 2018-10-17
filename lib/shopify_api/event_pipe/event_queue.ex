@@ -2,6 +2,8 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
   alias ShopifyAPI.AuthToken
 
+  @retry_timer 250
+
   def enqueue(%{destination: :application} = event),
     do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event)
 
@@ -55,14 +57,13 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   end
 
   def register(token) do
-    Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
-
     case GenServer.whereis(Exq) do
       nil ->
-        :timer.sleep(500)
+        :timer.sleep(@retry_timer)
         register(token)
 
       _res ->
+        Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
         Exq.subscribe(Exq, AuthToken.create_key(token), 1)
     end
   end
