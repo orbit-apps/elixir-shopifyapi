@@ -4,34 +4,41 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   @retry_timer 250
 
-  def enqueue(%{destination: :application} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event)
+  @doc """
+  Event enqueue end point, takes the event and the options to be passed on to Exq.
 
-  def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event)
+  options: [max_retries: #] or any Exq valid enqueue option.
+  """
+  def enqueue(event, opts \\ [])
 
-  def enqueue(%{destination: :shopify, object: %{inventory_level: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.InventoryLevelWorker, event)
+  def enqueue(%{destination: :application} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{location: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.LocationWorker, event)
+  def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{metafield: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event)
+  def enqueue(%{destination: :shopify, object: %{inventory_level: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.InventoryLevelWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{product: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event)
+  def enqueue(%{destination: :shopify, object: %{location: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.LocationWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{tender_transaction: _}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.TenderTransactionWorker, event)
+  def enqueue(%{destination: :shopify, object: %{metafield: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{transaction: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.TransactionWorker, event)
+  def enqueue(%{destination: :shopify, object: %{product: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{variant: %{}}} = event),
-    do: enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event)
+  def enqueue(%{destination: :shopify, object: %{tender_transaction: _}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.TenderTransactionWorker, event, opts)
 
-  def enqueue(event) do
+  def enqueue(%{destination: :shopify, object: %{transaction: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.TransactionWorker, event, opts)
+
+  def enqueue(%{destination: :shopify, object: %{variant: %{}}} = event, opts),
+    do: enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event, opts)
+
+  def enqueue(event, _opts) do
     Logger.warn(fn ->
       "#{__MODULE__} does not know what worker should handle #{inspect(event)}"
     end)
@@ -39,20 +46,20 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     {:error, "No worker to handle this event"}
   end
 
-  defp enqueue_event(worker, %{token: %AuthToken{} = token} = event) do
+  defp enqueue_event(worker, %{token: %AuthToken{} = token} = event, opts) do
     Logger.info(fn -> "Enqueueing[#{inspect(token)}] #{inspect(event)}" end)
-    Exq.enqueue(Exq, AuthToken.create_key(token), worker, [event])
+    Exq.enqueue(Exq, AuthToken.create_key(token), worker, [event], opts)
     {:ok}
   end
 
-  defp enqueue_event(_worker, %{token: token} = _event) do
+  defp enqueue_event(_worker, %{token: token} = _event, _) do
     Logger.error(fn -> "Unable to create token from #{inspect(token)}" end)
     {:error, "Token needs to be an AuthToken.t"}
   end
 
-  defp enqueue_event(worker, event) do
+  defp enqueue_event(worker, event, opts) do
     Logger.warn(fn -> "Enqueueing in default queue #{inspect(event)}" end)
-    Exq.enqueue(Exq, "default", worker, [event])
+    Exq.enqueue(Exq, "default", worker, [event], opts)
     {:ok}
   end
 
