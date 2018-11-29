@@ -46,7 +46,8 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 1.0"},
       {:plug, "~> 1.0"},
-      {:poison, "~> 3.1"}
+      {:poison, "~> 3.1"},
+      {:stream_data, "~> 0.4.2", only: :test}
     ]
   end
 end
