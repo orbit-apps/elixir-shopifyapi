@@ -48,6 +48,9 @@ defmodule ShopifyAPI.REST.Tag do
     |> encode()
   end
 
+  def value({_, value}), do: value
+  def value(value), do: value
+
   defp apply_separator(value, _separator) when is_binary(value), do: value
   defp apply_separator({value}, _separator), do: value
 
