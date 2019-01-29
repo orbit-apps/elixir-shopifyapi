@@ -32,11 +32,11 @@ defmodule ShopifyAPI.REST.Refund do
 
   ## Example
 
-      iex> ShopifyAPI.REST.Refund.calculate(auth, integer)
+      iex> ShopifyAPI.REST.Refund.calculate(auth, integer, map)
       {:ok, { "refund" => %{} }}
   """
-  def calculate(%AuthToken{} = auth, order_id),
-    do: Request.post(auth, "orders/#{order_id}/refunds/calculate.json")
+  def calculate(%AuthToken{} = auth, order_id, %{refund: %{}} = refund),
+    do: Request.post(auth, "orders/#{order_id}/refunds/calculate.json", refund)
 
   @doc """
   Create a refund.
