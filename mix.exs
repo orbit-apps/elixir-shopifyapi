@@ -1,7 +1,7 @@
 defmodule Plug.ShopifyAPI.MixProject do
   use Mix.Project
 
-  @version "0.1.55"
+  @version "0.1.56"
 
   def project do
     [
@@ -41,8 +41,8 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
       {:ex_doc, "~> 0.19.1", only: [:dev], runtime: false},
-      {:exq, "~> 0.12.0"},
-      {:exq_atomize_job_arguments, github: "pixelunion/exq-atomize-job-arguments", tag: "0.1.1"},
+      {:exq, "~> 0.13.0"},
+      {:exq_atomize_job_arguments, github: "pixelunion/exq-atomize-job-arguments", tag: "v0.1.2"},
       {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 1.0"},
       {:plug, "~> 1.0"},
