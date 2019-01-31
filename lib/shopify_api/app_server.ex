@@ -6,10 +6,10 @@ defmodule ShopifyAPI.AppServer do
 
   def start_link(_opts) do
     Logger.info(fn -> "Starting #{__MODULE__}..." end)
-    state = Application.get_env(:shopify_api, ShopifyAPI.AppServer)
-    state = for {k, v} <- state, into: %{}, do: {k, struct(ShopifyAPI.App, v)}
-    Logger.info(fn -> "#{__MODULE__} loaded with #{inspect(state)}" end)
-    GenServer.start_link(__MODULE__, state, name: @name)
+
+    pid = GenServer.start_link(__MODULE__, %{}, name: @name)
+    call_initializer(app_server_config(:initializer))
+    pid
   end
 
   def all, do: GenServer.call(@name, :all)
@@ -39,6 +39,9 @@ defmodule ShopifyAPI.AppServer do
         end
       end)
 
+    # TODO should this be in a seperate process? It could tie up the GenServer
+    persist(app_server_config(:persistance), name, Map.get(new_state, name))
+
     {:noreply, new_state}
   end
 
@@ -50,4 +53,16 @@ defmodule ShopifyAPI.AppServer do
 
   @impl true
   def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
+
+  def app_server_config(key), do: Application.get_env(:shopify_api, ShopifyAPI.AppServer)[key]
+
+  def call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
+    do: apply(module, function, [])
+
+  defp call_initializer(_), do: %{}
+
+  defp persist({module, function, _}, key, value) when is_atom(module) and is_atom(function),
+    do: apply(module, function, [key, value])
+
+  defp persist(_, _, _), do: nil
 end

@@ -9,11 +9,10 @@ defmodule ShopifyAPI.ShopServer do
 
   def start_link(_opts) do
     Logger.info(fn -> "Starting #{__MODULE__}..." end)
-    # TODO have some sane way to handle this config not existing
-    state = Application.get_env(:shopify_api, ShopifyAPI.ShopServer)
-    state = for {k, v} <- state, into: %{}, do: {k, struct(Shop, v)}
-    Logger.info(fn -> "#{__MODULE__} started with #{inspect(state)}" end)
-    GenServer.start_link(__MODULE__, state, name: @name)
+
+    pid = GenServer.start_link(__MODULE__, %{}, name: @name)
+    call_initializer(shop_server_config(:initializer))
+    pid
   end
 
   def all, do: GenServer.call(@name, :all)
@@ -38,6 +37,9 @@ defmodule ShopifyAPI.ShopServer do
   def handle_cast({:set, domain, new_values}, %{} = state) do
     new_state = Map.update(state, domain, %Shop{domain: domain}, &Map.merge(&1, new_values))
 
+    # TODO should this be in a seperate process? It could tie up the GenServer
+    persist(shop_server_config(:persistance), domain, Map.get(new_state, domain))
+
     {:noreply, new_state}
   end
 
@@ -49,4 +51,16 @@ defmodule ShopifyAPI.ShopServer do
 
   @impl true
   def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
+
+  def shop_server_config(key), do: Application.get_env(:shopify_api, ShopifyAPI.ShopServer)[key]
+
+  def call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
+    do: apply(module, function, [])
+
+  def call_initializer(_), do: %{}
+
+  defp persist({module, function, _}, key, value) when is_atom(module) and is_atom(function),
+    do: apply(module, function, [key, value])
+
+  defp persist(_, _, _), do: nil
 end
