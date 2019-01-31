@@ -70,12 +70,10 @@ defmodule ShopifyAPI.Plugs.Webhook do
     end
   end
 
-  defp fetch_app_name(conn) do
-    List.last(conn.path_info)
-  end
+  defp fetch_app_name(conn), do: List.last(conn.path_info)
 
   defp fetch_app(conn) do
-    case conn |> fetch_app_name |> AppServer.get() do
+    case conn |> fetch_app_name() |> AppServer.get() do
       {:ok, app} ->
         Conn.assign(conn, :app, app)
 
