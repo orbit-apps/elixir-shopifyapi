@@ -7,9 +7,7 @@ defmodule ShopifyAPI.AppServer do
   def start_link(_opts) do
     Logger.info(fn -> "Starting #{__MODULE__}..." end)
 
-    pid = GenServer.start_link(__MODULE__, %{}, name: @name)
-    call_initializer(app_server_config(:initializer))
-    pid
+    GenServer.start_link(__MODULE__, %{}, name: @name)
   end
 
   def all, do: GenServer.call(@name, :all)
@@ -26,7 +24,12 @@ defmodule ShopifyAPI.AppServer do
   #
 
   @impl true
-  def init(state), do: {:ok, state}
+  def init(state), do: {:ok, state, {:continue, :initialize}}
+
+  @impl true
+  @callback handle_cast(atom, map) :: tuple
+  def handle_continue(:initialize, state),
+    do: {:noreply, call_initializer(app_server_config(:initializer))}
 
   @impl true
   @callback handle_cast(map, map) :: tuple
@@ -54,9 +57,9 @@ defmodule ShopifyAPI.AppServer do
   @impl true
   def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
 
-  def app_server_config(key), do: Application.get_env(:shopify_api, ShopifyAPI.AppServer)[key]
+  defp app_server_config(key), do: Application.get_env(:shopify_api, ShopifyAPI.AppServer)[key]
 
-  def call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
+  defp call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
     do: apply(module, function, [])
 
   defp call_initializer(_), do: %{}
