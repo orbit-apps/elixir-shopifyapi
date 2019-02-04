@@ -41,7 +41,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
     %Event{
       destination: :client,
       app: conn.assigns.app,
-      shop: conn.assigns.shop,
+      shop: Map.get(conn.assigns, :shop),
       action: conn.assigns.shopify_event,
       object: conn.body_params
     }
@@ -61,7 +61,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   end
 
   defp fetch_shop(conn) do
-    case conn |> fetch_shop_name |> ShopServer.get() do
+    case conn |> fetch_shop_name() |> ShopServer.get() do
       {:ok, shop} ->
         Conn.assign(conn, :shop, shop)
 
@@ -70,12 +70,10 @@ defmodule ShopifyAPI.Plugs.Webhook do
     end
   end
 
-  defp fetch_app_name(conn) do
-    List.last(conn.path_info)
-  end
+  defp fetch_app_name(conn), do: List.last(conn.path_info)
 
   defp fetch_app(conn) do
-    case conn |> fetch_app_name |> AppServer.get() do
+    case conn |> fetch_app_name() |> AppServer.get() do
       {:ok, app} ->
         Conn.assign(conn, :app, app)
 

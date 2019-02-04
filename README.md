@@ -6,13 +6,6 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `shopify_api` to your list of dependencies in `mix.exs` and add the application to the `extra_applications`:
 
 ```elixir
-def application do
-  [
-    mod: {...}
-    extra_applications: [..., :shopify_api]
-  ]
-end
-
 def deps do
   [
     {:shopify_api, "~> 0.1.0"}
@@ -22,19 +15,32 @@ end
 
 Add it to your phoenix routes.
 
-```
+```elixir
 scope "/shop" do
   forward("/", ShopifyAPI.Router)
 end
 ```
 
 If you want to be able to handle webhooks you need to add this to your endpoint before the parsers section
-```
+```elixir
 plug(ShopifyAPI.Plugs.Webhook, mount: "/shop/webhooks")
 ```
 
-Optional, add graphiql to your phoenix routes
+If you want persisted Apps, Shops, and Tokens add configuration to your functions.
+```elixir
+config :shopify_api, ShopifyAPI.AuthTokenServer,
+  initializer: {MyApp.AuthToken, :init, []},
+  persistance: {MyApp.AuthToken, :save, []}
+config :shopify_api, ShopifyAPI.AppServer,
+  initializer: {MyApp.ShopifyApp, :init, []},
+  persistance: {MyApp.ShopifyApp, :save, []}
+config :shopify_api, ShopifyAPI.ShopServer,
+  initializer: {MyApp.Shop, :init, []},
+  persistance: {MyApp.Shop, :save, []}
 ```
+
+Optional, add graphiql to your phoenix routes
+```elixir
 if Mix.env == :dev do
   forward(
     "/graphiql",
