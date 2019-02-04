@@ -31,9 +31,16 @@ defmodule ShopifyAPI.ShopServer do
   def init(state), do: {:ok, state, {:continue, :initialize}}
 
   @impl true
-  @callback handle_cast(atom, map) :: tuple
-  def handle_continue(:initialize, state),
-    do: {:noreply, call_initializer(shop_server_config(:initializer))}
+  @callback handle_continue(atom, map) :: tuple
+  def handle_continue(:initialize, state) do
+    new_state =
+      :initializer
+      |> shop_server_config()
+      |> call_initializer()
+      |> Enum.reduce(%{}, &Map.put(&2, &1.domain, &1))
+
+    {:noreply, new_state}
+  end
 
   @impl true
   @callback handle_cast(map, map) :: tuple
