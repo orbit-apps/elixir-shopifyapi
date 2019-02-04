@@ -33,7 +33,7 @@ defmodule ShopifyAPI.AppServer do
       :initializer
       |> app_server_config()
       |> call_initializer()
-      |> Enum.reduce(%{}, &Map.put(&2, &1.name, &1))
+      |> Enum.reduce(state, &Map.put(&2, &1.name, &1))
 
     {:noreply, new_state}
   end
@@ -69,7 +69,7 @@ defmodule ShopifyAPI.AppServer do
   defp call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
     do: apply(module, function, [])
 
-  defp call_initializer(_), do: %{}
+  defp call_initializer(_), do: []
 
   defp persist({module, function, _}, key, value) when is_atom(module) and is_atom(function),
     do: apply(module, function, [key, value])
