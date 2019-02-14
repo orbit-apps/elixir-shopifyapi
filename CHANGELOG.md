@@ -1,3 +1,7 @@
+## 0.2.2
+
+- REST.Metafield.all/1 fix
+
 ## 0.2.1
 
 - Fix bug in server initialization params, make AuthTokenServers init match the other servers
