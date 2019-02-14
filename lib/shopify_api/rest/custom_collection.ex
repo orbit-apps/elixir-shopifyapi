@@ -28,7 +28,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
   Return a single custom collection.
 
   ## Example
-      iex> ShopifyAPI.REST.CustomCollection.get(token, string)
+      iex> ShopifyAPI.REST.CustomCollection.get(auth, string)
       {:ok, %{ "custom_collections" => %{} }}
   """
   def get(%AuthToken{} = auth, custom_collection_id),
@@ -38,7 +38,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
   Create a custom collection.
 
   ## Example
-      iex> ShopifyAPI.REST.CustomCollection.create(token, map)
+      iex> ShopifyAPI.REST.CustomCollection.create(auth, map)
       {:ok, %{ "custom_collection" => %{} }}
   """
   def create(%AuthToken{} = auth, %{custom_collection: %{}} = custom_collection),
@@ -48,7 +48,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
   Update an existing custom collection.
 
   ## Example
-      iex> ShopifyAPI.REST.CustomCollection.update(token, string, map)
+      iex> ShopifyAPI.REST.CustomCollection.update(auth, string, map)
       {:ok, %{ "custom_collection" => %{} }}
   """
   def update(
@@ -61,7 +61,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
   Delete a custom collection.
 
   ## Example
-      iex> ShopifyAPI.REST.CustomCollection.delete(token, string)
+      iex> ShopifyAPI.REST.CustomCollection.delete(auth, string)
       {:ok, %{ "response": 200 }}
   """
   def delete(%AuthToken{} = auth, custom_collection_id),

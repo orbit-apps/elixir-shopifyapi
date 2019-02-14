@@ -28,7 +28,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
   Return a single SmartCollection.
 
   ## Example
-      iex> ShopifyAPI.REST.SmartCollection.get(token, string)
+      iex> ShopifyAPI.REST.SmartCollection.get(auth, string)
       {:ok, %{ "smart_collection" => %{} }}
   """
   def get(%AuthToken{} = auth, smart_collection_id),
@@ -38,7 +38,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
   Create a SmartCollection.
 
   ## Example
-      iex> ShopifyAPI.REST.SmartCollection.create(token, map)
+      iex> ShopifyAPI.REST.SmartCollection.create(auth, map)
       {:ok, %{ "smart_collection" => %{} }}
   """
   def create(%AuthToken{} = auth, %{smart_collection: %{}} = smart_collection),
@@ -48,7 +48,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
   Update an existing SmartCollection.
 
   ## Example
-      iex> ShopifyAPI.REST.SmartCollection.update(token, map)
+      iex> ShopifyAPI.REST.SmartCollection.update(auth, map)
       {:ok, %{ "smart_collection" => %{} }}
   """
   def update(
@@ -61,7 +61,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
   Delete a SmartCollection.
 
   ## Example
-      iex> ShopifyAPI.REST.SmartCollection.delete(token, string)
+      iex> ShopifyAPI.REST.SmartCollection.delete(auth, string)
       {:ok, %{ "response": 200 }}
   """
   def delete(%AuthToken{} = auth, smart_collection_id),
