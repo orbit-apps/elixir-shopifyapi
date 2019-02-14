@@ -17,10 +17,10 @@ defmodule ShopifyAPI.REST.Metafield do
 
   ## Example
 
-    iex> ShopifyAPI.REST.Metafields.all(token, atom, integer)
+    iex> ShopifyAPI.REST.Metafields.all(auth)
     {:ok, %{ "metafields" => [] }}
   """
-  def all(%AuthToken{} = auth, type, id), do: Request.get(auth, resource_path(type, id))
+  def all(%AuthToken{} = auth), do: Request.get(auth, "metafields.json")
 
   @doc """
   Return a count of metafields that belong to a Shop resource.
