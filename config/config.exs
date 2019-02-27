@@ -33,6 +33,7 @@ config :shopify_api, ShopifyAPI.Webhook, %{
 config :shopify_api, http_timeout: 5000
 
 config :exq,
+  json_library: Jason,
   host: "127.0.0.1",
   port: 6379,
   namespace: "shopify",
