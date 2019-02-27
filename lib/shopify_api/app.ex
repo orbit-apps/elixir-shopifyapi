@@ -2,6 +2,8 @@ defmodule ShopifyAPI.App do
   @moduledoc """
     ShopifyAPI.App contains logic and a struct for representing a Shopify App.
   """
+  @derive {Jason.Encoder,
+           only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
   defstruct name: "",
             client_id: "",
             client_secret: "",
