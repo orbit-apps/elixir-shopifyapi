@@ -1,4 +1,5 @@
 defmodule ShopifyAPI.AuthToken do
+  @derive {Jason.Encoder, only: [:code, :app_name, :shop_name, :token, :timestamp, :plus]}
   defstruct code: "",
             app_name: "",
             shop_name: "",

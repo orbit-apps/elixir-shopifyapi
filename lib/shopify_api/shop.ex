@@ -1,6 +1,7 @@
 defmodule ShopifyAPI.Shop do
   alias ShopifyAPI.AuthToken
 
+  @derive {Jason.Encoder, only: [:domain]}
   defstruct domain: ""
 
   @typedoc """

@@ -1,3 +1,7 @@
+## Unreleased
+
+- Updated to Exq 0.13.1
+
 ## 0.2.2
 
 - REST.Metafield.all/1 fix
