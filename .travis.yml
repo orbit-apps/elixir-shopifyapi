@@ -9,7 +9,6 @@ notifications:
 env:
   - MIX_ENV=test
 script:
-  - mix format --check-formatted
-  - mix credo
+  - mix deps.get
   - mix test
 #- mix coveralls.travis
