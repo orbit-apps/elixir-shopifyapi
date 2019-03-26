@@ -1,12 +1,16 @@
 defmodule ShopifyAPI.Plugs.Webhook do
+  @moduledoc """
+  The ShopifyAPI.Plugs.Webhook plug handles incoming Shopify Webhook calls.  The incoming requests
+  get fired off to the :shopify_api :webhook_filter {module, function, _} setting getting passed a
+  ShopifyAPI.EventPipe.Event.t.
+  """
   import Plug.Conn
   require Logger
 
   alias Plug.Conn
-
-  alias ShopifyAPI.{AppServer, Security, ShopServer}
-
+  alias ShopifyAPI.ConnHelpers
   alias ShopifyAPI.EventPipe.Event
+  alias ShopifyAPI.Security
 
   def init(opts), do: opts
 
@@ -14,13 +18,13 @@ defmodule ShopifyAPI.Plugs.Webhook do
     mount = Keyword.get(options, :mount)
 
     if String.starts_with?(conn.request_path, mount) do
-      conn =
-        conn
-        |> fetch_shop
-        |> fetch_app
-        |> fetch_event
-
-      case verify_and_parse(conn) do
+      conn
+      |> ConnHelpers.assign_app()
+      |> ConnHelpers.assign_shop()
+      |> ConnHelpers.assign_auth_token()
+      |> ConnHelpers.assign_event()
+      |> verify_and_parse()
+      |> case do
         {:ok, conn} ->
           {module, function, _} = Application.get_env(:shopify_api, :webhook_filter)
           apply(module, function, [generate_event(conn)])
@@ -47,51 +51,16 @@ defmodule ShopifyAPI.Plugs.Webhook do
     }
   end
 
-  defp fetch_event(conn) do
-    with list_of_topics <- Conn.get_req_header(conn, "x-shopify-topic"),
-         topic <- List.first(list_of_topics) do
-      Conn.assign(conn, :shopify_event, topic)
-    end
-  end
-
-  defp fetch_shop_name(conn) do
-    conn
-    |> Conn.get_req_header("x-shopify-shop-domain")
-    |> List.first()
-  end
-
-  defp fetch_shop(conn) do
-    case conn |> fetch_shop_name() |> ShopServer.get() do
-      {:ok, shop} ->
-        Conn.assign(conn, :shop, shop)
-
-      _ ->
-        conn
-    end
-  end
-
-  defp fetch_app_name(conn), do: List.last(conn.path_info)
-
-  defp fetch_app(conn) do
-    case conn |> fetch_app_name() |> AppServer.get() do
-      {:ok, app} ->
-        Conn.assign(conn, :app, app)
-
-      _ ->
-        conn
-    end
-  end
-
   defp verify_and_parse(conn) do
     with %{client_secret: secret} <- conn.assigns.app,
          {:ok, content, conn} <- read_body(conn),
          signature <- List.first(get_req_header(conn, "x-shopify-hmac-sha256")),
          _ <-
-           Logger.info(fn ->
+           Logger.info(
              "#{__MODULE__} actual body hmac is: #{
                inspect(Security.base64_sha256_hmac(content, secret))
              }"
-           end),
+           ),
          ^signature <- Security.base64_sha256_hmac(content, secret),
          {:ok, params} <- Poison.decode(content) do
       {:ok, Map.put(conn, :body_params, params)}

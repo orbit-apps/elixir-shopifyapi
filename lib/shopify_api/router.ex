@@ -1,27 +1,30 @@
 defmodule ShopifyAPI.Router do
-  require Logger
   use Plug.Router
+  require Logger
 
+  # alias Absinthe.Plug
   alias GraphQL.Config.Schema
-  alias Plug.{Conn, Debugger}
-
-  alias Absinthe.Plug
-
-  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security}
-
+  alias Plug.Conn
+  alias Plug.Debugger
+  alias ShopifyAPI.App
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.AuthTokenServer
+  alias ShopifyAPI.ConnHelpers
   alias ShopifyAPI.EventPipe.EventQueue
 
   plug(:match)
   plug(:dispatch)
 
-  if Mix.env() == :dev do
-    use Debugger
-  end
+  #  if Mix.env() == :dev do
+  #    use Debugger
+  #  end
 
   get "/install" do
-    case fetch_shopify_app(conn) do
+    conn
+    |> ConnHelpers.fetch_shopify_app()
+    |> case do
       {:ok, app} ->
-        install_url = App.install_url(app, shop_domain(conn))
+        install_url = App.install_url(app, ConnHelpers.shop_domain(conn))
 
         conn
         |> Conn.put_resp_header("location", install_url)
@@ -29,7 +32,7 @@ defmodule ShopifyAPI.Router do
         |> Conn.halt()
 
       res ->
-        Logger.info(fn -> "#{__MODULE__} failed install with: #{res}" end)
+        Logger.info("#{__MODULE__} failed install with: #{res}")
 
         conn
         |> Conn.resp(404, "Not Found.")
@@ -39,12 +42,12 @@ defmodule ShopifyAPI.Router do
 
   # Shopify Callback on App authorization
   get "/authorized/:app" do
-    Logger.info(fn -> "Authorized #{shop_domain(conn)}" end)
+    Logger.info("Authorized #{ConnHelpers.shop_domain(conn)}")
 
-    with {:ok, app} <- fetch_shopify_app(conn),
-         true <- verify_nonce(app, conn.query_params),
-         true <- verify_hmac(app, conn.query_params),
-         {:ok, auth_token} <- fetch_auth_token(conn, app) do
+    with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
+         true <- ConnHelpers.verify_nonce(app, conn.query_params),
+         true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params),
+         {:ok, auth_token} <- request_auth_token(conn, app) do
       enqueue_post_install(auth_token)
       AuthTokenServer.set(auth_token)
 
@@ -53,7 +56,7 @@ defmodule ShopifyAPI.Router do
       |> Conn.halt()
     else
       res ->
-        Logger.info(fn -> "#{__MODULE__} failed authorized with: #{inspect(res)}" end)
+        Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
 
         conn
         |> Conn.resp(404, "Not Found.")
@@ -62,24 +65,7 @@ defmodule ShopifyAPI.Router do
   end
 
   # TODO this should be behind a api token authorization
-  forward("/graphql/config", to: Plug, schema: Schema)
-
-  defp fetch_auth_token(conn, app) do
-    case App.fetch_token(app, shop_domain(conn), auth_code(conn)) do
-      {:ok, token} ->
-        {:ok,
-         %AuthToken{
-           app_name: app_name(conn),
-           shop_name: shop_domain(conn),
-           code: auth_code(conn),
-           timestamp: String.to_integer(conn.query_params["timestamp"]),
-           token: token
-         }}
-
-      _msg ->
-        {:error, "unable to fetch token"}
-    end
-  end
+  # forward("/graphql/config", to: Plug, schema: Schema)
 
   defp enqueue_post_install(token) do
     EventQueue.enqueue(%{
@@ -89,35 +75,22 @@ defmodule ShopifyAPI.Router do
     })
   end
 
-  defp fetch_shopify_app(conn) do
-    conn
-    |> app_name()
-    |> AppServer.get()
-  end
+  defp request_auth_token(conn, app) do
+    app
+    |> App.fetch_token(ConnHelpers.shop_domain(conn), ConnHelpers.auth_code(conn))
+    |> case do
+      {:ok, token} ->
+        {:ok,
+         %AuthToken{
+           app_name: ConnHelpers.app_name(conn),
+           shop_name: ConnHelpers.shop_domain(conn),
+           code: ConnHelpers.auth_code(conn),
+           timestamp: String.to_integer(conn.query_params["timestamp"]),
+           token: token
+         }}
 
-  defp app_name(conn) do
-    conn.params["app"]
-  end
-
-  defp shop_domain(conn) do
-    conn.params["shop"]
-  end
-
-  defp auth_code(conn) do
-    conn.params["code"]
-  end
-
-  defp verify_nonce(%App{nonce: nonce}, params) do
-    nonce == params["state"]
-  end
-
-  defp verify_hmac(%App{client_secret: secret}, params) do
-    params["hmac"] ==
-      params
-      |> Enum.reject(fn x -> elem(x, 0) == "hmac" end)
-      |> Enum.sort_by(&elem(&1, 0))
-      |> Enum.map_every(1, &(elem(&1, 0) <> "=" <> elem(&1, 1)))
-      |> Enum.map_join("&", & &1)
-      |> Security.base16_sha256_hmac(secret)
+      _msg ->
+        {:error, "unable to fetch token"}
+    end
   end
 end
