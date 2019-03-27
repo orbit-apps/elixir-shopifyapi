@@ -26,11 +26,11 @@ defmodule ShopifyAPI.REST.Request do
 
   @spec put(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
   def put(auth, path, object),
-    do: shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth), auth)
+    do: shopify_request(:put, url(auth, path), Jason.encode!(object), headers(auth), auth)
 
   @spec post(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
   def post(auth, path, object \\ %{}),
-    do: shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth), auth)
+    do: shopify_request(:post, url(auth, path), Jason.encode!(object), headers(auth), auth)
 
   @spec delete(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
   def delete(auth, path), do: shopify_request(:delete, url(auth, path), "", headers(auth), auth)
@@ -56,9 +56,7 @@ defmodule ShopifyAPI.REST.Request do
     )
   end
 
-  defp url(%{shop_name: domain}, path) do
-    "#{@transport}#{domain}/admin/#{path}"
-  end
+  defp url(%{shop_name: domain}, path), do: "#{@transport}#{domain}/admin/#{path}"
 
   defp headers(%{token: access_token}) do
     [
@@ -73,7 +71,5 @@ defmodule ShopifyAPI.REST.Request do
          do: body
   end
 
-  def process_response_body(body) do
-    body |> Poison.decode()
-  end
+  def process_response_body(body), do: Jason.decode(body)
 end

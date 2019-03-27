@@ -28,7 +28,7 @@ defmodule ShopifyAPI.REST.ProductTest do
     }
 
     Bypass.expect_once(bypass, "GET", "/admin/products.json", fn conn ->
-      {:ok, body} = Poison.encode(products)
+      {:ok, body} = Jason.encode(products)
       Conn.resp(conn, 200, body)
     end)
 

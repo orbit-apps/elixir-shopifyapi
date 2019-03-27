@@ -93,7 +93,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
              }"
            end),
          ^signature <- Security.base64_sha256_hmac(content, secret),
-         {:ok, params} <- Poison.decode(content) do
+         {:ok, params} <- Jason.decode(content) do
       {:ok, Map.put(conn, :body_params, params)}
     else
       _ ->

@@ -82,7 +82,7 @@ defmodule Test.ShopifyAPI.RouterTest do
 
     test "fetches the token", %{bypass: bypass, shop_domain: shop_domain} do
       Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
-        {:ok, body} = Poison.encode(@token)
+        {:ok, body} = Jason.encode(@token)
         Conn.resp(conn, 200, body)
       end)
 
