@@ -2,13 +2,7 @@ defmodule ShopifyAPI.ConnHelpers do
   require Logger
 
   alias Plug.Conn
-  alias ShopifyAPI.App
-  alias ShopifyAPI.AppServer
-  alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.AuthTokenServer
-  alias ShopifyAPI.Security
-  alias ShopifyAPI.Shop
-  alias ShopifyAPI.ShopServer
+  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security, Shop, ShopServer}
 
   def fetch_shopify_app(conn) do
     conn

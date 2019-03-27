@@ -4,12 +4,8 @@ defmodule ShopifyAPI.Router do
 
   # alias Absinthe.Plug
   alias GraphQL.Config.Schema
-  alias Plug.Conn
-  alias Plug.Debugger
-  alias ShopifyAPI.App
-  alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.AuthTokenServer
-  alias ShopifyAPI.ConnHelpers
+  alias Plug.{Conn, Debugger}
+  alias ShopifyAPI.{App, AuthToken, AuthTokenServer, ConnHelpers}
   alias ShopifyAPI.EventPipe.EventQueue
 
   plug(:match)

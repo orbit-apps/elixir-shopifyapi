@@ -8,9 +8,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
   require Logger
 
   alias Plug.Conn
-  alias ShopifyAPI.ConnHelpers
+  alias ShopifyAPI.{ConnHelpers, Security}
   alias ShopifyAPI.EventPipe.Event
-  alias ShopifyAPI.Security
 
   def init(opts), do: opts
 

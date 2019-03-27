@@ -24,19 +24,14 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   require Logger
 
   alias Plug.Conn
-
-  alias ShopifyAPI.AppServer
-  alias ShopifyAPI.AuthTokenServer
-  alias ShopifyAPI.ConnHelpers
-  alias ShopifyAPI.Security
-  alias ShopifyAPI.ShopServer
+  alias ShopifyAPI.{AppServer, AuthTokenServer, ConnHelpers, Security, ShopServer}
 
   @shopify_api_admin_authenticated :shopify_api_admin_authenticated
 
   def init(opts), do: opts
 
   def call(conn, options) do
-    if get_sesion(conn, @shopify_api_admin_authenticated) do
+    if Conn.get_sesion(conn, @shopify_api_admin_authenticated) do
       conn
     else
       with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
@@ -45,13 +40,13 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
         |> ConnHelpers.assign_app()
         |> ConnHelpers.assign_shop()
         |> ConnHelpers.assign_auth_token()
-        |> put_session(conn, @shopify_api_admin_authenticated, true)
+        |> Conn.put_session(conn, @shopify_api_admin_authenticated, true)
       else
         res ->
           Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
 
           conn
-          |> delete_session(conn, @shopify_api_admin_authenticated)
+          |> Conn.delete_session(conn, @shopify_api_admin_authenticated)
           |> Conn.resp(401, "Not Authorized.")
           |> Conn.halt()
       end
