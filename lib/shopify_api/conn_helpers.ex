@@ -1,52 +1,64 @@
 defmodule ShopifyAPI.ConnHelpers do
+  @moduledoc false
   require Logger
 
   alias Plug.Conn
-  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Security, Shop, ShopServer}
+  alias ShopifyAPI.{App, AppServer, AuthTokenServer, Security, Shop, ShopServer}
 
-  def fetch_shopify_app(conn) do
-    conn
-    |> app_name()
-    |> AppServer.get()
-  end
+  @shopify_shop_header "x-shopify-shop-domain"
+  @shopify_topics_header "x-shopify-topic"
 
-  def fetch_shopify_shop(conn) do
+  @doc false
+  def fetch_shopify_app(conn), do: fetch_shopify_app(conn, nil)
+  def fetch_shopify_app(conn, nil), do: conn |> app_name() |> AppServer.get()
+  def fetch_shopify_app(_conn, app_name), do: AppServer.get(app_name)
+
+  @doc false
+  def fetch_shopify_shop(conn), do: fetch_shopify_shop(conn, nil)
+
+  def fetch_shopify_shop(conn, nil),
+    do: conn |> shop_domain() |> ShopServer.get() |> optionally_create_shop(conn)
+
+  def fetch_shopify_shop(conn, shop_domain),
+    do: shop_domain |> ShopServer.get() |> optionally_create_shop(conn)
+
+  @doc false
+  defp optionally_create_shop(:error, conn), do: {:ok, %Shop{domain: shop_domain(conn)}}
+  defp optionally_create_shop(shop, _), do: shop
+
+  @doc false
+  def app_name(conn), do: conn.params["app"] || List.last(conn.path_info)
+
+  @doc false
+  def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
+
+  @doc false
+  defp shop_domain_from_header(conn) do
     conn
-    |> shop_domain()
-    |> ShopServer.get()
-    |> optionally_create_shop()
+    |> Conn.get_req_header(@shopify_shop_header)
+    |> List.first()
   end
 
   @doc false
-  defp optionally_create_shop(:error), do: {:ok, %Shop{domain: shop_domain(conn)}}
-  defp optionally_create_shop(shop), do: shop
+  def auth_code(conn), do: conn.params["code"]
 
-  def app_name(conn) do
-    conn.params["app"] || List.last(conn.path_info)
-  end
-
-  def shop_domain(conn) do
-    conn |> Conn.get_req_header("x-shopify-shop-domain") |> List.first() || conn.params["shop"]
-  end
-
-  def auth_code(conn) do
-    conn.params["code"]
-  end
-
-  def assign_app(conn) do
-    case fetch_shopify_app(conn) do
+  @doc false
+  def assign_app(conn, app_name \\ nil) do
+    case fetch_shopify_app(conn, app_name) do
       {:ok, app} -> Conn.assign(conn, :app, app)
       :error -> conn
     end
   end
 
-  def assign_shop(conn) do
-    case fetch_shopify_shop(conn) do
+  @doc false
+  def assign_shop(conn, shop_domain \\ nil) do
+    case fetch_shopify_shop(conn, shop_domain) do
       {:ok, shop} -> Conn.assign(conn, :shop, shop)
       :error -> conn
     end
   end
 
+  @doc false
   def assign_auth_token(conn) do
     with shop <- conn.assigns.shop,
          shop_domain <- Map.get(shop, :domain),
@@ -61,17 +73,20 @@ defmodule ShopifyAPI.ConnHelpers do
     end
   end
 
+  @doc false
   def assign_event(conn) do
-    with list_of_topics <- Conn.get_req_header(conn, "x-shopify-topic"),
+    with list_of_topics <- Conn.get_req_header(conn, @shopify_topics_header),
          topic <- List.first(list_of_topics) do
       Conn.assign(conn, :shopify_event, topic)
     end
   end
 
+  @doc false
   def verify_nonce(%App{nonce: nonce}, params) do
     nonce == params["state"]
   end
 
+  @doc false
   def verify_params_with_hmac(%App{client_secret: secret}, params) do
     params["hmac"] ==
       params
