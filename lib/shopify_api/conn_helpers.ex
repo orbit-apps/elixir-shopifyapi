@@ -14,11 +14,12 @@ defmodule ShopifyAPI.ConnHelpers do
     conn
     |> shop_domain()
     |> ShopServer.get()
-    |> case do
-      :error -> {:ok, %Shop{domain: shop_domain(conn)}}
-      shop -> shop
-    end
+    |> optionally_create_shop()
   end
+
+  @doc false
+  defp optionally_create_shop(:error), do: {:ok, %Shop{domain: shop_domain(conn)}}
+  defp optionally_create_shop(shop), do: shop
 
   def app_name(conn) do
     conn.params["app"] || List.last(conn.path_info)
@@ -76,8 +77,8 @@ defmodule ShopifyAPI.ConnHelpers do
       params
       |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
       |> Enum.sort_by(&elem(&1, 0))
-      |> Enum.map_every(1, &(elem(&1, 0) <> "=" <> elem(&1, 1)))
-      |> Enum.map_join("&", & &1)
+      |> Enum.map(fn {key, value} -> key <> "=" <> value end)
+      |> Enum.join("&")
       |> Security.base16_sha256_hmac(secret)
   end
 end

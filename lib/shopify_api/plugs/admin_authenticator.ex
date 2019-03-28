@@ -26,7 +26,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   alias Plug.Conn
   alias ShopifyAPI.{AppServer, AuthTokenServer, ConnHelpers, Security, ShopServer}
 
-  @shopify_api_admin_authenticated :shopify_api_admin_authenticated
+  @session_key :shopify_api_admin_authenticated
 
   def init(opts), do: opts
 
