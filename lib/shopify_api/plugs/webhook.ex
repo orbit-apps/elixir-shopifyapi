@@ -23,18 +23,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
       |> ConnHelpers.assign_auth_token()
       |> ConnHelpers.assign_event()
       |> verify_and_parse()
-      |> case do
-        {:ok, conn} ->
-          {module, function, _} = Application.get_env(:shopify_api, :webhook_filter)
-          apply(module, function, [generate_event(conn)])
-
-          conn
-          |> Conn.resp(200, "ok.")
-          |> Conn.halt()
-
-        _ ->
-          conn
-      end
+      |> fire_callback(Application.get_env(:shopify_api, :webhook_filter))
+      |> send_response()
     else
       conn
     end
@@ -53,23 +43,41 @@ defmodule ShopifyAPI.Plugs.Webhook do
   defp verify_and_parse(conn) do
     with %{client_secret: secret} <- conn.assigns.app,
          {:ok, content, conn} <- read_body(conn),
-         signature <- List.first(get_req_header(conn, "x-shopify-hmac-sha256")),
-         _ <-
-           Logger.info(
-             "#{__MODULE__} actual body hmac is: #{
-               inspect(Security.base64_sha256_hmac(content, secret))
-             }"
-           ),
+         signature <- ConnHelpers.hmac_from_header(conn),
          ^signature <- Security.base64_sha256_hmac(content, secret),
          {:ok, params} <- Poison.decode(content) do
       {:ok, Map.put(conn, :body_params, params)}
     else
-      _ ->
-        {:error,
-         conn
-         |> put_resp_content_type("text/plain")
-         |> send_resp(401, "Not Authorized")
-         |> halt}
+      _ -> {:error, conn}
     end
+  end
+
+  defp fire_callback({:ok, conn}, nil) do
+    Logger.error(
+      "#{__MODULE__} failure to fire callback, no :shopify_api, :webhook_filter configuration"
+    )
+
+    {:error, conn}
+  end
+
+  defp fire_callback({:ok, conn}, {module, function, _}) do
+    apply(module, function, [generate_event(conn)])
+    {:ok, conn}
+  end
+
+  defp fire_callback({_, conn}, _), do: {:error, conn}
+
+  defp send_response({:ok, conn}) do
+    conn
+    |> send_resp(200, "ok.")
+    |> Conn.halt()
+  end
+
+  defp send_response({_, conn}) do
+    conn
+    |> put_resp_content_type("text/plain")
+    # TODO should we be sending 401 here?
+    |> send_resp(401, "Not Authorized")
+    |> halt()
   end
 end

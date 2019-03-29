@@ -17,6 +17,10 @@ defmodule ShopifyAPI.AppServer do
   @spec count :: integer
   def count, do: GenServer.call(@name, :count)
 
+  @spec set(%{:name => any, any => any}) :: atom
+  def set(%{name: name} = new_values), do: set(name, new_values)
+
+  @spec set(String.t(), %{:name => any, any => any}) :: atom
   def set(name, new_values), do: GenServer.cast(@name, {:set, name, new_values})
 
   #

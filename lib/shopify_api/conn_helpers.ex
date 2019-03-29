@@ -7,6 +7,7 @@ defmodule ShopifyAPI.ConnHelpers do
 
   @shopify_shop_header "x-shopify-shop-domain"
   @shopify_topics_header "x-shopify-topic"
+  @shopify_hmac_header "x-shopify-hmac-sha256"
 
   @doc false
   def fetch_shopify_app(conn), do: fetch_shopify_app(conn, nil)
@@ -32,6 +33,12 @@ defmodule ShopifyAPI.ConnHelpers do
   @doc false
   def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
 
+  def hmac_from_header(conn) do
+    conn
+    |> Conn.get_req_header(@shopify_hmac_header)
+    |> List.first()
+  end
+
   @doc false
   defp shop_domain_from_header(conn) do
     conn
@@ -45,16 +52,22 @@ defmodule ShopifyAPI.ConnHelpers do
   @doc false
   def assign_app(conn, app_name \\ nil) do
     case fetch_shopify_app(conn, app_name) do
-      {:ok, app} -> Conn.assign(conn, :app, app)
-      :error -> conn
+      {:ok, app} ->
+        Conn.assign(conn, :app, app)
+
+      :error ->
+        conn
     end
   end
 
   @doc false
   def assign_shop(conn, shop_domain \\ nil) do
     case fetch_shopify_shop(conn, shop_domain) do
-      {:ok, shop} -> Conn.assign(conn, :shop, shop)
-      :error -> conn
+      {:ok, shop} ->
+        Conn.assign(conn, :shop, shop)
+
+      :error ->
+        conn
     end
   end
 
