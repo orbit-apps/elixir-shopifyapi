@@ -2,18 +2,12 @@ defmodule ShopifyAPI.Router do
   use Plug.Router
   require Logger
 
-  # alias Absinthe.Plug
-  alias GraphQL.Config.Schema
-  alias Plug.{Conn, Debugger}
+  alias Plug.Conn
   alias ShopifyAPI.{App, AuthToken, AuthTokenServer, ConnHelpers}
   alias ShopifyAPI.EventPipe.EventQueue
 
   plug(:match)
   plug(:dispatch)
-
-  #  if Mix.env() == :dev do
-  #    use Debugger
-  #  end
 
   get "/install" do
     conn
@@ -59,9 +53,6 @@ defmodule ShopifyAPI.Router do
         |> Conn.halt()
     end
   end
-
-  # TODO this should be behind a api token authorization
-  # forward("/graphql/config", to: Plug, schema: Schema)
 
   defp enqueue_post_install(token) do
     EventQueue.enqueue(%{
