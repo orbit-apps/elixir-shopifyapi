@@ -28,7 +28,9 @@ defmodule ShopifyAPI.ConnHelpers do
   defp optionally_create_shop(shop, _), do: shop
 
   @doc false
-  def app_name(conn), do: conn.params["app"] || List.last(conn.path_info)
+  def app_name(conn), do: conn.params["app"] || app_name_from_path(conn)
+
+  def app_name_from_path(conn), do: List.last(conn.path_info)
 
   @doc false
   def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]

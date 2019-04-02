@@ -18,7 +18,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
     if String.starts_with?(conn.request_path, mount) do
       conn
-      |> ConnHelpers.assign_app()
+      # params have not been parsed yet, calling assign_app/0 tries the conn.params first which will error
+      |> ConnHelpers.assign_app(ConnHelpers.app_name_from_path(conn))
       |> ConnHelpers.assign_shop()
       |> ConnHelpers.assign_auth_token()
       |> ConnHelpers.assign_event()

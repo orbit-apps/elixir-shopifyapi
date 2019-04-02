@@ -15,18 +15,18 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
   end
 
   setup do
+    Application.put_env(:shopify_api, :webhook_filter, {__MODULE__, :webhook_callback, []})
     ShopServer.set(@shop)
     AppServer.set(@app)
   end
 
   test "401s with invalid hmac" do
     # Create a test connection
-    params = %{app: @app.name, shop: @shop.domain}
-
     conn =
       :post
-      |> conn("/webhook", params)
+      |> conn("/webhook/#{@app.name}", Poison.encode!(@req_body))
       |> Conn.put_req_header("x-shopify-hmac-sha256", "invalid")
+      |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
 
     # Invoke the plug
     conn = Webhook.call(conn, mount: "/webhook")
@@ -38,7 +38,6 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
   end
 
   test "fires callback and 200s with valid hmac" do
-    Application.put_env(:shopify_api, :webhook_filter, {__MODULE__, :webhook_callback, []})
     # Create a test connection
     conn =
       :post
