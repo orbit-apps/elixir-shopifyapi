@@ -132,6 +132,7 @@ Setting up webhook handling requires adding a handler to your configuration.
 
 ```elixir
 config :shopify_api, webhook_filter: {MyApp.WebhookFilter, :process, []}
+config :shopify_api, ShopifyAPI.Webhook, uri: "https://testapp.ngrok.io/shop/webhook"
 ```
 
 A handler will need to be created
