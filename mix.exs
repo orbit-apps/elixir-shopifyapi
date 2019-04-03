@@ -40,7 +40,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:credo, "~> 1.0", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
-      {:ex_doc, "~> 0.19.1", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.20.0", only: [:dev], runtime: false},
       {:exq, "~> 0.13.0"},
       {:exq_atomize_job_arguments, github: "pixelunion/exq-atomize-job-arguments", tag: "v0.1.2"},
       {:gen_stage, "~> 0.12"},
