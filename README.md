@@ -1,14 +1,18 @@
 # ShopifyAPI and Plug.ShopifyAPI
 
+- [Installation](#installation)
+- [Installing this app in a Shop](#installing-this-app-in-a-shop)
+- [Configuration](#configuration)
+- [Webhooks](#webhooks)
+
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `shopify_api` to your list of dependencies in `mix.exs` and add the application to the `extra_applications`:
+The package can be installed by adding `shopify_api` to your list of dependencies in `mix.exs`.
 
 ```elixir
 def deps do
   [
-    {:shopify_api, "~> 0.1.0"}
+    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "0.2.3"}
   ]
 end
 ```
@@ -55,7 +59,7 @@ end
 
 1. Start something like ngrok
 2. Configure your app to allow your ngrok url as one of the redirect_urls
-3. Point your browser to `http://localhost:4000/shop/install?shop=your-shop.shopify.com&app=yourapp` and it should prompt you to login and authorize it.
+3. Point your browser to `http://localhost:4000/shop/install?shop=your-shop.myshopify.com&app=yourapp` and it should prompt you to login and authorize it.
 
 
 ## Configuration
@@ -65,7 +69,7 @@ There is a GraphQL interface to get and update configuration, this is the recomm
 ### Shops
 
 example fetch:
-```
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
@@ -74,7 +78,7 @@ http://localhost:4000/shop/graphql/config
 ```
 
 example set:
-```
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
@@ -85,7 +89,7 @@ http://localhost:4000/shop/graphql/config
 ### Apps
 
 example fetch:
-```
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
@@ -94,7 +98,7 @@ http://localhost:4000/shop/graphql/config
 ```
 
 example set:
-```
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
@@ -105,7 +109,7 @@ http://localhost:4000/shop/graphql/config
 ### AuthTokens
 
 example fetch:
-```
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
@@ -114,12 +118,43 @@ http://localhost:4000/shop/graphql/config
 ```
 
 example set:
-```
+```bash
 curl \
   -X POST \
   -H "Content-Type: application/json" \
   --data '{"query": "mutation M { updateAuthToken(token: \"<TOKEN>\", timestamp: <TIMESTAMP>, shopName: \"<SHOPIFY-STORE-DOMAIN>\", code: \"<RESPONSE-CODE>\", appName: \"<APP-NAME>\") { appName } }" }' \
 http://localhost:4000/shop/graphql/config
+```
+
+## Webhooks
+
+Setting up webhook handling requires adding a handler to your configuration.
+
+```elixir
+config :shopify_api, webhook_filter: {MyApp.WebhookFilter, :process, []}
+```
+
+A handler will need to be created
+
+```elixir
+defmodule MyApp.WebhookFilter do
+  def process(%{action: "orders/create", object: %{}} = event) do
+    IO.inspect(event, label: event)
+    # ....
+  end
+end
+```
+
+And finally webhooks will have to be registered with Shopify. After installing a shop you will need to fire a webhook creation.
+
+```elixir
+token = ShopifyAPI.AuthTokenServer.get("shop domain", "app name")
+
+topic = "orders/create"
+server_address = ShopifyAPI.REST.Webhook.webhook_uri(token)
+webhook = %{topic: topic, address: server_address}
+
+ShopifyAPI.REST.Webhook.create(token, %{webhook: webhook})
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)

@@ -1,11 +1,14 @@
 defmodule ShopifyAPI.Plugs.Webhook do
+  @moduledoc """
+  The ShopifyAPI.Plugs.Webhook plug handles incoming Shopify Webhook calls.  The incoming requests
+  get fired off to the :shopify_api :webhook_filter {module, function, _} setting getting passed a
+  ShopifyAPI.EventPipe.Event.t.
+  """
   import Plug.Conn
   require Logger
 
   alias Plug.Conn
-
-  alias ShopifyAPI.{AppServer, Security, ShopServer}
-
+  alias ShopifyAPI.{ConnHelpers, Security}
   alias ShopifyAPI.EventPipe.Event
 
   def init(opts), do: opts
@@ -14,24 +17,15 @@ defmodule ShopifyAPI.Plugs.Webhook do
     mount = Keyword.get(options, :mount)
 
     if String.starts_with?(conn.request_path, mount) do
-      conn =
-        conn
-        |> fetch_shop
-        |> fetch_app
-        |> fetch_event
-
-      case verify_and_parse(conn) do
-        {:ok, conn} ->
-          {module, function, _} = Application.get_env(:shopify_api, :webhook_filter)
-          apply(module, function, [generate_event(conn)])
-
-          conn
-          |> Conn.resp(200, "ok.")
-          |> Conn.halt()
-
-        _ ->
-          conn
-      end
+      conn
+      # params have not been parsed yet, calling assign_app/0 tries the conn.params first which will error
+      |> ConnHelpers.assign_app(ConnHelpers.app_name_from_path(conn))
+      |> ConnHelpers.assign_shop()
+      |> ConnHelpers.assign_auth_token()
+      |> ConnHelpers.assign_event()
+      |> verify_and_parse()
+      |> fire_callback(Application.get_env(:shopify_api, :webhook_filter))
+      |> send_response()
     else
       conn
     end
@@ -47,61 +41,44 @@ defmodule ShopifyAPI.Plugs.Webhook do
     }
   end
 
-  defp fetch_event(conn) do
-    with list_of_topics <- Conn.get_req_header(conn, "x-shopify-topic"),
-         topic <- List.first(list_of_topics) do
-      Conn.assign(conn, :shopify_event, topic)
-    end
-  end
-
-  defp fetch_shop_name(conn) do
-    conn
-    |> Conn.get_req_header("x-shopify-shop-domain")
-    |> List.first()
-  end
-
-  defp fetch_shop(conn) do
-    case conn |> fetch_shop_name() |> ShopServer.get() do
-      {:ok, shop} ->
-        Conn.assign(conn, :shop, shop)
-
-      _ ->
-        conn
-    end
-  end
-
-  defp fetch_app_name(conn), do: List.last(conn.path_info)
-
-  defp fetch_app(conn) do
-    case conn |> fetch_app_name() |> AppServer.get() do
-      {:ok, app} ->
-        Conn.assign(conn, :app, app)
-
-      _ ->
-        conn
-    end
-  end
-
   defp verify_and_parse(conn) do
     with %{client_secret: secret} <- conn.assigns.app,
          {:ok, content, conn} <- read_body(conn),
-         signature <- List.first(get_req_header(conn, "x-shopify-hmac-sha256")),
-         _ <-
-           Logger.info(fn ->
-             "#{__MODULE__} actual body hmac is: #{
-               inspect(Security.base64_sha256_hmac(content, secret))
-             }"
-           end),
+         signature <- ConnHelpers.hmac_from_header(conn),
          ^signature <- Security.base64_sha256_hmac(content, secret),
          {:ok, params} <- Poison.decode(content) do
       {:ok, Map.put(conn, :body_params, params)}
     else
-      _ ->
-        {:error,
-         conn
-         |> put_resp_content_type("text/plain")
-         |> send_resp(401, "Not Authorized")
-         |> halt}
+      _ -> {:error, conn}
     end
+  end
+
+  defp fire_callback({:ok, conn}, nil) do
+    Logger.error(
+      "#{__MODULE__} failure to fire callback, no :shopify_api, :webhook_filter configuration"
+    )
+
+    {:error, conn}
+  end
+
+  defp fire_callback({:ok, conn}, {module, function, _}) do
+    apply(module, function, [generate_event(conn)])
+    {:ok, conn}
+  end
+
+  defp fire_callback({_, conn}, _), do: {:error, conn}
+
+  defp send_response({:ok, conn}) do
+    conn
+    |> send_resp(200, "ok.")
+    |> Conn.halt()
+  end
+
+  defp send_response({_, conn}) do
+    conn
+    |> put_resp_content_type("text/plain")
+    # TODO should we be sending 401 here?
+    |> send_resp(401, "Not Authorized")
+    |> halt()
   end
 end
