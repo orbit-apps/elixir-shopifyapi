@@ -9,10 +9,13 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   @app %App{name: "test"}
   @shop %Shop{domain: "test-shop.example.com"}
   @auth_token %AuthToken{app_name: @app.name, shop_name: @shop.domain, token: "test"}
-  @params %{test: "test", shop: @shop.domain, hmac: "2ebfc11fdbff86c17d688617e0ce54ca6ae1cf2a8ddcdcb2226dfbf8d02374e6"}
+  @params %{
+    test: "test",
+    shop: @shop.domain,
+    hmac: "2ebfc11fdbff86c17d688617e0ce54ca6ae1cf2a8ddcdcb2226dfbf8d02374e6"
+  }
 
   setup do
-    Application.put_env(:shopify_api, :webhook_filter, {__MODULE__, :webhook_callback, []})
     ShopServer.set(@shop)
     AppServer.set(@app)
     AuthTokenServer.set(@auth_token)
@@ -81,7 +84,11 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
       conn =
         :get
         |> conn("/admin/#{@app.name}?" <> URI.encode_query(@params))
-        |> init_test_session(%{app_name: @app.name, shop_domain: @shop.domain, shopify_api_admin_authenticated: true})
+        |> init_test_session(%{
+          app_name: @app.name,
+          shop_domain: @shop.domain,
+          shopify_api_admin_authenticated: true
+        })
         |> Conn.fetch_query_params()
 
       [conn: conn]

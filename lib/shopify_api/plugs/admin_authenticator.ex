@@ -45,23 +45,31 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
   defp do_authentication(conn) do
     with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
-         true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params) do
+         {:hmac_verify, true} <-
+           {:hmac_verify, ConnHelpers.verify_params_with_hmac(app, conn.query_params)} do
       # store the App and Shop name in the session for use on other page views
       conn
-      |> ConnHelpers.assign_app()
+      |> ConnHelpers.assign_app(app)
       |> ConnHelpers.assign_shop()
       |> ConnHelpers.assign_auth_token()
       |> put_session(:app_name, ConnHelpers.app_name(conn))
       |> put_session(:shop_domain, ConnHelpers.shop_domain(conn))
       |> put_session(@session_key, true)
     else
-      res ->
-        Logger.info("#{__MODULE__} has failed: #{inspect(res)}")
+      {:hmac_verify, _} ->
+        Logger.info("#{__MODULE__} failed hmac validation")
+        send_unauthorized_response(conn)
 
-        conn
-        |> delete_session(@session_key)
-        |> resp(401, "Not Authorized.")
-        |> halt()
+      {:error, _} ->
+        Logger.info("#{__MODULE__} failed to find app")
+        send_unauthorized_response(conn)
     end
+  end
+
+  defp send_unauthorized_response(conn) do
+    conn
+    |> delete_session(@session_key)
+    |> resp(401, "Not Authorized.")
+    |> halt()
   end
 end

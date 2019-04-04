@@ -10,32 +10,46 @@ defmodule ShopifyAPI.ConnHelpers do
   @shopify_hmac_header "x-shopify-hmac-sha256"
 
   @doc false
-  def fetch_shopify_app(conn), do: fetch_shopify_app(conn, app_name(conn))
-  def fetch_shopify_app(_conn, app_name), do: AppServer.get(app_name)
-
-  @doc false
-  def fetch_shopify_shop(conn), do: fetch_shopify_shop(conn, shop_domain(conn))
-
-  def fetch_shopify_shop(conn, shop_domain),
-    do: shop_domain |> ShopServer.get() |> optionally_create_shop(conn)
-
-  @doc false
   defp optionally_create_shop(:error, conn), do: {:ok, %Shop{domain: shop_domain(conn)}}
   defp optionally_create_shop(shop, _), do: shop
-
-  @doc false
-  def app_name(conn), do: conn.params["app"] || app_name_from_path(conn)
-
-  def app_name_from_path(conn), do: List.last(conn.path_info)
-
-  @doc false
-  def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
 
   @doc false
   def hmac_from_header(conn) do
     conn
     |> Conn.get_req_header(@shopify_hmac_header)
     |> List.first()
+  end
+
+  @doc false
+  def auth_code(conn), do: conn.params["code"]
+
+  @doc false
+  def app_name(conn), do: conn.params["app"] || app_name_from_path(conn)
+
+  @doc false
+  def app_name_from_path(conn), do: List.last(conn.path_info)
+
+  @doc false
+  def fetch_shopify_app(conn), do: conn |> app_name() |> AppServer.get()
+
+  @doc false
+  def assign_app(conn, app_name \\ nil)
+  def assign_app(conn, %App{} = app), do: Conn.assign(conn, :app, app)
+
+  def assign_app(conn, app_name) do
+    app_name =
+      case app_name do
+        nil -> app_name(conn)
+        name -> name
+      end
+
+    case AppServer.get(app_name) do
+      {:ok, app} ->
+        Conn.assign(conn, :app, app)
+
+      _ ->
+        conn
+    end
   end
 
   @doc false
@@ -46,21 +60,20 @@ defmodule ShopifyAPI.ConnHelpers do
   end
 
   @doc false
-  def auth_code(conn), do: conn.params["code"]
+  def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
 
   @doc false
-  def assign_app(conn, app_name \\ nil) do
-    case fetch_shopify_app(conn, app_name) do
-      {:ok, app} ->
-        Conn.assign(conn, :app, app)
-
-      :error ->
-        conn
-    end
-  end
+  defp fetch_shopify_shop(conn, shop_domain),
+    do: shop_domain |> ShopServer.get() |> optionally_create_shop(conn)
 
   @doc false
   def assign_shop(conn, shop_domain \\ nil) do
+    shop_domain =
+      case shop_domain do
+        nil -> shop_domain(conn)
+        domain -> domain
+      end
+
     case fetch_shopify_shop(conn, shop_domain) do
       {:ok, shop} ->
         Conn.assign(conn, :shop, shop)
