@@ -1,6 +1,18 @@
 ## Unreleased
 
-- Updated to Exq 0.13.1
+## 0.2.5
+
+- Add new Plug.AdminAuthenticator for easy Shop admin panel authentication
+- Refactor Plug.Webhook
+
+## 0.2.4
+
+- Bump Exq ver and use Jason encoding for jobs
+- Add REST.Asset and REST.Theme
+
+## 0.2.3
+
+- Added filter params to REST.Metafield.all/2&3
 
 ## 0.2.2
 
