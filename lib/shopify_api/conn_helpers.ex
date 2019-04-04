@@ -33,17 +33,11 @@ defmodule ShopifyAPI.ConnHelpers do
   def fetch_shopify_app(conn), do: conn |> app_name() |> AppServer.get()
 
   @doc false
-  def assign_app(conn, app_name \\ nil)
+  def assign_app(conn, name \\ nil)
   def assign_app(conn, %App{} = app), do: Conn.assign(conn, :app, app)
 
-  def assign_app(conn, app_name) do
-    app_name =
-      case app_name do
-        nil -> app_name(conn)
-        name -> name
-      end
-
-    case AppServer.get(app_name) do
+  def assign_app(conn, name) do
+    case AppServer.get(name || app_name(conn)) do
       {:ok, app} ->
         Conn.assign(conn, :app, app)
 
@@ -63,18 +57,12 @@ defmodule ShopifyAPI.ConnHelpers do
   def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
 
   @doc false
-  defp fetch_shopify_shop(conn, shop_domain),
-    do: shop_domain |> ShopServer.get() |> optionally_create_shop(conn)
+  defp fetch_shopify_shop(conn, domain),
+    do: domain |> ShopServer.get() |> optionally_create_shop(conn)
 
   @doc false
-  def assign_shop(conn, shop_domain \\ nil) do
-    shop_domain =
-      case shop_domain do
-        nil -> shop_domain(conn)
-        domain -> domain
-      end
-
-    case fetch_shopify_shop(conn, shop_domain) do
+  def assign_shop(conn, domain \\ nil) do
+    case fetch_shopify_shop(conn, domain || shop_domain(conn)) do
       {:ok, shop} ->
         Conn.assign(conn, :shop, shop)
 
