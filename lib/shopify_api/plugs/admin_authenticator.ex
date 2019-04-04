@@ -23,9 +23,8 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   ```
   """
   import Plug.Conn
+  import ShopifyAPI.ConnHelpers
   require Logger
-
-  alias ShopifyAPI.ConnHelpers
 
   @session_key :shopify_api_admin_authenticated
 
@@ -35,33 +34,42 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
     if get_session(conn, @session_key) do
       # rehydrate the conn.assigns for the app, shop and auth token.
       conn
-      |> ConnHelpers.assign_app(get_session(conn, :app_name))
-      |> ConnHelpers.assign_shop(get_session(conn, :shop_name))
-      |> ConnHelpers.assign_auth_token()
+      |> assign_app(get_session(conn, :app_name))
+      |> assign_shop(get_session(conn, :shop_name))
+      |> assign_auth_token()
     else
       do_authentication(conn)
     end
   end
 
   defp do_authentication(conn) do
-    with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
-         true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params) do
+    with {:ok, app} <- fetch_shopify_app(conn),
+         {:hmac_verify, true} <- verify_hmac(app, conn.query_params) do
       # store the App and Shop name in the session for use on other page views
       conn
-      |> ConnHelpers.assign_app()
-      |> ConnHelpers.assign_shop()
-      |> ConnHelpers.assign_auth_token()
-      |> put_session(:app_name, ConnHelpers.app_name(conn))
-      |> put_session(:shop_domain, ConnHelpers.shop_domain(conn))
+      |> assign_app(app)
+      |> assign_shop()
+      |> assign_auth_token()
+      |> put_session(:app_name, app_name(conn))
+      |> put_session(:shop_domain, shop_domain(conn))
       |> put_session(@session_key, true)
     else
-      res ->
-        Logger.info("#{__MODULE__} has failed: #{inspect(res)}")
+      {:hmac_verify, _} ->
+        Logger.info("#{__MODULE__} failed hmac validation")
+        send_unauthorized_response(conn)
 
-        conn
-        |> delete_session(@session_key)
-        |> resp(401, "Not Authorized.")
-        |> halt()
+      {:error, _} ->
+        Logger.info("#{__MODULE__} failed to find app")
+        send_unauthorized_response(conn)
     end
   end
+
+  defp send_unauthorized_response(conn) do
+    conn
+    |> delete_session(@session_key)
+    |> resp(401, "Not Authorized.")
+    |> halt()
+  end
+
+  defp verify_hmac(app, params), do: {:hmac_verify, verify_params_with_hmac(app, params)}
 end
