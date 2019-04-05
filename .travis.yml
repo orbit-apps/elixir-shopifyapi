@@ -11,7 +11,7 @@ env:
 script:
   - mix deps.get
   - mix test
-  - travis_wait 20 MIX_ENV=dev mix dialyzer --halt-exit-status
+  - MIX_ENV=dev travis_wait 20 mix dialyzer --halt-exit-status
 #- mix coveralls.travis
 
 cache:
