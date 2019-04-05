@@ -6,7 +6,6 @@ services:
   - redis-server
 notifications:
   email: false
-install: travis_wait 20 mvn install
 env:
   - MIX_ENV=test
 script:
