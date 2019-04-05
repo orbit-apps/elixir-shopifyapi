@@ -7,7 +7,7 @@ defmodule Plug.ShopifyAPI.MixProject do
     [
       app: :shopify_api,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [plt_add_deps: :transitive],
@@ -38,7 +38,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:absinthe, "~> 1.4.0"},
       {:bypass, "~> 1.0", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test]},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
       {:ex_doc, "~> 0.20.0", only: [:dev], runtime: false},
       {:exq, "~> 0.13.0"},

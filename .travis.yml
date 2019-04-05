@@ -1,6 +1,6 @@
 language: elixir
-elixir: '1.7.0'
-otp_release: '21.0'
+elixir: '1.8.1'
+otp_release: '21.3'
 sudo: required
 services:
   - redis-server
@@ -11,4 +11,9 @@ env:
 script:
   - mix deps.get
   - mix test
+  - mix dialyzer --halt-exit-status
 #- mix coveralls.travis
+
+cache:
+  directories:
+    - priv/plts
