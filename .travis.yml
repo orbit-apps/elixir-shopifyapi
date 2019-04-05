@@ -8,6 +8,10 @@ notifications:
   email: false
 env:
   - MIX_ENV=test
+before_script:
+  - mix compile 
+  - travis_wait mix dialyzer --plt
+
 script:
   - mix deps.get
   - mix test
