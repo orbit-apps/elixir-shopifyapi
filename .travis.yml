@@ -6,11 +6,8 @@ services:
   - redis-server
 notifications:
   email: false
-env:
-  - MIX_ENV=test
 script:
   - mix deps.get
-  - mix test
   - mix dialyzer --halt-exit-status
 #- mix coveralls.travis
 

@@ -10,7 +10,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      dialyzer: [plt_add_deps: :transitive],
+      dialyzer: [plt_add_deps: :transitive, plt_file: {:no_warn, "priv/plts/dialyzer.plt"}],
       test_coverage: [tool: ExCoveralls],
 
       # Ex_Doc configuration
