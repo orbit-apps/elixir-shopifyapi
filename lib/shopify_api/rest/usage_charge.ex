@@ -37,14 +37,13 @@ defmodule ShopifyAPI.REST.UsageCharge do
   def get(
         %AuthToken{} = auth,
         recurring_application_charge_id,
-        %{usage_charge: %{id: usage_charge_id}} = usage_charge
+        %{usage_charge: %{id: usage_charge_id}}
       ) do
     Request.get(
       auth,
       "recurring_application_charges/#{recurring_application_charge_id}/usage_charges/#{
         usage_charge_id
-      }.json",
-      usage_charge
+      }.json"
     )
   end
 

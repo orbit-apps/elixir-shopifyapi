@@ -12,6 +12,7 @@ defmodule ShopifyAPI.REST.Request do
 
   use HTTPoison.Base
 
+  alias HTTPoison.{AsyncResponse, Error, Response}
   alias ShopifyAPI.{AuthToken, Throttled, ThrottleServer}
 
   @transport "https://"
@@ -21,18 +22,22 @@ defmodule ShopifyAPI.REST.Request do
 
   @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
 
-  @spec get(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
+  @spec get(AuthToken.t(), String.t()) ::
+          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
   def get(auth, path), do: shopify_request(:get, url(auth, path), "", headers(auth), auth)
 
-  @spec put(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
+  @spec put(AuthToken.t(), String.t(), map()) ::
+          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
   def put(auth, path, object),
     do: shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth), auth)
 
-  @spec post(AuthToken.t(), String.t(), map()) :: {:error, any()} | {:ok, any()}
+  @spec post(AuthToken.t(), String.t(), map()) ::
+          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
   def post(auth, path, object \\ %{}),
     do: shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth), auth)
 
-  @spec delete(AuthToken.t(), String.t()) :: {:error, any()} | {:ok, any()}
+  @spec delete(AuthToken.t(), String.t()) ::
+          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
   def delete(auth, path), do: shopify_request(:delete, url(auth, path), "", headers(auth), auth)
 
   defp shopify_request(action, url, body, headers, token) do

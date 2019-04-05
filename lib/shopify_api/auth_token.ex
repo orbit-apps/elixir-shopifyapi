@@ -19,7 +19,7 @@ defmodule ShopifyAPI.AuthToken do
           shop_name: String.t(),
           token: String.t(),
           timestamp: 0,
-          plus: Boolean.t()
+          plus: boolean()
         }
 
   def create_key(%__MODULE__{shop_name: shop, app_name: app}), do: create_key(shop, app)
