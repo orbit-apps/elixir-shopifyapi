@@ -18,9 +18,3 @@ action "Check Credo" {
   needs = "Get Deps"
   args = "credo"
 }
-
-action "Check Dialyzer" {
-  uses = "jclem/action-mix@v1.3.3"
-  needs = "Get Deps"
-  args = "dialyzer"
-}
