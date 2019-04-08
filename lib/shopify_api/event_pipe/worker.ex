@@ -7,6 +7,7 @@ defmodule ShopifyAPI.EventPipe.Worker do
 
   def perform(event), do: Logger.warn(fn -> "Failed to process event: #{inspect(event)}" end)
 
+  @spec execute_action(ShopifyAPI.EventPipe.Event.t(), any()) :: any()
   def execute_action(event, work) when is_function(work) do
     Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
 

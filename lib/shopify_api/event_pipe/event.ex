@@ -6,14 +6,16 @@ defmodule ShopifyAPI.EventPipe.Event do
             object: nil,
             callback: nil,
             action: :none,
-            assigns: %{}
+            assigns: %{},
+            response: nil
 
   @type t :: %__MODULE__{
           destination: atom(),
           token: map(),
           object: any(),
           callback: any(),
-          action: atom(),
-          assigns: map()
+          action: atom() | String.t(),
+          assigns: map(),
+          response: any()
         }
 end
