@@ -4,10 +4,12 @@ defmodule ShopifyAPI.EventPipe.Worker do
   """
   require Logger
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.EventPipe.Event
 
+  @type work :: (AuthToken.t(), Event.t() -> any())
   def perform(event), do: Logger.warn(fn -> "Failed to process event: #{inspect(event)}" end)
 
-  @spec execute_action(ShopifyAPI.EventPipe.Event.t(), any()) :: any()
+  @spec execute_action(Event.t(), work()) :: any()
   def execute_action(event, work) when is_function(work) do
     Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
 
