@@ -6,14 +6,18 @@ defmodule ShopifyAPI.EventPipe.Event do
             object: nil,
             callback: nil,
             action: :none,
-            assigns: %{}
+            assigns: %{},
+            response: nil
+
+  @type callback :: (ShopifyAPI.AuthToken.t(), t() -> any())
 
   @type t :: %__MODULE__{
           destination: atom(),
           token: map(),
           object: any(),
-          callback: any(),
-          action: atom(),
-          assigns: map()
+          callback: nil | callback(),
+          action: atom() | String.t(),
+          assigns: map(),
+          response: any()
         }
 end
