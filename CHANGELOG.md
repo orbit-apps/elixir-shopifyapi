@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.2.6
+
+- Fixed dialyzer, thank you @baradoy!
+- Type for Event work
+- Make exq optional (turning it off for test runs), if Exq isn't running work will be run inline.
+
 ## 0.2.5
 
 - Add new Plug.AdminAuthenticator for easy Shop admin panel authentication
