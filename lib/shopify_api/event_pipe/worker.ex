@@ -14,7 +14,7 @@ defmodule ShopifyAPI.EventPipe.Worker do
     Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
 
     with {:ok, token} <- fetch_token(event),
-         auth_token <- struct(AuthToken, token),
+         auth_token <- ensure_auth_token(token),
          response <- work.(auth_token, event),
          event_with_response <- Map.put(event, :response, response) do
       fire_callback(event_with_response)
@@ -39,4 +39,7 @@ defmodule ShopifyAPI.EventPipe.Worker do
   defp fetch_token(event) do
     Map.fetch(event, :token)
   end
+
+  def ensure_auth_token(%AuthToken{} = token), do: token
+  def ensure_auth_token(token), do: struct(AuthToken, token)
 end
