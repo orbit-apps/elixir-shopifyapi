@@ -123,19 +123,18 @@ defmodule ShopifyAPI.REST.DraftOrder do
   ## Example
 
       To complete a draft order, marking it as paid:
-      iex> ShopifyAPI.REST.DraftOrder.complete(auth, integer, false)
+      iex> ShopifyAPI.REST.DraftOrder.complete(auth, integer)
 
       To complete a draft order, marking it as pending:
-      iex> ShopifyAPI.REST.DraftOrder.complete(auth, integer, true)
+      iex> ShopifyAPI.REST.DraftOrder.complete(auth, integer, %{"payment_pending" => true})
 
       {:ok, %{"draft_order", %{...}}}
   """
-  def complete(%AuthToken{} = auth, draft_order_id, params),
+  def complete(%AuthToken{} = auth, draft_order_id, params \\ %{}),
     do:
       Request.put(
         auth,
-        "draft_orders/#{draft_order_id}/complete.json?" <>
-          URI.encode_query(%{"payment_pending" => params}),
+        "draft_orders/#{draft_order_id}/complete.json?" <> URI.encode_query(params),
         %{}
       )
 end
