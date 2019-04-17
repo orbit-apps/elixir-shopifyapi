@@ -121,4 +121,20 @@ defmodule ShopifyAPI.REST.Customer do
   """
   def get_orders(%AuthToken{} = auth, customer_id),
     do: Request.get(auth, "customers/#{customer_id}/orders.json")
+
+  @doc """
+  Search for customers that match a supplied query
+
+  ## Example
+
+      iex> ShopifyAPI.REST.Customer.search(auth, params)
+      {:ok, {"customers" => [] }}
+
+  The search params must be passed in as follows:
+  %{"query" => "store::7020"} - returns all customers with a tag of store::7020
+  %{"query" => "country:Canada"} - returns all customers with an address in Canada
+  %{"query" => "Bob country:Canada"} - returns all customers with an address in Canada and the name "Bob"
+  """
+  def search(%AuthToken{} = auth, params),
+    do: Request.get(auth, "customers/search.json?" <> URI.encode_query(params))
 end

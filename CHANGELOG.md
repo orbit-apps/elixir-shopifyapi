@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Added new endpoint for customer search
+- Added new endpoints for draft orders
+
 ## 0.2.6
 
 - Fixed dialyzer, thank you @baradoy!
