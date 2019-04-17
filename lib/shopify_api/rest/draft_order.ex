@@ -130,12 +130,12 @@ defmodule ShopifyAPI.REST.DraftOrder do
 
       {:ok, %{"draft_order", %{...}}}
   """
-  def complete(%AuthToken{} = auth, draft_order_id, payment_pending),
+  def complete(%AuthToken{} = auth, draft_order_id, params),
     do:
       Request.put(
         auth,
         "draft_orders/#{draft_order_id}/complete.json?" <>
-          URI.encode_query(%{"payment_pending" => payment_pending}),
+          URI.encode_query(%{"payment_pending" => params}),
         %{}
       )
 end
