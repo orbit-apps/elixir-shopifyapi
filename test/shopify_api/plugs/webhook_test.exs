@@ -62,7 +62,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       app: @app,
       assigns: %{},
       callback: nil,
-      destination: :client,
+      destination: "client",
       object: %{"app" => @app.name, "shop" => @shop.domain},
       shop: @shop,
       token: %{}

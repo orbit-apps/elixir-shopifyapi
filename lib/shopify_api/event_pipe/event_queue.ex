@@ -1,6 +1,7 @@
 defmodule ShopifyAPI.EventPipe.EventQueue do
   require Logger
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.EventPipe.Event
 
   @retry_timer 250
 
@@ -9,33 +10,34 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   options: [max_retries: #] or any Exq valid enqueue option.
   """
+  @spec enqueue(Event.t(), keyword()) :: {:ok} | {:error, String.t()}
   def enqueue(event, opts \\ [])
 
-  def enqueue(%{destination: :application} = event, opts),
+  def enqueue(%Event{destination: "application"} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{fulfillment: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{fulfillment: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{inventory_level: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{inventory_level: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.InventoryLevelWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{location: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{location: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.LocationWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{metafield: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{metafield: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{product: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{product: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.ProductWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{tender_transaction: _}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{tender_transaction: _}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.TenderTransactionWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{transaction: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{transaction: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.TransactionWorker, event, opts)
 
-  def enqueue(%{destination: :shopify, object: %{variant: %{}}} = event, opts),
+  def enqueue(%Event{destination: "shopify", object: %{variant: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event, opts)
 
   def enqueue(event, _opts) do

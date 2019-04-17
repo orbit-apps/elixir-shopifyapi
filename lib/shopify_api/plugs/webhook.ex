@@ -33,7 +33,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
   defp generate_event(conn) do
     %Event{
-      destination: :client,
+      destination: "client",
       app: conn.assigns.app,
       shop: Map.get(conn.assigns, :shop),
       action: conn.assigns.shopify_event,

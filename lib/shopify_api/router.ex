@@ -4,7 +4,7 @@ defmodule ShopifyAPI.Router do
 
   alias Plug.Conn
   alias ShopifyAPI.{App, AuthToken, AuthTokenServer, ConnHelpers}
-  alias ShopifyAPI.EventPipe.EventQueue
+  alias ShopifyAPI.EventPipe.{Event, EventQueue}
 
   plug(:match)
   plug(:dispatch)
@@ -55,8 +55,8 @@ defmodule ShopifyAPI.Router do
   end
 
   defp enqueue_post_install(token) do
-    EventQueue.enqueue(%{
-      destination: :application,
+    EventQueue.enqueue(%Event{
+      destination: "application",
       token: token,
       action: "post_install"
     })
