@@ -1,7 +1,7 @@
-defmodule GraphQL.Config.Schema do
+defmodule ShopifyAPI.GraphQL.Config.Schema do
   use Absinthe.Schema
 
-  alias GraphQL.Config.Resolver
+  alias ShopifyAPI.GraphQL.Config.Resolver
 
   object :shop do
     field(:domain, :string)
