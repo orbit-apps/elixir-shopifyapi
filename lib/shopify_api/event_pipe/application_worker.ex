@@ -4,8 +4,9 @@ defmodule ShopifyAPI.EventPipe.ApplicationWorker do
   """
   import ShopifyAPI.EventPipe.Worker
   alias ShopifyAPI.Shop
+  alias ShopifyAPI.EventPipe.Event
 
-  def perform(%{action: "post_install", token: _} = event) do
+  def perform(%Event{action: "post_install", token: _} = event) do
     execute_action(event, fn token, _ ->
       Shop.post_install(token)
     end)

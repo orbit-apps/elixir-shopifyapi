@@ -4,8 +4,9 @@ defmodule ShopifyAPI.EventPipe.LocationWorker do
   """
   require Logger
   import ShopifyAPI.EventPipe.Worker
+  alias ShopifyAPI.EventPipe.Event
   alias ShopifyAPI.REST.Location
 
-  def perform(%{action: "all", object: _, token: _} = event),
+  def perform(%Event{action: "all", object: _, token: _} = event),
     do: execute_action(event, fn token, _ -> Location.all(token) end)
 end

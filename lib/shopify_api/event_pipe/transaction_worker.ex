@@ -3,9 +3,10 @@ defmodule ShopifyAPI.EventPipe.TransactionWorker do
   Worker for processing Transactions
   """
   import ShopifyAPI.EventPipe.Worker
+  alias ShopifyAPI.EventPipe.Event
   alias ShopifyAPI.REST.Transaction
 
-  def perform(%{action: "create", object: _, token: _} = event) do
+  def perform(%Event{action: "create", object: _, token: _} = event) do
     execute_action(event, fn token, %{object: transaction} ->
       Transaction.create(token, transaction)
     end)
