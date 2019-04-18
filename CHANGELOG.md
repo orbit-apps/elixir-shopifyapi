@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Changed Event.t() typespec to be strings for destination and action. 
+- Coerce events from the queue into %Events{}
+
 ## 0.2.7
 
 - Added new endpoint for customer search
