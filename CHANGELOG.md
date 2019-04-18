@@ -1,7 +1,10 @@
 ## Unreleased
 
+## 0.2.7
+
 - Added new endpoint for customer search
 - Added new endpoints for draft orders
+- Added the ShopifyAPI namespace prefix to the GraphQL modules
 
 ## 0.2.6
 
