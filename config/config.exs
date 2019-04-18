@@ -46,7 +46,8 @@ config :exq,
     Exq.Middleware.Job,
     Exq.Middleware.Manager,
     Exq.Middleware.Logger,
-    Exq.Middleware.AtomizeJobArguments
+    Exq.Middleware.AtomizeJobArguments,
+    ShopifyAPI.Middleware.EventStructCoercer
   ]
 
 # Import environment specific config. This must remain at the bottom

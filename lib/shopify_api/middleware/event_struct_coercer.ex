@@ -9,7 +9,7 @@ defmodule ShopifyAPI.Middleware.EventStructCoercer do
   alias ShopifyAPI.EventPipe.Event
 
   def before_work(%Pipeline{assigns: %{job: %{args: args} = job}} = pipeline) do
-    event = Map.merge(%Event{}, args)
+    event = struct(Event, args)
     Pipeline.assign(pipeline, :job, %{job | args: event})
   end
 
