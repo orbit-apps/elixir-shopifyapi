@@ -11,7 +11,7 @@ defmodule ShopifyAPI.Middleware.EventStructCoercer do
   def before_work(%Pipeline{assigns: %{job: %{args: args} = job}} = pipeline) do
     events =
       Enum.map(args, fn
-        %{description: _, action: _, token: _} = event -> struct(Event, event)
+        %{destination: _, action: _, token: _} = event -> struct(Event, event)
         non_event -> non_event
       end)
 
