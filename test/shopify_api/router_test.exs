@@ -29,6 +29,7 @@ defmodule Test.ShopifyAPI.RouterTest do
     })
 
     ShopServer.set(%{domain: @shop_domain})
+    :ok
   end
 
   describe "/install" do

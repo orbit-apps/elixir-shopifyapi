@@ -17,11 +17,20 @@ defmodule ShopifyAPI.AppServer do
   @spec count :: integer
   def count, do: GenServer.call(@name, :count)
 
-  @spec set(%{:name => any, any => any}) :: atom
-  def set(%{name: name} = new_values), do: set(name, new_values)
+  @spec set(%{:name => any, any => any} | String.t(), boolean | %{}) :: atom
+  def set(value, call_persist \\ true)
+  def set(%{name: name} = new_values, call_persist) when is_boolean(call_persist), do: set(name, new_values, call_persist)
+  def set(name, new_values) when is_binary(name) and is_map(new_values), do: set(name, new_values, true)
 
-  @spec set(String.t(), %{:name => any, any => any}) :: atom
-  def set(name, new_values), do: GenServer.cast(@name, {:set, name, new_values})
+  @spec set(String.t(), %{:name => any, any => any}, boolean) :: atom
+  def set(name, new_values, true) do
+    set(name, new_values, false)
+
+    # TODO should this be in a seperate process? It could tie up the GenServer
+    persist(app_server_config(:persistance), name, new_values)
+  end
+
+  def set(name, new_values, false), do: GenServer.cast(@name, {:set, name, new_values})
 
   #
   # Callbacks
@@ -52,9 +61,6 @@ defmodule ShopifyAPI.AppServer do
           _ -> Map.merge(t, new_values)
         end
       end)
-
-    # TODO should this be in a seperate process? It could tie up the GenServer
-    persist(app_server_config(:persistance), name, Map.get(new_state, name))
 
     {:noreply, new_state}
   end

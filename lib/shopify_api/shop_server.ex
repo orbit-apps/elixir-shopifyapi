@@ -20,8 +20,17 @@ defmodule ShopifyAPI.ShopServer do
   @spec count :: integer
   def count, do: GenServer.call(@name, :count)
 
-  @spec set(%{:domain => any, any => any}) :: atom
-  def set(%{domain: domain} = new_values), do: GenServer.cast(@name, {:set, domain, new_values})
+  def set(new_values, call_persist \\ true)
+
+  @spec set(%{:domain => any, any => any}, boolean) :: atom
+  def set(%{domain: domain} = new_values, false), do: GenServer.cast(@name, {:set, domain, new_values})
+
+  def set(%{domain: domain} = new_values, true) do
+    set(new_values, false)
+
+    # TODO should this be in a seperate process? It could tie up the GenServer
+    persist(shop_server_config(:persistance), domain, new_values)
+  end
 
   #
   # Callbacks
@@ -46,9 +55,6 @@ defmodule ShopifyAPI.ShopServer do
   @callback handle_cast(map, map) :: tuple
   def handle_cast({:set, domain, new_values}, %{} = state) do
     new_state = Map.update(state, domain, %Shop{domain: domain}, &Map.merge(&1, new_values))
-
-    # TODO should this be in a seperate process? It could tie up the GenServer
-    persist(shop_server_config(:persistance), domain, Map.get(new_state, domain))
 
     {:noreply, new_state}
   end

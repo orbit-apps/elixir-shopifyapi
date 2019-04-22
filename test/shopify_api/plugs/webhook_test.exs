@@ -16,8 +16,9 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
 
   setup do
     Application.put_env(:shopify_api, :webhook_filter, {__MODULE__, :webhook_callback, []})
-    ShopServer.set(@shop)
-    AppServer.set(@app)
+    ShopServer.set(@shop, false)
+    AppServer.set(@app, false)
+    :ok
   end
 
   test "401s with invalid hmac" do
