@@ -9,8 +9,9 @@ defmodule ShopifyAPI.Middleware.EventStructCoercer do
   alias ShopifyAPI.EventPipe.Event
 
   def before_work(%Pipeline{assigns: %{job: %{args: args} = job}} = pipeline) do
-    event = struct(Event, args)
-    Pipeline.assign(pipeline, :job, %{job | args: event})
+    events = Enum.map(args, fn event -> struct(Event, event) end)
+
+    Pipeline.assign(pipeline, :job, %{job | args: events})
   end
 
   def after_processed_work(pipeline), do: pipeline
