@@ -4,9 +4,10 @@ defmodule ShopifyAPI.EventPipe.InventoryLevelWorker do
   """
   require Logger
   import ShopifyAPI.EventPipe.Worker
+  alias ShopifyAPI.EventPipe.Event
   alias ShopifyAPI.REST.InventoryLevel
 
-  def perform(%{action: "set", object: _, token: _} = event) do
+  def perform(%Event{action: "set", object: _, token: _} = event) do
     execute_action(event, fn token, %{object: level} -> InventoryLevel.set(token, level) end)
   end
 end

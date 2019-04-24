@@ -1,22 +1,22 @@
 defmodule ShopifyAPI.EventPipe.Event do
-  defstruct destination: :nowhere,
+  defstruct destination: "nowhere",
             app: %{},
             shop: %{},
             token: %{},
             object: nil,
             callback: nil,
-            action: :none,
+            action: "none",
             assigns: %{},
             response: nil
 
   @type callback :: (ShopifyAPI.AuthToken.t(), t() -> any())
 
   @type t :: %__MODULE__{
-          destination: atom(),
+          destination: String.t(),
           token: map(),
           object: any(),
           callback: nil | callback(),
-          action: atom() | String.t(),
+          action: String.t(),
           assigns: map(),
           response: any()
         }
