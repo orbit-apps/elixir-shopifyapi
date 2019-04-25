@@ -69,7 +69,7 @@ defmodule ShopifyAPI.Middleware.EventStructCoercerTest do
     pipe =
       [
         {:not_an_event},
-        %{type: "not and event"},
+        %{type: "not an event"},
         %{destination: "is_event", action: "action", token: %{}}
       ]
       |> build_pipeline
@@ -77,7 +77,7 @@ defmodule ShopifyAPI.Middleware.EventStructCoercerTest do
 
     assert [
              {:not_an_event},
-             %{type: "not and event"},
+             %{type: "not an event"},
              %Event{destination: "is_event", action: "action", token: %{}}
            ] = get_pipeline_args(pipe)
   end
