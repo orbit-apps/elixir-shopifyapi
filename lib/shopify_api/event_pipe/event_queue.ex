@@ -50,7 +50,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   defp enqueue_event(worker, %{token: %AuthToken{} = token} = event, opts) do
     Logger.info(fn -> "Enqueueing[#{inspect(token)}] #{inspect(event)}" end)
-    background_job_impl().(Exq, AuthToken.create_key(token), worker, [event], opts)
+    background_job_enqueue(AuthToken.create_key(token), worker, [event], opts)
     {:ok}
   end
 
@@ -61,7 +61,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   defp enqueue_event(worker, event, opts) do
     Logger.warn(fn -> "Enqueueing in default queue #{inspect(event)}" end)
-    background_job_impl().(Exq, "default", worker, [event], opts)
+    background_job_enqueue("default", worker, [event], opts)
     {:ok}
   end
 
@@ -77,15 +77,14 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     end
   end
 
-  defp background_job_impl do
-    pid = GenServer.whereis(Exq)
+  defp background_job_enqueue(queue_name, worker, events, opts) do
+    background_job_impl =
+      Application.get_env(
+        :shopify_api,
+        :background_job_implementation,
+        ShopifyAPI.EventPipe.ExqBackgroundJob
+      )
 
-    if is_pid(pid) do
-      &Exq.enqueue/5
-    else
-      &run_inline/5
-    end
+    background_job_impl.enqueue(queue_name, worker, events, opts)
   end
-
-  defp run_inline(_, _queue, worker, [event], _opts), do: worker.perform(event)
 end
