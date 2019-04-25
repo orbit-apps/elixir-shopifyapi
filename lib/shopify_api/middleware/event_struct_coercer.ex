@@ -20,10 +20,10 @@ defmodule ShopifyAPI.Middleware.EventStructCoercer do
       |> Map.keys()
       |> Enum.find(false, fn key -> not Map.has_key?(%Event{}, key) end)
 
-    if !has_extra_keys do
-      struct(Event, event)
-    else
+    if has_extra_keys do
       event
+    else
+      struct(Event, event)
     end
   end
 
