@@ -11,9 +11,12 @@ defmodule ShopifyAPI.REST.Request do
   """
 
   use HTTPoison.Base
+  require Logger
 
   alias HTTPoison.{AsyncResponse, Error, Response}
   alias ShopifyAPI.{AuthToken, Throttled, ThrottleServer}
+
+  @default_api_version "2019-04"
 
   @transport "https://"
   if Mix.env() == :test do
@@ -43,6 +46,8 @@ defmodule ShopifyAPI.REST.Request do
   defp shopify_request(action, url, body, headers, token) do
     Throttled.request(
       fn ->
+        Logger.debug("#{__MODULE__} requesting #{inspect(url)}")
+
         case request(action, url, body, headers, recv_timeout: @http_receive_timeout) do
           {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
             # TODO probably have to return the response here if we want to use the headers
@@ -61,8 +66,12 @@ defmodule ShopifyAPI.REST.Request do
     )
   end
 
+  def process_response_body(body) do
+    body |> Poison.decode()
+  end
+
   defp url(%{shop_name: domain}, path) do
-    "#{@transport}#{domain}/admin/#{path}"
+    "#{@transport}#{domain}/admin/api/#{version()}/#{path}"
   end
 
   defp headers(%{token: access_token}) do
@@ -78,7 +87,11 @@ defmodule ShopifyAPI.REST.Request do
          do: body
   end
 
-  def process_response_body(body) do
-    body |> Poison.decode()
+  def version do
+    Keyword.get(
+      Application.get_env(:shopify_api, ShopifyAPI.REST) || [],
+      :api_version,
+      @default_api_version
+    )
   end
 end

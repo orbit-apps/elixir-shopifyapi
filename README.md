@@ -66,6 +66,16 @@ end
 
 There is a GraphQL interface to get and update configuration, this is the recommended way of pushing configuration in to your server.
 
+### API Version
+
+Shopify introduced API versioning here: https://help.shopify.com/en/api/versioning
+
+Configure the version to use in your config.exs, it will default to a stable version as ref'd in the [request module](lib/shopify_api/rest/request.ex).
+
+```elixir
+config :shopify_api, ShopifyAPI.REST, api_version: "2019-04"
+```
+
 ### Shops
 
 example fetch:

@@ -26,7 +26,7 @@ defmodule ShopifyAPI.REST.RequestTest do
       shop: _shop,
       auth_token: token
     } do
-      Bypass.expect_once(bypass, "GET", "/admin/example", fn conn ->
+      Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/example", fn conn ->
         headers = conn.req_headers |> Enum.into(%{})
         assert headers["x-shopify-access-token"] == "token"
         Conn.resp(conn, 200, "{}")
@@ -42,7 +42,7 @@ defmodule ShopifyAPI.REST.RequestTest do
       shop: _shop,
       auth_token: token
     } do
-      Bypass.expect_once(bypass, "GET", "/admin/example", fn conn ->
+      Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/example", fn conn ->
         Conn.resp(conn, 200, "{}")
       end)
 
@@ -56,7 +56,7 @@ defmodule ShopifyAPI.REST.RequestTest do
       shop: _shop,
       auth_token: token
     } do
-      Bypass.expect_once(bypass, "POST", "/admin/example", fn conn ->
+      Bypass.expect_once(bypass, "POST", "/admin/api/#{Request.version()}/example", fn conn ->
         Conn.resp(conn, 201, "{}")
       end)
 

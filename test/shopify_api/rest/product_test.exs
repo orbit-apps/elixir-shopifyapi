@@ -5,7 +5,7 @@ defmodule ShopifyAPI.REST.ProductTest do
 
   alias ShopifyAPI.{AuthToken, Shop}
 
-  alias ShopifyAPI.REST.Product
+  alias ShopifyAPI.REST.{Product, Request}
 
   setup _context do
     bypass = Bypass.open()
@@ -27,7 +27,7 @@ defmodule ShopifyAPI.REST.ProductTest do
       ]
     }
 
-    Bypass.expect_once(bypass, "GET", "/admin/products.json", fn conn ->
+    Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/products.json", fn conn ->
       {:ok, body} = Poison.encode(products)
       Conn.resp(conn, 200, body)
     end)
