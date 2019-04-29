@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.ApplicationCredit do
       iex> ShopifyAPI.REST.ApplicationCredit.create(auth, map)
       {:ok, { "application_credit" => %{} }}
   """
-  def create(%AuthToken{} = auth, %{application_credit: {}} = application_credit),
+  def create(%AuthToken{} = auth, %{application_credit: %{}} = application_credit),
     do: Request.post(auth, "application_credits.json", application_credit)
 
   @doc """
