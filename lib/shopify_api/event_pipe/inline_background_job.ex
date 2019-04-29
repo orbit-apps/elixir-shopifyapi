@@ -7,7 +7,6 @@ defmodule ShopifyAPI.EventPipe.InlineBackgroundJob do
 
   @impl BackgroundJobBehaviour
   def enqueue(_queue_name, worker, events, _opts) do
-    events
-    |> Enum.each(fn event -> worker.perform(event) end)
+    Enum.each(events, fn event -> worker.perform(event) end)
   end
 end
