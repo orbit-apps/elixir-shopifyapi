@@ -9,6 +9,17 @@ defmodule ShopifyAPI.EventPipe.BackgroundJobBehaviour do
   The implementation is respnsible for calling `worker.perform(event)` for every event sent to it.
   """
 
+  alias ShopifyAPI.AuthToken
+
+  @doc """
+  Subscribes to the background job implementation with the given AuthToken
+  This allows for multiple sites to be run each with their own queue.
+  """
+  @callback subscribe(token :: %AuthToken{}) :: no_return()
+
+  @doc """
+  Sends an event to the Queue.
+  """
   @callback enqueue(
               queue_name :: String.t(),
               worker :: module(),

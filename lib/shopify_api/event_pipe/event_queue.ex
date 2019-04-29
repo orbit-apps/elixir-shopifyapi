@@ -3,8 +3,6 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.EventPipe.Event
 
-  @retry_timer 250
-
   @doc """
   Event enqueue end point, takes the event and the options to be passed on to Exq.
 
@@ -65,26 +63,19 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     {:ok}
   end
 
-  def register(token) do
-    case GenServer.whereis(Exq) do
-      nil ->
-        :timer.sleep(@retry_timer)
-        register(token)
-
-      _res ->
-        Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
-        Exq.subscribe(Exq, AuthToken.create_key(token), 1)
-    end
+  def subscribe(token) do
+    background_job_impl().subscribe(token)
   end
 
   defp background_job_enqueue(queue_name, worker, events, opts) do
-    background_job_impl =
-      Application.get_env(
-        :shopify_api,
-        :background_job_implementation,
-        ShopifyAPI.EventPipe.ExqBackgroundJob
-      )
+    background_job_impl().enqueue(queue_name, worker, events, opts)
+  end
 
-    background_job_impl.enqueue(queue_name, worker, events, opts)
+  defp background_job_impl() do
+    Application.get_env(
+      :shopify_api,
+      :background_job_implementation,
+      ShopifyAPI.EventPipe.ExqBackgroundJob
+    )
   end
 end
