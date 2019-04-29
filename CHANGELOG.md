@@ -1,8 +1,11 @@
 ## Unreleased
 
+## 0.3.0
+
 - Support API versioning
-- Changed Event.t() typespec to be strings for destination and action. 
 - Coerce events from the queue into %Events{}
+- Change Events in EventQueue to use string destinations and actions
+- Changed Event.t() typespec to be strings for destination and action. 
 
 ## 0.2.7
 
