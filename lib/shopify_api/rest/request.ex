@@ -66,13 +66,10 @@ defmodule ShopifyAPI.REST.Request do
     )
   end
 
-  def process_response_body(body) do
-    body |> Poison.decode()
-  end
+  def process_response_body(body), do: Poison.decode(body)
 
-  defp url(%{shop_name: domain}, path) do
-    "#{@transport}#{domain}/admin/api/#{version()}/#{path}"
-  end
+  defp url(%{shop_name: domain}, path),
+    do: "#{@transport}#{domain}/admin/api/#{version()}/#{path}"
 
   defp headers(%{token: access_token}) do
     [
@@ -82,7 +79,7 @@ defmodule ShopifyAPI.REST.Request do
   end
 
   defp fetch_body(http_response) do
-    with {:ok, map_fetched} <- http_response |> Map.fetch(:body),
+    with {:ok, map_fetched} <- Map.fetch(http_response, :body),
          {:ok, body} <- map_fetched,
          do: body
   end
