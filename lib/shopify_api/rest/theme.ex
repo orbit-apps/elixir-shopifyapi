@@ -37,7 +37,7 @@ defmodule ShopifyAPI.REST.Theme do
     {:ok, %{ "theme" => %{} }}
   """
   def update(%AuthToken{} = auth, %{"theme" => %{"id" => theme_id} = theme}),
-    do: update(auth, %{theme: theme |> Map.put(:id, theme_id)})
+    do: update(auth, %{theme: Map.put(theme, :id, theme_id)})
 
   def update(%AuthToken{} = auth, %{theme: %{id: theme_id}} = theme),
     do: Request.put(auth, "themes/#{theme_id}.json", theme)

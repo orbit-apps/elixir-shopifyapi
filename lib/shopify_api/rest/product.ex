@@ -45,7 +45,7 @@ defmodule ShopifyAPI.REST.Product do
     {:ok, %{ "product" => %{} }}
   """
   def update(%AuthToken{} = auth, %{"product" => %{"id" => product_id} = product}),
-    do: update(auth, %{product: product |> Map.put(:id, product_id)})
+    do: update(auth, %{product: Map.put(product, :id, product_id)})
 
   def update(%AuthToken{} = auth, %{product: %{id: product_id}} = product),
     do: Request.put(auth, "products/#{product_id}.json", product)

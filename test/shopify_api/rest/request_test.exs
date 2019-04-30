@@ -27,7 +27,7 @@ defmodule ShopifyAPI.REST.RequestTest do
       auth_token: token
     } do
       Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/example", fn conn ->
-        headers = conn.req_headers |> Enum.into(%{})
+        headers = Enum.into(conn.req_headers, %{})
         assert headers["x-shopify-access-token"] == "token"
         Conn.resp(conn, 200, "{}")
       end)

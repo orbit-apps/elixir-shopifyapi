@@ -88,6 +88,7 @@
         {Credo.Check.Readability.TrailingWhiteSpace},
         {Credo.Check.Readability.VariableNames},
         {Credo.Check.Readability.Semicolons},
+        {Credo.Check.Readability.SinglePipe},
         {Credo.Check.Readability.SpaceAfterCommas},
 
         #
