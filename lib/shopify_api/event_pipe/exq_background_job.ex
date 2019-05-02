@@ -16,7 +16,7 @@ defmodule ShopifyAPI.EventPipe.ExqBackgroundJob do
         subscribe(token)
 
       _res ->
-        Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
+        Logger.info("#{__MODULE__} registering #{AuthToken.create_key(token)}")
         Exq.subscribe(Exq, AuthToken.create_key(token), 1)
     end
   end
@@ -29,7 +29,7 @@ defmodule ShopifyAPI.EventPipe.ExqBackgroundJob do
   @impl BackgroundJobBehaviour
   def fire_callback(%{callback: callback} = event) when is_binary(callback) do
     Task.start(fn ->
-      Logger.info(fn -> "Firing call back to #{callback} with #{inspect(event)}" end)
+      Logger.info("Firing call back to #{callback} with #{inspect(event)}")
       {func, _} = Code.eval_string(callback)
       func.(event)
     end)

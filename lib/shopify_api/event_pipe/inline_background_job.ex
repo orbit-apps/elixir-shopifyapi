@@ -13,7 +13,7 @@ defmodule ShopifyAPI.EventPipe.InlineBackgroundJob do
 
   @impl BackgroundJobBehaviour
   def fire_callback(%{callback: callback} = event) when is_binary(callback) do
-    Logger.info(fn -> "Firing call back to #{callback} with #{inspect(event)}" end)
+    Logger.info("Firing call back to #{callback} with #{inspect(event)}")
     {func, _} = Code.eval_string(callback)
     func.(event)
 
