@@ -10,6 +10,7 @@ defmodule ShopifyAPI.EventPipe.BackgroundJobBehaviour do
   """
 
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.EventPipe.Event
 
   @doc """
   Subscribes to the background job implementation with the given AuthToken
@@ -23,7 +24,12 @@ defmodule ShopifyAPI.EventPipe.BackgroundJobBehaviour do
   @callback enqueue(
               queue_name :: String.t(),
               worker :: module(),
-              events :: list(ShopifyAPI.EventPipe.Event.t()),
+              events :: list(Event.t()),
               opts :: any()
             ) :: no_return()
+
+  @doc """
+  Trigger when when the worker is finished with the response.
+  """
+  @callback fire_callback(Event.t()) :: {:ok, any()} | {:error, any()}
 end

@@ -63,6 +63,10 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     {:ok}
   end
 
+  def fire_callback(%Event{} = event) do
+    background_job_impl().fire_callback(event)
+  end
+
   def subscribe(token) do
     background_job_impl().subscribe(token)
   end
