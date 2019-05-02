@@ -84,7 +84,7 @@ config :shopify_api, ShopifyAPI.REST, api_version: "2019-04"
 
 ### Background Runner
 
-By default [`InlineBackgroundJob`](lib/shopify_api/event_pipe/inline_background_job.ex) is used which will run the worker in the same process that [`EventQueue.enqueue/2`](lib/shopify_api/event_pipe/event_queue.ex) was called from. This option is ideal for `text.exs` or if you do not wish to configure redis.
+By default [`InlineBackgroundJob`](lib/shopify_api/event_pipe/inline_background_job.ex) is used which will run the worker in the same process that [`EventQueue.enqueue/2`](lib/shopify_api/event_pipe/event_queue.ex) was called from. This option is ideal if you do not wish to configure Exq and Redis.
 ```elixir
 config :shopify_api, :background_job_implementation, 
   ShopifyAPI.EventPipe.InlineBackgroundJob

@@ -75,7 +75,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
     Application.get_env(
       :shopify_api,
       :background_job_implementation,
-      ShopifyAPI.EventPipe.ExqBackgroundJob
+      ShopifyAPI.EventPipe.InlineBackgroundJob
     )
   end
 end
