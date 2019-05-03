@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.4.0
+
 - Add BackgroundJobBehaviour to allow configure the job runner
 - Add Credo and compile warnings to CI
 
