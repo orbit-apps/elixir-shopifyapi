@@ -1,5 +1,6 @@
 {
   "skip_files": [
+    "lib/shopify_api/event_pipe/exq_background_job.ex",
     "lib/shopify_api/rest/access_scope.ex",
     "lib/shopify_api/rest/application_charge.ex",
     "lib/shopify_api/rest/application_credit.ex",
@@ -40,4 +41,3 @@
     "lib/shopify_api/rest/webhook.ex"
   ]
 }
-
