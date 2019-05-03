@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Add BackgroundJobBehaviour to allow configure the job runner
+- Add Credo and compile warnings to CI
+
 ## 0.3.1
 
 - Fix for ApplicationCredit

@@ -3,8 +3,6 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.EventPipe.Event
 
-  @retry_timer 250
-
   @doc """
   Event enqueue end point, takes the event and the options to be passed on to Exq.
 
@@ -50,7 +48,7 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   defp enqueue_event(worker, %{token: %AuthToken{} = token} = event, opts) do
     Logger.info(fn -> "Enqueueing[#{inspect(token)}] #{inspect(event)}" end)
-    background_job_impl().(Exq, AuthToken.create_key(token), worker, [event], opts)
+    background_job_impl().enqueue(AuthToken.create_key(token), worker, [event], opts)
     {:ok}
   end
 
@@ -61,31 +59,23 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
 
   defp enqueue_event(worker, event, opts) do
     Logger.warn(fn -> "Enqueueing in default queue #{inspect(event)}" end)
-    background_job_impl().(Exq, "default", worker, [event], opts)
+    background_job_impl().enqueue("default", worker, [event], opts)
     {:ok}
   end
 
-  def register(token) do
-    case GenServer.whereis(Exq) do
-      nil ->
-        :timer.sleep(@retry_timer)
-        register(token)
+  def fire_callback(%Event{} = event) do
+    background_job_impl().fire_callback(event)
+  end
 
-      _res ->
-        Logger.info(fn -> "#{__MODULE__} registering #{AuthToken.create_key(token)}" end)
-        Exq.subscribe(Exq, AuthToken.create_key(token), 1)
-    end
+  def subscribe(token) do
+    background_job_impl().subscribe(token)
   end
 
   defp background_job_impl do
-    pid = GenServer.whereis(Exq)
-
-    if is_pid(pid) do
-      &Exq.enqueue/5
-    else
-      &run_inline/5
-    end
+    Application.get_env(
+      :shopify_api,
+      :background_job_implementation,
+      ShopifyAPI.EventPipe.InlineBackgroundJob
+    )
   end
-
-  defp run_inline(_, _queue, worker, [event], _opts), do: worker.perform(event)
 end
