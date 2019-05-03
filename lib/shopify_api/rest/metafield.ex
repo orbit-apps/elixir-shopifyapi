@@ -137,9 +137,4 @@ defmodule ShopifyAPI.REST.Metafield do
   defp resource_path(:page, page_id, id), do: "pages/#{page_id}/metafields/#{id}.json"
   defp resource_path(:product, product_id, id), do: "products/#{product_id}/metafields/#{id}.json"
   defp resource_path(:variant, variant_id, id), do: "variants/#{variant_id}/metafields/#{id}.json"
-
-  defp resource_path(:article), do: "Not implemented."
-  # TODO: Update this when PR for ProductImage closes.
-  defp resource_path(:product_image), do: "Not implemented."
-  defp resource_path(:shop), do: "metafields.json"
 end
