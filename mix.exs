@@ -12,6 +12,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       deps: deps(),
       dialyzer: [plt_add_deps: :transitive, plt_file: {:no_warn, "priv/plts/dialyzer.plt"}],
       test_coverage: [tool: ExCoveralls],
+      package: package(),
 
       # Ex_Doc configuration
       name: "Shopify API",
@@ -49,6 +50,18 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:plug, "~> 1.0"},
       {:poison, "~> 3.1"},
       {:stream_data, "~> 0.4.2", only: :test}
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: [
+        "Pixel Union",
+        "Hez Ronningen"
+      ],
+      links: %{github: "https://github.com/pixelunion/elixir-shopifyapi"},
+      licenses: ["Apache2.0"],
+      files: ~w(lib test) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md .formatter.exs)
     ]
   end
 end
