@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add support for serializing `%ShopifyAPI.EventPipe.Event{}` structs with Jason.
+
 ## 0.4.0
 
 - Add BackgroundJobBehaviour to allow configure the job runner

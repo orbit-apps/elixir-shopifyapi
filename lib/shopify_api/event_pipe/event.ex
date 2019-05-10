@@ -1,4 +1,5 @@
 defmodule ShopifyAPI.EventPipe.Event do
+  @derive Jason.Encoder
   defstruct destination: "nowhere",
             app: %{},
             shop: %{},
