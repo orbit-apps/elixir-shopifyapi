@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.4.1
+
 - Add support for serializing `%ShopifyAPI.EventPipe.Event{}` structs with Jason.
 
 ## 0.4.0
