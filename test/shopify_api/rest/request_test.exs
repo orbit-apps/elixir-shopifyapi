@@ -1,66 +1,118 @@
 defmodule ShopifyAPI.REST.RequestTest do
   use ExUnit.Case
 
-  alias Plug.Conn
+  import Bypass, only: [expect_once: 4]
 
-  alias ShopifyAPI.{AuthToken, Shop}
-
+  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST.Request
 
-  setup _context do
-    bypass = Bypass.open()
+  defmodule MockAPIResponses do
+    import Plug.Conn
 
-    shop = %Shop{domain: "localhost:#{bypass.port}"}
+    # Used to test that the Shopify auth header is set
+    def assert_auth_header_set(%{req_headers: req_headers} = conn) do
+      headers = Enum.into(req_headers, %{})
+      assert headers["x-shopify-access-token"] == "token"
+      resp(conn, 200, "")
+    end
 
-    token = %AuthToken{
-      token: "token",
-      shop_name: shop.domain
-    }
+    def success(status \\ 200, body \\ "{}"),
+      do: generate_response(status, body)
 
-    {:ok, %{shop: shop, auth_token: token, bypass: bypass}}
-  end
+    def failure(status \\ 500, body \\ "{}"),
+      do: generate_response(status, body)
 
-  describe "all" do
-    test "auth headers get added to out going request", %{
-      bypass: bypass,
-      shop: _shop,
-      auth_token: token
-    } do
-      Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/example", fn conn ->
-        headers = Enum.into(conn.req_headers, %{})
-        assert headers["x-shopify-access-token"] == "token"
-        Conn.resp(conn, 200, "{}")
-      end)
-
-      assert {:ok, _} = Request.get(token, "example")
+    defp generate_response(status, body) when is_integer(status) and is_binary(body) do
+      fn conn -> resp(conn, status, body) end
     end
   end
 
+  setup do
+    bypass = Bypass.open()
+    token = %AuthToken{token: "token", shop_name: "localhost:#{bypass.port}"}
+    {:ok, %{token: token, bypass: bypass}}
+  end
+
+  test "adds API auth header to outgoing requests", %{bypass: bypass, token: token} do
+    expect_once(
+      bypass,
+      "GET",
+      "/admin/api/#{Request.version()}/example",
+      &MockAPIResponses.assert_auth_header_set/1
+    )
+
+    assert {:ok, _} = Request.get(token, "example")
+  end
+
   describe "GET" do
-    test "returns ok when returned status code is 200", %{
-      bypass: bypass,
-      shop: _shop,
-      auth_token: token
-    } do
-      Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/example", fn conn ->
-        Conn.resp(conn, 200, "{}")
-      end)
+    test "returns ok when returned status code is 200", %{bypass: bypass, token: token} do
+      expect_once(
+        bypass,
+        "GET",
+        "/admin/api/#{Request.version()}/example",
+        MockAPIResponses.success()
+      )
 
       assert {:ok, _} = Request.get(token, "example")
+    end
+
+    test "returns errors from API on non-200 responses", %{bypass: bypass, token: token} do
+      expect_once(
+        bypass,
+        "GET",
+        "/admin/api/#{Request.version()}/example",
+        MockAPIResponses.failure()
+      )
+
+      assert {:error, %{status_code: 500}} = Request.get(token, "example")
     end
   end
 
   describe "POST" do
-    test "returns ok when returned status code is 201", %{
-      bypass: bypass,
-      shop: _shop,
-      auth_token: token
-    } do
-      Bypass.expect_once(bypass, "POST", "/admin/api/#{Request.version()}/example", fn conn ->
-        Conn.resp(conn, 201, "{}")
-      end)
+    test "returns ok when returned status code is 201", %{bypass: bypass, token: token} do
+      expect_once(
+        bypass,
+        "POST",
+        "/admin/api/#{Request.version()}/example",
+        MockAPIResponses.success(201)
+      )
 
       assert {:ok, _} = Request.post(token, "example", %{})
+    end
+
+    test "returns errors from API on non-200 responses", %{bypass: bypass, token: token} do
+      expect_once(
+        bypass,
+        "POST",
+        "/admin/api/#{Request.version()}/example",
+        MockAPIResponses.failure(422)
+      )
+
+      assert {:error, %{status_code: 422}} = Request.post(token, "example", %{})
+    end
+  end
+
+  describe "DELETE" do
+    test "is successful when API returns a 2XX status", %{bypass: bypass, token: token} do
+      expect_once(
+        bypass,
+        "DELETE",
+        "/admin/api/#{Request.version()}/example",
+        MockAPIResponses.success(200)
+      )
+
+      assert {:ok, _} = Request.delete(token, "example")
+    end
+
+    test "returns errors from API on non-200 responses", %{bypass: bypass, token: token} do
+      expect_once(
+        bypass,
+        "DELETE",
+        "/admin/api/#{Request.version()}/example",
+        MockAPIResponses.failure(404)
+      )
+
+      assert {:error, %{status_code: 404}} = Request.delete(token, "example")
     end
   end
 end
