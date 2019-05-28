@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Request do
   require Logger
 
   alias HTTPoison.{AsyncResponse, Error, Response}
-  alias ShopifyAPI.{AuthToken, Throttled, ThrottleServer}
+  alias ShopifyAPI.{AuthToken, CallLimit, Throttled, ThrottleServer}
 
   @default_api_version "2019-04"
 
@@ -51,7 +51,7 @@ defmodule ShopifyAPI.REST.Request do
             request(action, url, body, headers, recv_timeout: @http_receive_timeout)
           end)
 
-        log_request(action, url, time)
+        log_request(action, url, time, response)
 
         case response do
           {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
@@ -71,11 +71,18 @@ defmodule ShopifyAPI.REST.Request do
     )
   end
 
-  defp log_request(action, url, time) do
+  defp log_request(action, url, time, response) do
     Logger.debug(fn ->
       module = __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
       action = action |> to_string() |> String.upcase()
-      "#{module} #{action} #{url} [#{div(time, 1_000)}ms]"
+
+      call_limit =
+        case response do
+          {:ok, http_response} -> CallLimit.limit_header_or_status_code(http_response)
+          _ -> nil
+        end
+
+      "#{module} #{action} #{url} (#{call_limit}) [#{div(time, 1_000)}ms]"
     end)
   end
 
