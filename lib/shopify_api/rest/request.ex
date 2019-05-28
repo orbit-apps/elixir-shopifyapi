@@ -76,15 +76,17 @@ defmodule ShopifyAPI.REST.Request do
       module = __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
       action = action |> to_string() |> String.upcase()
 
-      call_limit =
-        case response do
-          {:ok, http_response} -> CallLimit.limit_header_or_status_code(http_response)
-          _ -> nil
-        end
-
-      "#{module} #{action} #{url} (#{call_limit}) [#{div(time, 1_000)}ms]"
+      "#{module} #{action} #{url} (#{call_limit(response)}) [#{div(time, 1_000)}ms]"
     end)
   end
+
+  defp call_limit({:ok, response}) do
+    response
+    |> CallLimit.limit_header_or_status_code()
+    |> CallLimit.get_api_call_limit()
+  end
+
+  defp call_limit(_), do: nil
 
   def process_response_body(body), do: Poison.decode(body)
 
