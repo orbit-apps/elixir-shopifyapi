@@ -46,9 +46,14 @@ defmodule ShopifyAPI.REST.Request do
   defp shopify_request(action, url, body, headers, token) do
     Throttled.request(
       fn ->
-        Logger.debug("#{__MODULE__} requesting #{inspect(url)}")
+        {time, response} =
+          :timer.tc(fn ->
+            request(action, url, body, headers, recv_timeout: @http_receive_timeout)
+          end)
 
-        case request(action, url, body, headers, recv_timeout: @http_receive_timeout) do
+        log_request(action, url, time)
+
+        case response do
           {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
             # TODO probably have to return the response here if we want to use the headers
             ThrottleServer.update_api_call_limit(response, token)
@@ -64,6 +69,14 @@ defmodule ShopifyAPI.REST.Request do
       end,
       token
     )
+  end
+
+  defp log_request(action, url, time) do
+    Logger.debug(fn ->
+      module = __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
+      action = action |> to_string() |> String.upcase()
+      "#{module} #{action} #{url} [#{div(time, 1_000)}ms]"
+    end)
   end
 
   def process_response_body(body), do: Poison.decode(body)
