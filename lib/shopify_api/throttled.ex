@@ -1,4 +1,21 @@
 defmodule ShopifyAPI.Throttled do
+  @moduledoc """
+  A wrapper for requests against Shopify's API, implementing request throttling.
+
+  For more information on Shopify's REST API Rate Limiting:
+  https://help.shopify.com/en/api/reference/rest-admin-api-rate-limits
+
+  Request "buckets" are identified based on the provided `AuthToken`. An ets
+  table is checked before making a request, seeing if additional requests are
+  allowed. If not, the client will sleep before attempting the request.
+
+  Upon receiving a HTTP response, the number of allowed requests is
+  extracted from response headers and inserted into the ets table.
+
+  If Shopify returns the `429 Too Many Requests` status code for a request, it
+  will be retried after a delay and re-check of the ets table, to a maximum of
+  10 total attempts (this is configurable).
+  """
   require Logger
 
   alias ShopifyAPI.ThrottleServer
