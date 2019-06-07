@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Request do
   require Logger
 
   alias HTTPoison.{AsyncResponse, Error, Response}
-  alias ShopifyAPI.{AuthToken, CallLimit, Throttled, ThrottleServer}
+  alias ShopifyAPI.{AuthToken, CallLimit, Throttled}
 
   @default_api_version "2019-04"
 
@@ -44,31 +44,32 @@ defmodule ShopifyAPI.REST.Request do
   def delete(auth, path), do: shopify_request(:delete, url(auth, path), "", headers(auth), auth)
 
   defp shopify_request(action, url, body, headers, token) do
-    Throttled.request(
-      fn ->
-        {time, response} =
-          :timer.tc(fn ->
-            request(action, url, body, headers, recv_timeout: @http_receive_timeout)
-          end)
+    response =
+      Throttled.request(
+        fn ->
+          {time, response} =
+            :timer.tc(fn ->
+              request(action, url, body, headers, recv_timeout: @http_receive_timeout)
+            end)
 
-        log_request(action, url, time, response)
+          log_request(action, url, time, response)
 
-        case response do
-          {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
-            # TODO probably have to return the response here if we want to use the headers
-            ThrottleServer.update_api_call_limit(response, token)
-            {:ok, fetch_body(response)}
+          response
+        end,
+        token
+      )
 
-          {:ok, response} ->
-            ThrottleServer.update_api_call_limit(response, token)
-            {:error, response}
+    case response do
+      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
+        # TODO probably have to return the response here if we want to use the headers
+        {:ok, fetch_body(response)}
 
-          response ->
-            {:error, response}
-        end
-      end,
-      token
-    )
+      {:ok, response} ->
+        {:error, response}
+
+      response ->
+        {:error, response}
+    end
   end
 
   defp log_request(action, url, time, response) do

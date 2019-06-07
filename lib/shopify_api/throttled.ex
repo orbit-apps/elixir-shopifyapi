@@ -30,14 +30,21 @@ defmodule ShopifyAPI.Throttled do
   def request(func, token, max_tries, depth) when is_function(func) do
     over_limit_status_code = ShopifyAPI.over_limit_status_code()
 
-    case token
-         |> ThrottleServer.get()
-         |> make_request(func, ShopifyAPI.requests_per_second(token)) do
-      {:error, %{status_code: ^over_limit_status_code}} ->
+    token
+    |> ThrottleServer.get()
+    |> make_request(func, ShopifyAPI.requests_per_second(token))
+    |> case do
+      # over request limit, back off and try again.
+      {:ok, %{status_code: ^over_limit_status_code}} ->
         request(func, token, max_tries, depth + 1)
 
-      resp ->
-        resp
+      # successful request, update internal call limit
+      {:ok, response} ->
+        ThrottleServer.update_api_call_limit(response, token)
+        {:ok, response}
+
+      error ->
+        error
     end
   end
 
