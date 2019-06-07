@@ -1,9 +1,10 @@
-defmodule ShopifyAPI.REST.RequestTest do
+defmodule ShopifyAPI.RESTTest do
   use ExUnit.Case
 
   import Bypass, only: [expect_once: 4]
 
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.REST
   alias ShopifyAPI.REST.Request
 
   defmodule MockAPIResponses do
@@ -41,7 +42,7 @@ defmodule ShopifyAPI.REST.RequestTest do
       &MockAPIResponses.assert_auth_header_set/1
     )
 
-    assert {:ok, _} = Request.get(token, "example")
+    assert {:ok, _} = REST.get(token, "example")
   end
 
   describe "GET" do
@@ -53,7 +54,7 @@ defmodule ShopifyAPI.REST.RequestTest do
         MockAPIResponses.success()
       )
 
-      assert {:ok, _} = Request.get(token, "example")
+      assert {:ok, _} = REST.get(token, "example")
     end
 
     test "returns errors from API on non-200 responses", %{bypass: bypass, token: token} do
@@ -64,7 +65,7 @@ defmodule ShopifyAPI.REST.RequestTest do
         MockAPIResponses.failure()
       )
 
-      assert {:error, %{status_code: 500}} = Request.get(token, "example")
+      assert {:error, %{status_code: 500}} = REST.get(token, "example")
     end
   end
 
@@ -77,7 +78,7 @@ defmodule ShopifyAPI.REST.RequestTest do
         MockAPIResponses.success(201)
       )
 
-      assert {:ok, _} = Request.post(token, "example", %{})
+      assert {:ok, _} = REST.post(token, "example", %{})
     end
 
     test "returns errors from API on non-200 responses", %{bypass: bypass, token: token} do
@@ -88,7 +89,7 @@ defmodule ShopifyAPI.REST.RequestTest do
         MockAPIResponses.failure(422)
       )
 
-      assert {:error, %{status_code: 422}} = Request.post(token, "example", %{})
+      assert {:error, %{status_code: 422}} = REST.post(token, "example", "")
     end
   end
 
@@ -101,7 +102,7 @@ defmodule ShopifyAPI.REST.RequestTest do
         MockAPIResponses.success(200)
       )
 
-      assert {:ok, _} = Request.delete(token, "example")
+      assert {:ok, _} = REST.delete(token, "example")
     end
 
     test "returns errors from API on non-200 responses", %{bypass: bypass, token: token} do
@@ -112,7 +113,7 @@ defmodule ShopifyAPI.REST.RequestTest do
         MockAPIResponses.failure(404)
       )
 
-      assert {:error, %{status_code: 404}} = Request.delete(token, "example")
+      assert {:error, %{status_code: 404}} = REST.delete(token, "example")
     end
   end
 end

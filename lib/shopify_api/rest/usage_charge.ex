@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Create a usage charge.
@@ -19,7 +19,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
         recurring_application_charge_id,
         usage_charge
       ) do
-    Request.post(
+    REST.post(
       auth,
       "recurring_application_charges/#{recurring_application_charge_id}/usage_charges.json",
       usage_charge
@@ -39,7 +39,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
         recurring_application_charge_id,
         %{usage_charge: %{id: usage_charge_id}}
       ) do
-    Request.get(
+    REST.get(
       auth,
       "recurring_application_charges/#{recurring_application_charge_id}/usage_charges/#{
         usage_charge_id
@@ -56,7 +56,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
       {:ok, { "usage_charges" => [] }}
   """
   def all(%AuthToken{} = auth, recurring_application_charge_id) do
-    Request.get(
+    REST.get(
       auth,
       "recurring_application_charge_id/#{recurring_application_charge_id}/usage_charges.json"
     )

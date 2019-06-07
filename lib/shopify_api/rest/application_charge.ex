@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Create an application charge.
@@ -18,7 +18,7 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
         %AuthToken{} = auth,
         %{application_charge: %{}} = application_charge
       ),
-      do: Request.post(auth, "application_charges.json", application_charge)
+      do: REST.post(auth, "application_charges.json", application_charge)
 
   @doc """
   Get a single application charge.
@@ -29,7 +29,7 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
       {:ok, { "application_charge" => %{} }}
   """
   def get(%AuthToken{} = auth, application_charge_id),
-    do: Request.get(auth, "application_charges/#{application_charge_id}.json")
+    do: REST.get(auth, "application_charges/#{application_charge_id}.json")
 
   @doc """
   Get a list of all application charges.
@@ -39,7 +39,7 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
       iex> ShopifyAPI.REST.ApplicationCharge.all(auth)
       {:ok, { "application_charges" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "application_charges.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "application_charges.json")
 
   @doc """
   Active an application charge.
@@ -53,7 +53,7 @@ defmodule ShopifyAPI.REST.ApplicationCharge do
         %AuthToken{} = auth,
         %{application_charge: %{id: application_charge_id}} = application_charge
       ) do
-    Request.post(
+    REST.post(
       auth,
       "application_charges/#{application_charge_id}/activate.json",
       application_charge

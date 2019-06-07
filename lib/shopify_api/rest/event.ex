@@ -6,7 +6,7 @@ defmodule ShopifyAPI.REST.Event do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all Events.
@@ -16,7 +16,7 @@ defmodule ShopifyAPI.REST.Event do
       iex> ShopifyAPI.REST.Event.all(auth)
       {:ok, { "events" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "events.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "events.json")
 
   @doc """
   Get a single event.
@@ -26,7 +26,7 @@ defmodule ShopifyAPI.REST.Event do
       iex> ShopifyAPI.REST.Event.get(auth, integer)
       {:ok, { "event" => %{} }}
   """
-  def get(%AuthToken{} = auth, event_id), do: Request.get(auth, "events/#{event_id}.json")
+  def get(%AuthToken{} = auth, event_id), do: REST.get(auth, "events/#{event_id}.json")
 
   @doc """
   Get a count of all Events.
@@ -36,5 +36,5 @@ defmodule ShopifyAPI.REST.Event do
       iex> ShopifyAPI.REST.Event.count(auth)
       {:ok, { "events" => integer }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "events/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "events/count.json")
 end

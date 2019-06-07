@@ -5,7 +5,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
 
   require Logger
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Create a recurring application charge.
@@ -19,7 +19,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
         %AuthToken{} = auth,
         %{recurring_application_charge: {}} = recurring_application_charge
       ) do
-    Request.post(auth, "recurring_application_charges.json", recurring_application_charge)
+    REST.post(auth, "recurring_application_charges.json", recurring_application_charge)
   end
 
   @doc """
@@ -31,7 +31,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
       {:ok, { "recurring_application_charge" => %{} }}
   """
   def get(%AuthToken{} = auth, recurring_application_charge_id),
-    do: Request.get(auth, "recurring_application_charges/#{recurring_application_charge_id}.json")
+    do: REST.get(auth, "recurring_application_charges/#{recurring_application_charge_id}.json")
 
   @doc """
   Get a list of all recurring application charges.
@@ -41,7 +41,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
       iex> ShopifyAPI.REST.RecurringApplicationCharge.all(auth)
       {:ok, { "recurring_application_charges" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "recurring_application_charges.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "recurring_application_charges.json")
 
   @doc """
   Activates a recurring application charge.
@@ -52,7 +52,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
       {:ok, { "recurring_application_charge" => %{} }}
   """
   def activate(%AuthToken{} = auth, recurring_application_charge_id) do
-    Request.post(
+    REST.post(
       auth,
       "recurring_application_charges/#{recurring_application_charge_id}/activate.json"
     )
@@ -68,7 +68,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   """
   def cancel(%AuthToken{} = auth, recurring_application_charge_id),
     do:
-      Request.delete(
+      REST.delete(
         auth,
         "recurring_application_charges/#{recurring_application_charge_id}.json"
       )

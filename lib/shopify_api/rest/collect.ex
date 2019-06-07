@@ -4,18 +4,18 @@ defmodule ShopifyAPI.REST.Collect do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Add a product to custom collection.
 
   ## Example
 
-      iex> ShopifyAPI.REST.Request.add(auth)
+      iex> ShopifyAPI.REST.REST.add(auth)
       {:ok, { "collect" => %{} }}
   """
   def add(%AuthToken{} = auth, %{collect: %{}} = collect),
-    do: Request.post(auth, "collects.json", collect)
+    do: REST.post(auth, "collects.json", collect)
 
   @doc """
   Remove a product from a custom collection.
@@ -26,7 +26,7 @@ defmodule ShopifyAPI.REST.Collect do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, collect_id),
-    do: Request.delete(auth, "collects/#{collect_id}.json")
+    do: REST.delete(auth, "collects/#{collect_id}.json")
 
   @doc """
   Get list of all collects.
@@ -36,7 +36,7 @@ defmodule ShopifyAPI.REST.Collect do
       iex> ShopifyAPI.REST.Get(auth)
       {:ok, { "collects" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "collects.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "collects.json")
 
   @doc """
   Get a count of collects.
@@ -46,7 +46,7 @@ defmodule ShopifyAPI.REST.Collect do
       iex> ShopifyAPI.REST.Count(auth)
       {:ok, { "count": integer }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "collects/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "collects/count.json")
 
   @doc """
   Get a specific collect.
@@ -56,5 +56,5 @@ defmodule ShopifyAPI.REST.Collect do
       iex> ShopifyAPI.REST.Get(auth, string)
       {:ok, { "collect" => %{} }}
   """
-  def get(%AuthToken{} = auth, collect_id), do: Request.get(auth, "collects/#{collect_id}.json")
+  def get(%AuthToken{} = auth, collect_id), do: REST.get(auth, "collects/#{collect_id}.json")
 end

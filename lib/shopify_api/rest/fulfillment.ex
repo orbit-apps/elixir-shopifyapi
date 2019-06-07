@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all fulfillments.
@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillments" => [] }}
   """
   def all(%AuthToken{} = auth, order_id),
-    do: Request.get(auth, "orders/#{order_id}/fulfillments.json")
+    do: REST.get(auth, "orders/#{order_id}/fulfillments.json")
 
   @doc """
   Return a count of all fulfillments.
@@ -26,7 +26,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "count" => integer }}
   """
   def count(%AuthToken{} = auth, order_id),
-    do: Request.get(auth, "orders/#{order_id}/fulfillments/count.json")
+    do: REST.get(auth, "orders/#{order_id}/fulfillments/count.json")
 
   @doc """
   Get a single fulfillment.
@@ -37,7 +37,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillment" => %{} }}
   """
   def get(%AuthToken{} = auth, order_id, fulfillment_id),
-    do: Request.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json")
+    do: REST.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json")
 
   @doc """
   Create a new fulfillment.
@@ -48,7 +48,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillment" => %{} }}
   """
   def create(%AuthToken{} = auth, order_id, %{fulfillment: %{}} = fulfillment),
-    do: Request.post(auth, "orders/#{order_id}/fulfillments.json", fulfillment)
+    do: REST.post(auth, "orders/#{order_id}/fulfillments.json", fulfillment)
 
   @doc """
   Update an existing fulfillment.
@@ -63,7 +63,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
         order_id,
         %{fulfillment: %{id: fulfillment_id}} = fulfillment
       ),
-      do: Request.put(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json", fulfillment)
+      do: REST.put(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json", fulfillment)
 
   @doc """
   Complete a fulfillment.
@@ -74,7 +74,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillment" => %{} }}
   """
   def complete(%AuthToken{} = auth, order_id, %{fulfillment: %{id: fulfillment_id}} = fulfillment) do
-    Request.post(
+    REST.post(
       auth,
       "orders/#{order_id}/fulfillments/#{fulfillment_id}/complete.json",
       fulfillment
@@ -90,7 +90,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillment" => %{} }}
   """
   def open(%AuthToken{} = auth, order_id, %{fulfillment: %{id: fulfillment_id}} = fulfillment) do
-    Request.post(
+    REST.post(
       auth,
       "orders/#{order_id}/fulfillments/#{fulfillment_id}/open.json",
       fulfillment
@@ -106,7 +106,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
       {:ok, { "fulfillment" => %{} }}
   """
   def cancel(%AuthToken{} = auth, order_id, %{fulfillment: %{id: fulfillment_id}} = fulfillment) do
-    Request.post(
+    REST.post(
       auth,
       "orders/#{order_id}/fulfillments/#{fulfillment_id}/cancel.json",
       fulfillment

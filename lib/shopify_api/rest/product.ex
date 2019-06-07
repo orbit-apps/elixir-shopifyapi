@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.Product do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Get a list of all the products.
@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Product do
     iex> ShopifyAPI.REST.Product.all(auth)
     {:ok, %{ "products" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "products.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "products.json")
 
   @doc """
   Return a single product.
@@ -24,7 +24,7 @@ defmodule ShopifyAPI.REST.Product do
     iex> ShopifyAPI.REST.Product.get(auth, integer)
     {:ok, %{ "product" => %{} }}
   """
-  def get(%AuthToken{} = auth, product_id), do: Request.get(auth, "products/#{product_id}.json")
+  def get(%AuthToken{} = auth, product_id), do: REST.get(auth, "products/#{product_id}.json")
 
   @doc """
   Return a count of products.
@@ -34,7 +34,7 @@ defmodule ShopifyAPI.REST.Product do
     iex> ShopifyAPI.REST.Product.count(auth)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "products/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "products/count.json")
 
   @doc """
   Update a product.
@@ -48,7 +48,7 @@ defmodule ShopifyAPI.REST.Product do
     do: update(auth, %{product: Map.put(product, :id, product_id)})
 
   def update(%AuthToken{} = auth, %{product: %{id: product_id}} = product),
-    do: Request.put(auth, "products/#{product_id}.json", product)
+    do: REST.put(auth, "products/#{product_id}.json", product)
 
   @doc """
   Delete a product.
@@ -59,7 +59,7 @@ defmodule ShopifyAPI.REST.Product do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, product_id),
-    do: Request.delete(auth, "products/#{product_id}.json")
+    do: REST.delete(auth, "products/#{product_id}.json")
 
   @doc """
   Create a new product.
@@ -73,5 +73,5 @@ defmodule ShopifyAPI.REST.Product do
     do: create(auth, %{product: product})
 
   def create(%AuthToken{} = auth, %{product: %{}} = product),
-    do: Request.post(auth, "products.json", product)
+    do: REST.post(auth, "products.json", product)
 end

@@ -1,19 +1,9 @@
 defmodule ShopifyAPI.REST.Request do
-  @moduledoc """
-  Provides basic REST actions for hitting the Shopify API. Don't use this
-  directly instead use one of the helper modules such as `ShopifyAPI.REST.Product`.
-
-  Actons provided, the names correspond to the HTTP Action called.
-    - get
-    - put
-    - post
-    - delete
-  """
+  @moduledoc false
 
   use HTTPoison.Base
   require Logger
 
-  alias HTTPoison.{AsyncResponse, Error, Response}
   alias ShopifyAPI.{AuthToken, CallLimit, Throttled}
 
   @default_api_version "2019-04"
@@ -25,23 +15,28 @@ defmodule ShopifyAPI.REST.Request do
 
   ## Public Interface
 
-  @spec get(AuthToken.t(), String.t()) ::
-          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-  def get(auth, path), do: shopify_request(:get, url(auth, path), "", headers(auth), auth)
+  def perform(%AuthToken{} = token, method, path, body \\ "") do
+    url = url(token, path)
+    headers = headers(token)
 
-  @spec put(AuthToken.t(), String.t(), map()) ::
-          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-  def put(auth, path, object),
-    do: shopify_request(:put, url(auth, path), Poison.encode!(object), headers(auth), auth)
+    response =
+      Throttled.request(
+        fn -> request(method, url, body, headers) end,
+        token
+      )
 
-  @spec post(AuthToken.t(), String.t(), map()) ::
-          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-  def post(auth, path, object \\ %{}),
-    do: shopify_request(:post, url(auth, path), Poison.encode!(object), headers(auth), auth)
+    case response do
+      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
+        # TODO probably have to return the response here if we want to use the headers
+        {:ok, fetch_body(response)}
 
-  @spec delete(AuthToken.t(), String.t()) ::
-          {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-  def delete(auth, path), do: shopify_request(:delete, url(auth, path), "", headers(auth), auth)
+      {:ok, response} ->
+        {:error, response}
+
+      response ->
+        {:error, response}
+    end
+  end
 
   def version do
     Keyword.get(
@@ -69,26 +64,6 @@ defmodule ShopifyAPI.REST.Request do
   end
 
   ## Private Helpers
-
-  defp shopify_request(method, url, body, headers, token) do
-    response =
-      Throttled.request(
-        fn -> request(method, url, body, headers) end,
-        token
-      )
-
-    case response do
-      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
-        # TODO probably have to return the response here if we want to use the headers
-        {:ok, fetch_body(response)}
-
-      {:ok, response} ->
-        {:error, response}
-
-      response ->
-        {:error, response}
-    end
-  end
 
   defp log_request(method, url, time, response) do
     Logger.debug(fn ->

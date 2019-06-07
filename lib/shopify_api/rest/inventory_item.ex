@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.InventoryItem do
   """
   require Logger
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of inventory items.
@@ -30,7 +30,7 @@ defmodule ShopifyAPI.REST.InventoryItem do
       {:ok, { "inventory_item" => %{} }}
   """
   def get(%AuthToken{} = auth, inventory_item_id),
-    do: Request.get(auth, "inventory_items/#{inventory_item_id}.json")
+    do: REST.get(auth, "inventory_items/#{inventory_item_id}.json")
 
   @doc """
   Update an existing inventory item.
@@ -41,5 +41,5 @@ defmodule ShopifyAPI.REST.InventoryItem do
       {:ok, { "inventory_item" => %{} }}
   """
   def update(%AuthToken{} = auth, %{inventory_item: %{id: inventory_item_id}} = inventory_item),
-    do: Request.put(auth, "inventory_items/#{inventory_item_id}.json", inventory_item)
+    do: REST.put(auth, "inventory_items/#{inventory_item_id}.json", inventory_item)
 end
