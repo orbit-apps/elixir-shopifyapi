@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Refactor `ShopifyAPI.REST.Request`, extract underlying `get`/`post`/`put`/`delete` to `ShopifyAPI.REST`.
+- Correct examples for `ShopifyAPI.REST.Collect`.
+
 ## 0.4.1
 
 - Add support for serializing `%ShopifyAPI.EventPipe.Event{}` structs with Jason.
