@@ -18,12 +18,12 @@ defmodule ShopifyAPI.REST.Request do
 
   @default_api_version "2019-04"
 
-  @transport "https://"
-  if Mix.env() == :test do
-    @transport "http://"
-  end
+  # Use HTTP in test for Bypass, HTTPS in all other environments
+  @transport if Mix.env() == :test, do: "http://", else: "https://"
 
   @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
+
+  ## Public Interface
 
   @spec get(AuthToken.t(), String.t()) ::
           {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
@@ -43,19 +43,37 @@ defmodule ShopifyAPI.REST.Request do
           {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
   def delete(auth, path), do: shopify_request(:delete, url(auth, path), "", headers(auth), auth)
 
-  defp shopify_request(action, url, body, headers, token) do
+  def version do
+    Keyword.get(
+      Application.get_env(:shopify_api, ShopifyAPI.REST) || [],
+      :api_version,
+      @default_api_version
+    )
+  end
+
+  ## HTTPoison Overrides
+
+  def request(%HTTPoison.Request{method: method, url: url} = request) do
+    {time, response} = :timer.tc(&super/1, [request])
+    log_request(method, url, time, response)
+
+    response
+  end
+
+  def process_request_options(opts) do
+    Keyword.put_new(opts, :recv_timeout, @http_receive_timeout)
+  end
+
+  def process_response_body(body) do
+    Poison.decode(body)
+  end
+
+  ## Private Helpers
+
+  defp shopify_request(method, url, body, headers, token) do
     response =
       Throttled.request(
-        fn ->
-          {time, response} =
-            :timer.tc(fn ->
-              request(action, url, body, headers, recv_timeout: @http_receive_timeout)
-            end)
-
-          log_request(action, url, time, response)
-
-          response
-        end,
+        fn -> request(method, url, body, headers) end,
         token
       )
 
@@ -72,12 +90,12 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  defp log_request(action, url, time, response) do
+  defp log_request(method, url, time, response) do
     Logger.debug(fn ->
       module = __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
-      action = action |> to_string() |> String.upcase()
+      method = method |> to_string() |> String.upcase()
 
-      "#{module} #{action} #{url} (#{call_limit(response)}) [#{div(time, 1_000)}ms]"
+      "#{module} #{method} #{url} (#{call_limit(response)}) [#{div(time, 1_000)}ms]"
     end)
   end
 
@@ -88,8 +106,6 @@ defmodule ShopifyAPI.REST.Request do
   end
 
   defp call_limit(_), do: nil
-
-  def process_response_body(body), do: Poison.decode(body)
 
   defp url(%{shop_name: domain}, path),
     do: "#{@transport}#{domain}/admin/api/#{version()}/#{path}"
@@ -105,13 +121,5 @@ defmodule ShopifyAPI.REST.Request do
     with {:ok, map_fetched} <- Map.fetch(http_response, :body),
          {:ok, body} <- map_fetched,
          do: body
-  end
-
-  def version do
-    Keyword.get(
-      Application.get_env(:shopify_api, ShopifyAPI.REST) || [],
-      :api_version,
-      @default_api_version
-    )
   end
 end
