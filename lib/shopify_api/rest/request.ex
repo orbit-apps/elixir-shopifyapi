@@ -55,10 +55,12 @@ defmodule ShopifyAPI.REST.Request do
     response
   end
 
+  @impl true
   def process_request_options(opts) do
     Keyword.put_new(opts, :recv_timeout, @http_receive_timeout)
   end
 
+  @impl true
   def process_response_body(body) do
     Poison.decode(body)
   end
