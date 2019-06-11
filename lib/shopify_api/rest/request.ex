@@ -1,5 +1,10 @@
 defmodule ShopifyAPI.REST.Request do
-  @moduledoc false
+  @moduledoc """
+  The internal interface to Shopify's REST Admin API, built on HTTPoison.
+
+  Adds support for building URLs and authentication headers from an AuthToken,
+  as well as functionality to throttle/log requests and parse responses.
+  """
 
   use HTTPoison.Base
   require Logger
