@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.Theme do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Get a single theme.
@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.Theme do
       {:ok, { "theme" => %{} }}
   """
   def get(%AuthToken{} = auth, theme_id, params \\ %{}),
-    do: Request.get(auth, "themes/#{theme_id}.json?" <> URI.encode_query(params))
+    do: REST.get(auth, "themes/#{theme_id}.json?" <> URI.encode_query(params))
 
   @doc """
   Return a list of all themes.
@@ -26,7 +26,7 @@ defmodule ShopifyAPI.REST.Theme do
       {:ok, { "themes" => [] }}
   """
   def all(%AuthToken{} = auth, params \\ %{}),
-    do: Request.get(auth, "themes.json?" <> URI.encode_query(params))
+    do: REST.get(auth, "themes.json?" <> URI.encode_query(params))
 
   @doc """
   Update a theme.
@@ -40,7 +40,7 @@ defmodule ShopifyAPI.REST.Theme do
     do: update(auth, %{theme: Map.put(theme, :id, theme_id)})
 
   def update(%AuthToken{} = auth, %{theme: %{id: theme_id}} = theme),
-    do: Request.put(auth, "themes/#{theme_id}.json", theme)
+    do: REST.put(auth, "themes/#{theme_id}.json", theme)
 
   @doc """
   Delete a theme.
@@ -51,7 +51,7 @@ defmodule ShopifyAPI.REST.Theme do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, theme_id),
-    do: Request.delete(auth, "themes/#{theme_id}.json")
+    do: REST.delete(auth, "themes/#{theme_id}.json")
 
   @doc """
   Create a new theme.
@@ -65,5 +65,5 @@ defmodule ShopifyAPI.REST.Theme do
     do: create(auth, %{theme: theme})
 
   def create(%AuthToken{} = auth, %{theme: %{}} = theme),
-    do: Request.post(auth, "themes.json", theme)
+    do: REST.post(auth, "themes.json", theme)
 end

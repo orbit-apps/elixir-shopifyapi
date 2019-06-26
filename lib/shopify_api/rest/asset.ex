@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.Asset do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Get a single theme asset.
@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.Asset do
       {:ok, { "asset" => %{} }}
   """
   def get(%AuthToken{} = auth, theme_id, params),
-    do: Request.get(auth, "themes/#{theme_id}/assets.json?" <> URI.encode_query(params))
+    do: REST.get(auth, "themes/#{theme_id}/assets.json?" <> URI.encode_query(params))
 
   @doc """
   Return a list of all theme assets.
@@ -25,7 +25,7 @@ defmodule ShopifyAPI.REST.Asset do
       iex> ShopifyAPI.REST.Asset.all(auth, theme_id)
       {:ok, { "assets" => [] }}
   """
-  def all(%AuthToken{} = auth, theme_id), do: Request.get(auth, "themes/#{theme_id}/assets.json")
+  def all(%AuthToken{} = auth, theme_id), do: REST.get(auth, "themes/#{theme_id}/assets.json")
 
   @doc """
   Update a theme asset.
@@ -36,7 +36,7 @@ defmodule ShopifyAPI.REST.Asset do
     {:ok, %{ "asset" => %{} }}
   """
   def update(%AuthToken{} = auth, theme_id, asset),
-    do: Request.put(auth, "themes/#{theme_id}/assets.json", asset)
+    do: REST.put(auth, "themes/#{theme_id}/assets.json", asset)
 
   @doc """
   Delete a theme asset.
@@ -47,7 +47,7 @@ defmodule ShopifyAPI.REST.Asset do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, theme_id, params),
-    do: Request.delete(auth, "themes/#{theme_id}/assets.json?" <> URI.encode_query(params))
+    do: REST.delete(auth, "themes/#{theme_id}/assets.json?" <> URI.encode_query(params))
 
   @doc """
   Create a new theme asset.

@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.Location do
   """
   require Logger
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of locations.
@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Location do
       iex> ShopifyAPI.REST.Location.all(auth)
       {:ok, { "locations" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "locations.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "locations.json")
 
   @doc """
   Return a single location.
@@ -25,7 +25,7 @@ defmodule ShopifyAPI.REST.Location do
     {:ok, %{ "location" => %{} }}
   """
   def get(%AuthToken{} = auth, location_id),
-    do: Request.get(auth, "locations/#{location_id}.json")
+    do: REST.get(auth, "locations/#{location_id}.json")
 
   @doc """
   Return a count of locations.
@@ -35,7 +35,7 @@ defmodule ShopifyAPI.REST.Location do
     iex> ShopifyAPI.REST.Location.count(auth)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "locations/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "locations/count.json")
 
   @doc """
   Returns a list of inventory levels for a location.
@@ -46,5 +46,5 @@ defmodule ShopifyAPI.REST.Location do
     {:ok, %{ "inventory_levels" => %{} }}
   """
   def inventory_levels(%AuthToken{} = auth, location_id),
-    do: Request.get(auth, "locations/#{location_id}/inventory_levels.json")
+    do: REST.get(auth, "locations/#{location_id}/inventory_levels.json")
 end

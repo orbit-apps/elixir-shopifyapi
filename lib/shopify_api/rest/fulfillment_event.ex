@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all fulfillment events.
@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
       {:ok, { "fulfillment_events" => [] }}
   """
   def all(%AuthToken{} = auth, order_id, fulfillment_id),
-    do: Request.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}/events.json")
+    do: REST.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}/events.json")
 
   @doc """
   Get a single fulfillment event.
@@ -27,7 +27,7 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
   """
   def get(%AuthToken{} = auth, order_id, fulfillment_id, event_id),
     do:
-      Request.get(
+      REST.get(
         auth,
         "orders/#{order_id}/fulfillments/#{fulfillment_id}/events/#{event_id}.json"
       )
@@ -45,7 +45,7 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
         order_id,
         %{fulfillment_event: %{id: fulfillment_id}} = fulfillment_event
       ) do
-    Request.post(
+    REST.post(
       auth,
       "orders/#{order_id}/fulfillments/#{fulfillment_id}/events.json",
       fulfillment_event
@@ -61,7 +61,7 @@ defmodule ShopifyAPI.REST.FulfillmentEvent do
       {:ok,  200 }
   """
   def delete(%AuthToken{} = auth, order_id, fulfillment_id, event_id) do
-    Request.delete(
+    REST.delete(
       auth,
       "orders/#{order_id}/fulfillments/#{fulfillment_id}/events/#{event_id}.json"
     )

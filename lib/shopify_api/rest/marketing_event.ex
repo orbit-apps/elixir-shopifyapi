@@ -5,7 +5,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
 
   require Logger
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all marketing events.
@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       iex> ShopifyAPI.REST.MarketingEvent.all(auth)
       {:ok, { "marketing_events" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "marketing_events.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "marketing_events.json")
 
   @doc """
   Get a count of all marketing events.
@@ -25,7 +25,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       iex> ShopifyAPI.REST.MarketingEvent.count(auth)
       {:ok, { "count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "marketing_events/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "marketing_events/count.json")
 
   @doc """
   Get a single marketing event.
@@ -36,7 +36,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       {:ok, { "marketing_event" => %{} }}
   """
   def get(%AuthToken{} = auth, marketing_event_id),
-    do: Request.get(auth, "marketing_events/#{marketing_event_id}.json")
+    do: REST.get(auth, "marketing_events/#{marketing_event_id}.json")
 
   @doc """
   Create a marketing event.
@@ -50,7 +50,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
         %AuthToken{} = auth,
         %{marketing_event: %{id: marketing_event_id}} = marketing_event
       ),
-      do: Request.post(auth, "marketing_events/#{marketing_event_id}.json", marketing_event)
+      do: REST.post(auth, "marketing_events/#{marketing_event_id}.json", marketing_event)
 
   @doc """
   Update a marketing event.
@@ -64,7 +64,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
         %AuthToken{} = auth,
         %{marketing_event: %{id: marketing_event_id}} = marketing_event
       ),
-      do: Request.put(auth, "marketing_events/#{marketing_event_id}.json", marketing_event)
+      do: REST.put(auth, "marketing_events/#{marketing_event_id}.json", marketing_event)
 
   @doc """
   Delete a marketing event.
@@ -75,7 +75,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, marketing_event_id),
-    do: Request.delete(auth, "marketing_events/#{marketing_event_id}.json")
+    do: REST.delete(auth, "marketing_events/#{marketing_event_id}.json")
 
   @doc """
   Creates a marketing engagements on a marketing event.

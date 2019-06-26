@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.User do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Get a single user.
@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.User do
       iex> ShopifyAPI.REST.User.get(auth, integer)
       {:ok, { "user" => %{} }}
   """
-  def get(%AuthToken{} = auth, user_id), do: Request.get(auth, "users/#{user_id}.json")
+  def get(%AuthToken{} = auth, user_id), do: REST.get(auth, "users/#{user_id}.json")
 
   @doc """
   Return a list of all users.
@@ -24,7 +24,7 @@ defmodule ShopifyAPI.REST.User do
       iex> ShopifyAPI.REST.User.all(auth)
       {:ok, { "users" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "users.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "users.json")
 
   @doc """
   Get the currently logged-in user.
@@ -34,5 +34,5 @@ defmodule ShopifyAPI.REST.User do
       iex> ShopifyAPI.REST.User.current(auth)
       {:ok, { "user" => %{} }}
   """
-  def current(%AuthToken{} = auth), do: Request.get(auth, "users/current.json")
+  def current(%AuthToken{} = auth), do: REST.get(auth, "users/current.json")
 end

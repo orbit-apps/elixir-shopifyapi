@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Get a list of all the custom collections.
@@ -13,7 +13,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
       iex> ShopifyAPI.REST.CustomCollection.all(token)
       {:ok, %{ "custom_collections" => %{} }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "admin/custom_collections.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "admin/custom_collections.json")
 
   @doc """
   Get a count of all custom collections.
@@ -22,7 +22,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
       iex> ShopifyAPI.REST.CustomCollection.count(token)
       {:ok, { "count": integer }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "custom_collections/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "custom_collections/count.json")
 
   @doc """
   Return a single custom collection.
@@ -32,7 +32,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
       {:ok, %{ "custom_collections" => %{} }}
   """
   def get(%AuthToken{} = auth, custom_collection_id),
-    do: Request.get(auth, "custom_collections/#{custom_collection_id}.json")
+    do: REST.get(auth, "custom_collections/#{custom_collection_id}.json")
 
   @doc """
   Create a custom collection.
@@ -42,7 +42,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
       {:ok, %{ "custom_collection" => %{} }}
   """
   def create(%AuthToken{} = auth, %{custom_collection: %{}} = custom_collection),
-    do: Request.post(auth, "custom_collections.json", custom_collection)
+    do: REST.post(auth, "custom_collections.json", custom_collection)
 
   @doc """
   Update an existing custom collection.
@@ -55,7 +55,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
         %AuthToken{} = auth,
         %{custom_collection: %{id: custom_collection_id}} = custom_collection
       ),
-      do: Request.put(auth, "custom_collections/#{custom_collection_id}.json", custom_collection)
+      do: REST.put(auth, "custom_collections/#{custom_collection_id}.json", custom_collection)
 
   @doc """
   Delete a custom collection.
@@ -65,5 +65,5 @@ defmodule ShopifyAPI.REST.CustomCollection do
       {:ok, %{ "response": 200 }}
   """
   def delete(%AuthToken{} = auth, custom_collection_id),
-    do: Request.delete(auth, "custom_collections/#{custom_collection_id}.json")
+    do: REST.delete(auth, "custom_collections/#{custom_collection_id}.json")
 end

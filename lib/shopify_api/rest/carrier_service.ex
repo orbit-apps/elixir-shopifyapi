@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.CarrierService do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all carrier services.
@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.CarrierService do
       iex> ShopifyAPI.REST.CarrierService.all(auth)
       {:ok, { "carrier_services" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "carrier_services.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "carrier_services.json")
 
   @doc """
   Get a single carrier service.
@@ -25,7 +25,7 @@ defmodule ShopifyAPI.REST.CarrierService do
       {:ok, { "carrier_service" => %{} }}
   """
   def get(%AuthToken{} = auth, carrier_service_id),
-    do: Request.get(auth, "carrier_services/#{carrier_service_id}.json")
+    do: REST.get(auth, "carrier_services/#{carrier_service_id}.json")
 
   @doc """
   Create a carrier service.
@@ -36,7 +36,7 @@ defmodule ShopifyAPI.REST.CarrierService do
       {:ok, { "carrier_service" => %{} }}
   """
   def create(%AuthToken{} = auth, %{carrier_service: %{}} = carrier_service),
-    do: Request.post(auth, "carrier_services.json", carrier_service)
+    do: REST.post(auth, "carrier_services.json", carrier_service)
 
   @doc """
   Update a carrier service.
@@ -50,7 +50,7 @@ defmodule ShopifyAPI.REST.CarrierService do
         %AuthToken{} = auth,
         %{carrier_service: %{id: carrier_service_id}} = carrier_service
       ),
-      do: Request.put(auth, "carrier_services/#{carrier_service_id}.json", carrier_service)
+      do: REST.put(auth, "carrier_services/#{carrier_service_id}.json", carrier_service)
 
   @doc """
   Delete a carrier service.
@@ -61,5 +61,5 @@ defmodule ShopifyAPI.REST.CarrierService do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, carrier_service_id),
-    do: Request.delete(auth, "carrier_services/#{carrier_service_id}.json")
+    do: REST.delete(auth, "carrier_services/#{carrier_service_id}.json")
 end

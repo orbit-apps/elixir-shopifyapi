@@ -4,57 +4,57 @@ defmodule ShopifyAPI.REST.Collect do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Add a product to custom collection.
 
   ## Example
 
-      iex> ShopifyAPI.REST.Request.add(auth)
-      {:ok, { "collect" => %{} }}
+      iex> ShopifyAPI.REST.Collect.add(auth, %{collect: collect})
+      {:ok, %{ "collect" => %{} }}
   """
   def add(%AuthToken{} = auth, %{collect: %{}} = collect),
-    do: Request.post(auth, "collects.json", collect)
+    do: REST.post(auth, "collects.json", collect)
 
   @doc """
   Remove a product from a custom collection.
 
   ## Example
 
-      iex> ShopifyAPI.REST.Delete(auth, string)
-      {:ok, 200 }
+      iex> ShopifyAPI.REST.Collect.delete(auth, collect_id)
+      {:ok, 200}
   """
   def delete(%AuthToken{} = auth, collect_id),
-    do: Request.delete(auth, "collects/#{collect_id}.json")
+    do: REST.delete(auth, "collects/#{collect_id}.json")
 
   @doc """
   Get list of all collects.
 
   ## Example
 
-      iex> ShopifyAPI.REST.Get(auth)
-      {:ok, { "collects" => [] }}
+      iex> ShopifyAPI.REST.Collect.all(auth)
+      {:ok, %{ "collects" => [] }}
   """
-  def all(%AuthToken{} = auth), do: Request.get(auth, "collects.json")
+  def all(%AuthToken{} = auth), do: REST.get(auth, "collects.json")
 
   @doc """
   Get a count of collects.
 
   ## Example
 
-      iex> ShopifyAPI.REST.Count(auth)
-      {:ok, { "count": integer }}
+      iex> ShopifyAPI.REST.Collect.count(auth)
+      {:ok, %{ "count" => 123 }}
   """
-  def count(%AuthToken{} = auth), do: Request.get(auth, "collects/count.json")
+  def count(%AuthToken{} = auth), do: REST.get(auth, "collects/count.json")
 
   @doc """
   Get a specific collect.
 
   ## Example
 
-      iex> ShopifyAPI.REST.Get(auth, string)
-      {:ok, { "collect" => %{} }}
+      iex> ShopifyAPI.REST.Collect.get(auth, id)
+      {:ok, %{ "collect" => %{} }}
   """
-  def get(%AuthToken{} = auth, collect_id), do: Request.get(auth, "collects/#{collect_id}.json")
+  def get(%AuthToken{} = auth, collect_id), do: REST.get(auth, "collects/#{collect_id}.json")
 end

@@ -5,7 +5,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
 
   require Logger
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all addresses for a customer.
@@ -16,7 +16,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       {:ok, %{ "addresses" => [] }}
   """
   def all(%AuthToken{} = auth, customer_id),
-    do: Request.get(auth, "customers/#{customer_id}/addresses.json")
+    do: REST.get(auth, "customers/#{customer_id}/addresses.json")
 
   @doc """
   Return a single address for a customer.
@@ -27,7 +27,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       {:ok, %{ "customer_address" => %{} }}
   """
   def get(%AuthToken{} = auth, customer_id, address_id),
-    do: Request.get(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
+    do: REST.get(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
 
   @doc """
   Create a new address for a customer.
@@ -38,7 +38,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       {:ok, %{ "customer_address" => %{} }}
   """
   def create(%AuthToken{} = auth, customer_id, %{address: %{}} = address),
-    do: Request.post(auth, "customers/#{customer_id}/addresses.json", address)
+    do: REST.post(auth, "customers/#{customer_id}/addresses.json", address)
 
   @doc """
   Update an existing customer address.
@@ -53,7 +53,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
         customer_id,
         %{address: %{id: address_id}} = address
       ) do
-    Request.put(
+    REST.put(
       auth,
       "customers/#{customer_id}/addresses/#{address_id}.json",
       address
@@ -69,7 +69,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       {:ok, 200 }
   """
   def delete(%AuthToken{} = auth, customer_id, address_id),
-    do: Request.delete(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
+    do: REST.delete(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
 
   @doc """
   Perform bulk operations for multiple customer addresses.
@@ -99,7 +99,7 @@ defmodule ShopifyAPI.REST.CustomerAddress do
         customer_id,
         %{address: %{id: address_id}} = address
       ) do
-    Request.put(
+    REST.put(
       auth,
       "customers/#{customer_id}/addresses/#{address_id}/default.json",
       address

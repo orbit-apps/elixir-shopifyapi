@@ -4,7 +4,7 @@ defmodule ShopifyAPI.REST.ProductImage do
   """
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.REST.Request
+  alias ShopifyAPI.REST
 
   @doc """
   Return a list of all products images.
@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, { "images" => [] }}
   """
   def all(%AuthToken{} = auth, product_id),
-    do: Request.get(auth, "products/#{product_id}/images.json")
+    do: REST.get(auth, "products/#{product_id}/images.json")
 
   @doc """
   Get a count of all product images.
@@ -26,7 +26,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, { "count" => integer }}
   """
   def count(%AuthToken{} = auth, product_id),
-    do: Request.get(auth, "products/#{product_id}/images/count.json")
+    do: REST.get(auth, "products/#{product_id}/images/count.json")
 
   @doc """
   Get all images for a single product.
@@ -37,7 +37,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, { "image" => %{} }}
   """
   def get(%AuthToken{} = auth, product_id),
-    do: Request.get(auth, "products/#{product_id}/images.json")
+    do: REST.get(auth, "products/#{product_id}/images.json")
 
   @doc """
   Get a single product image.
@@ -48,7 +48,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, { "image" => %{} }}
   """
   def get(%AuthToken{} = auth, product_id, image_id),
-    do: Request.get(auth, "products/#{product_id}/images/#{image_id}.json")
+    do: REST.get(auth, "products/#{product_id}/images/#{image_id}.json")
 
   @doc """
   Create a new product image.
@@ -59,7 +59,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, { "image" => %{} }}
   """
   def create(%AuthToken{} = auth, product_id, %{image: %{}} = image),
-    do: Request.post(auth, "products/#{product_id}/images.json", image)
+    do: REST.post(auth, "products/#{product_id}/images.json", image)
 
   @doc """
   Update an existing product image.
@@ -70,7 +70,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, { "image" => %{} }}
   """
   def update(%AuthToken{} = auth, product_id, %{image: %{id: image_id}} = image),
-    do: Request.put(auth, "products/#{product_id}/images/#{image_id}.json", image)
+    do: REST.put(auth, "products/#{product_id}/images/#{image_id}.json", image)
 
   @doc """
   Delete a product image.
@@ -81,5 +81,5 @@ defmodule ShopifyAPI.REST.ProductImage do
       {:ok, 200 }}
   """
   def delete(%AuthToken{} = auth, product_id, image_id),
-    do: Request.delete(auth, "products/#{product_id}/images/#{image_id}.json")
+    do: REST.delete(auth, "products/#{product_id}/images/#{image_id}.json")
 end
