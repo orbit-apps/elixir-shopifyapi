@@ -1,15 +1,16 @@
 # ShopifyAPI and Plug.ShopifyAPI
 
-- [ShopifyAPI and Plug.ShopifyAPI](#shopifyapi-and-plugshopifyapi)
-  - [Installation](#installation)
-  - [Installing this app in a Shop](#installing-this-app-in-a-shop)
-  - [Configuration](#configuration)
-    - [API Version](#api-version)
-    - [Background Runner](#background-runner)
-    - [Shops](#shops)
-    - [Apps](#apps)
-    - [AuthTokens](#authtokens)
-  - [Webhooks](#webhooks)
+- [ShopifyAPI and Plug.ShopifyAPI](#ShopifyAPI-and-PlugShopifyAPI)
+  - [Installation](#Installation)
+  - [Installing this app in a Shop](#Installing-this-app-in-a-Shop)
+  - [Configuration](#Configuration)
+    - [API Version](#API-Version)
+    - [Background Runner](#Background-Runner)
+    - [Shops](#Shops)
+    - [Apps](#Apps)
+    - [AuthTokens](#AuthTokens)
+  - [Webhooks](#Webhooks)
+  - [Telemetry](#Telemetry)
 
 ## Installation
 
@@ -208,3 +209,24 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/shopify_api](https://hexdocs.pm/shopify_api).
 
+## Telemetry
+
+Telemetry events: 
+- [:shopify_api, :rest, :request] 
+  
+The telemetry events can be instrumented with 
+
+```elixir
+defmodule Instrumenter do
+  def setup do
+    events = [
+      [:shopify_api, :rest, :request]
+    ]
+
+    :telemetry.attach_many("my-instrumenter", events, &handle_event/4, nil)
+  end
+
+  def handle_event([:shopify_api, :rest, :request], measurements, metadata, _config) do
+    # Ship events 
+  end
+end```
