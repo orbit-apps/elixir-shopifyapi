@@ -14,6 +14,22 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   def all, do: GenServer.call(@name, :all)
 
+  @doc """
+  Fetch's a shop's AuthToken from the AuthTokenServer. A myshopify domain
+  and an app must be provided.
+
+  ```
+  iex(6)> ShopifyAPI.AuthTokenServer.get("a-shop.myshopify.com", "my_app")
+  {:ok, %ShopifyAPI.AuthToken{
+     app_name: "my_app",
+     shop_name: "a-shop.myshopify.com",
+     ...
+    }}
+  iex(7)> ShopifyAPI.AuthTokenServer.get("not-in-memory.myshopify.com", "my_app")
+  {:error, "Auth token for not-in-memory.myshopify.com:my_app could not be found."}
+  ```
+  """
+  @spec get(String.t(), String.t()) :: {:ok, AuthToken.t()} | {:error, any()}
   def get(shop, app), do: GenServer.call(@name, {:get, AuthToken.create_key(shop, app)})
 
   def get_for_app(app), do: GenServer.call(@name, {:get_for_app, app})
@@ -85,7 +101,15 @@ defmodule ShopifyAPI.AuthTokenServer do
   def handle_call(:all, _caller, state), do: {:reply, state, state}
 
   @impl true
-  def handle_call({:get, key}, _caller, state), do: {:reply, Map.fetch(state, key), state}
+  def handle_call({:get, key}, _caller, state) do
+    case Map.fetch(state, key) do
+      {:ok, _token} = token_response ->
+        {:reply, token_response, state}
+
+      :error ->
+        {:reply, {:error, "Auth token for #{key} could not be found."}, state}
+    end
+  end
 
   @impl true
   def handle_call({:get_for_app, app}, _caller, state) do
