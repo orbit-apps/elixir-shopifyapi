@@ -1,5 +1,7 @@
 ## Unreleased
 
+- `AuthTokenServer.get` spec has been changed. It will return `{:error, any()}` if it can't find an AuthToken.
+
 ## 0.4.3
 
 - Refactor `ShopifyAPI.REST.Request`, extract underlying `get`/`post`/`put`/`delete` to `ShopifyAPI.REST`.
@@ -25,7 +27,7 @@
 - Support API versioning
 - Coerce events from the queue into %Events{}
 - Change Events in EventQueue to use string destinations and actions
-- Changed Event.t() typespec to be strings for destination and action. 
+- Changed Event.t() typespec to be strings for destination and action.
 
 ## 0.2.7
 
