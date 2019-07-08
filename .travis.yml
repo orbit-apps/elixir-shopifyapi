@@ -14,6 +14,7 @@ before_script:
   - MIX_ENV=dev travis_wait 20 mix dialyzer --plt
 
 script:
+  - mix --version
   - mix test
   - MIX_ENV=dev mix dialyzer --halt-exit-status
 #- mix coveralls.travis
