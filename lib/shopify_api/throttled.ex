@@ -38,14 +38,16 @@ defmodule ShopifyAPI.Throttled do
     |> case do
       # over request limit, back off and try again.
       {:ok, %{status_code: ^over_limit_status_code} = response} ->
-        {_limit, _available_modifier} = AvailabilityTracker.api_hit_limit(token, response)
-        # Telemetry goes here
+        {available_count, remaining_modifier} = AvailabilityTracker.api_hit_limit(token, response)
+        send_over_limit_telemetry(token, available_count, remaining_modifier, depth, response)
         request(func, token, max_tries, depth + 1)
 
       # successful request, update internal call limit
       {:ok, response} ->
-        # Telemetry goes here
-        {_limit, _available_modifier} = AvailabilityTracker.update_api_call_limit(token, response)
+        {available_count, remaining_modifier} =
+          AvailabilityTracker.update_api_call_limit(token, response)
+
+        send_within_limit_telemetry(token, available_count, remaining_modifier, depth, response)
         {:ok, response}
 
       error ->
@@ -61,4 +63,59 @@ defmodule ShopifyAPI.Throttled do
   end
 
   def make_request({_, _}, func, _), do: func.()
+
+  ## Private Helpers
+
+  defp send_over_limit_telemetry(
+         token,
+         available_count,
+         wait_in_milliseconds,
+         retry_depth,
+         response
+       ) do
+    send_telemetry(
+      token,
+      available_count,
+      wait_in_milliseconds,
+      retry_depth,
+      response,
+      :over_limit
+    )
+  end
+
+  defp send_within_limit_telemetry(
+         token,
+         available_count,
+         wait_in_milliseconds,
+         retry_depth,
+         response
+       ) do
+    send_telemetry(
+      token,
+      available_count,
+      wait_in_milliseconds,
+      retry_depth,
+      response,
+      :within_limit
+    )
+  end
+
+  defp send_telemetry(
+         %{app_name: app, shop_name: shop} = _token,
+         available_count,
+         wait_in_milliseconds,
+         retry_depth,
+         %{status_code: status} = _response,
+         type
+       ) do
+    :telemetry.execute(
+      [:shopify_api, :throttling, type],
+      %{
+        remaining_calls: available_count,
+        wait_in_milliseconds: wait_in_milliseconds,
+        retry_depth: retry_depth
+      },
+      %{app: app, shop: shop, status_code: status}
+    )
+  end
 end

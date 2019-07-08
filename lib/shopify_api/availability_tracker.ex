@@ -55,7 +55,7 @@ defmodule ShopifyAPI.AvailabilityTracker do
     |> case do
       # Wait for a second to allow time for a bucket fill
       0 -> set(token, 0, 1_000)
-      limit -> set(token, limit, 0)
+      remaining -> set(token, remaining, 0)
     end
   end
 

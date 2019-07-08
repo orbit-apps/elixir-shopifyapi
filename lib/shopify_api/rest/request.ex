@@ -9,6 +9,7 @@ defmodule ShopifyAPI.REST.Request do
   use HTTPoison.Base
   require Logger
 
+  alias HTTPoison.Error
   alias ShopifyAPI.{AuthToken, CallLimit, Throttled}
 
   @default_api_version "2019-04"
@@ -76,14 +77,14 @@ defmodule ShopifyAPI.REST.Request do
   ## Private Helpers
 
   defp send_telemetry(
-         %{app_name: app, shop_name: shop},
+         %{app_name: app, shop_name: shop} = _token,
          method,
          url,
          time,
          {:ok, %{status_code: status}} = response
        ) do
     :telemetry.execute(
-      [:shopify_api, :rest, :request],
+      [:shopify_api, :rest_request, :success],
       %{request_time: time, remaining_calls: remaining_calls(response)},
       %{
         app: app,
@@ -92,6 +93,27 @@ defmodule ShopifyAPI.REST.Request do
         status_code: status,
         method: method,
         module: module_name()
+      }
+    )
+  end
+
+  defp send_telemetry(
+         %{app_name: app, shop_name: shop} = _token,
+         method,
+         url,
+         time,
+         {:error, %Error{reason: reason}} = _response
+       ) do
+    :telemetry.execute(
+      [:shopify_api, :rest_request, :failure],
+      %{request_time: time},
+      %{
+        app: app,
+        shop: shop,
+        url: url,
+        method: method,
+        module: module_name(),
+        reason: reason
       }
     )
   end

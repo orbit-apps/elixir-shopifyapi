@@ -212,7 +212,10 @@ be found at [https://hexdocs.pm/shopify_api](https://hexdocs.pm/shopify_api).
 ## Telemetry
 
 Telemetry events: 
-- [:shopify_api, :rest, :request] 
+- [:shopify_api, :rest_request, :success] 
+- [:shopify_api, :rest_request, :failure]
+- [:shopify_api, :throttling, :over_limit]
+- [:shopify_api, :throttling, :within_limit]
   
 The telemetry events can be instrumented with 
 
@@ -220,13 +223,14 @@ The telemetry events can be instrumented with
 defmodule Instrumenter do
   def setup do
     events = [
-      [:shopify_api, :rest, :request]
+      [:shopify_api, :rest_request, :success],
+      [:shopify_api, :rest_request, :failure]
     ]
 
     :telemetry.attach_many("my-instrumenter", events, &handle_event/4, nil)
   end
 
-  def handle_event([:shopify_api, :rest, :request], measurements, metadata, _config) do
-    # Ship events 
+  def handle_event([:shopify_api, :rest_request, :success], measurements, metadata, _config) do
+    # Ship success events 
   end
 end```
