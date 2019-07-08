@@ -2,8 +2,6 @@ defmodule ShopifyAPI.AvailabilityTracker do
   @moduledoc """
   Handles Tracking of API throttling and when the API will be available for a request.
   """
-  require Logger
-
   alias ShopifyAPI.{AuthToken, CallLimit}
 
   @name :shopify_api_availability_tracker
