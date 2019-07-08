@@ -1,6 +1,6 @@
 workflow "Continuous Integration" {
   on = "push"
-  resolves = ["Check Formatting", "Check Credo"]
+  resolves = ["Get Version", "Check Formatting", "Check Credo"]
 }
 
 action "Get Deps" {
@@ -17,4 +17,10 @@ action "Check Credo" {
   uses = "jclem/action-mix@v1.3.3"
   needs = "Get Deps"
   args = "credo"
+}
+
+action "Get Version" {
+  uses = "jclem/action-mix@v1.3.3"
+  needs = "Get Deps"
+  args = "--version"
 }
