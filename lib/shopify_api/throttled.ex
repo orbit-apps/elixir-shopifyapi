@@ -15,10 +15,12 @@ defmodule ShopifyAPI.Throttled do
   If Shopify returns the `429 Too Many Requests` status code for a request, it
   will be retried after a delay and re-check of the ets table, to a maximum of
   10 total attempts (this is configurable).
+
+  See docs: https://help.shopify.com/en/api/reference/rest-admin-api-rate-limits
   """
   require Logger
 
-  alias ShopifyAPI.ThrottleServer
+  alias ShopifyAPI.AvailabilityTracker
 
   @request_max_tries 10
 
@@ -31,16 +33,21 @@ defmodule ShopifyAPI.Throttled do
     over_limit_status_code = ShopifyAPI.over_limit_status_code()
 
     token
-    |> ThrottleServer.get()
-    |> make_request(func, ShopifyAPI.requests_per_second(token))
+    |> AvailabilityTracker.get()
+    |> make_request(func)
     |> case do
       # over request limit, back off and try again.
-      {:ok, %{status_code: ^over_limit_status_code}} ->
+      {:ok, %{status_code: ^over_limit_status_code} = response} ->
+        {available_count, remaining_modifier} = AvailabilityTracker.api_hit_limit(token, response)
+        send_over_limit_telemetry(token, available_count, remaining_modifier, depth, response)
         request(func, token, max_tries, depth + 1)
 
       # successful request, update internal call limit
       {:ok, response} ->
-        ThrottleServer.update_api_call_limit(response, token)
+        {available_count, remaining_modifier} =
+          AvailabilityTracker.update_api_call_limit(token, response)
+
+        send_within_limit_telemetry(token, available_count, remaining_modifier, depth, response)
         {:ok, response}
 
       error ->
@@ -48,28 +55,67 @@ defmodule ShopifyAPI.Throttled do
     end
   end
 
-  def make_request(t, func, req_sec, sleep_impl \\ &:timer.sleep/1)
+  def make_request(t, func, sleep_impl \\ &:timer.sleep/1)
 
-  # No limit found in the store, make a request
-  def make_request({_, last_check}, func, _, _) when last_check == :no_time, do: func.()
-
-  # Haven't hit our limit yet, make a request
-  def make_request({limit, _}, func, _, _) when limit > 0, do: func.()
-
-  def make_request({_, last_check}, func, req_sec, sleep_impl) do
-    case last_check_is_stale?(last_check, req_sec) do
-      :lt ->
-        func.()
-
-      _ ->
-        sleep_impl.(round(1_000 / req_sec))
-        func.()
-    end
+  def make_request({_, wait}, func, sleep_impl) when is_integer(wait) and wait > 0 do
+    sleep_impl.(wait)
+    func.()
   end
 
-  defp last_check_is_stale?(last_check, req_sec) do
-    last_check
-    |> NaiveDateTime.add(round(1_000 / req_sec), :millisecond)
-    |> NaiveDateTime.compare(NaiveDateTime.utc_now())
+  def make_request({_, _}, func, _), do: func.()
+
+  ## Private Helpers
+
+  defp send_over_limit_telemetry(
+         token,
+         available_count,
+         wait_in_milliseconds,
+         retry_depth,
+         response
+       ) do
+    send_telemetry(
+      token,
+      available_count,
+      wait_in_milliseconds,
+      retry_depth,
+      response,
+      :over_limit
+    )
+  end
+
+  defp send_within_limit_telemetry(
+         token,
+         available_count,
+         wait_in_milliseconds,
+         retry_depth,
+         response
+       ) do
+    send_telemetry(
+      token,
+      available_count,
+      wait_in_milliseconds,
+      retry_depth,
+      response,
+      :within_limit
+    )
+  end
+
+  defp send_telemetry(
+         %{app_name: app, shop_name: shop} = _token,
+         available_count,
+         wait_in_milliseconds,
+         retry_depth,
+         %{status_code: status} = _response,
+         type
+       ) do
+    :telemetry.execute(
+      [:shopify_api, :throttling, type],
+      %{
+        remaining_calls: available_count,
+        wait_in_milliseconds: wait_in_milliseconds,
+        retry_depth: retry_depth
+      },
+      %{app: app, shop: shop, status_code: status}
+    )
   end
 end

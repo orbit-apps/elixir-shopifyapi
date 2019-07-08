@@ -1,15 +1,18 @@
 defmodule ShopifyAPI.Application do
   use Application
 
+  alias ShopifyAPI.AvailabilityTracker
+
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
+    AvailabilityTracker.init()
+
     # Define workers and child supervisors to be supervised
     children = [
       ShopifyAPI.ShopServer,
       ShopifyAPI.AppServer,
-      ShopifyAPI.AuthTokenServer,
-      ShopifyAPI.ThrottleServer
+      ShopifyAPI.AuthTokenServer
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
