@@ -211,13 +211,14 @@ be found at [https://hexdocs.pm/shopify_api](https://hexdocs.pm/shopify_api).
 
 ## Telemetry
 
-Telemetry events: 
-- [:shopify_api, :rest_request, :success] 
-- [:shopify_api, :rest_request, :failure]
-- [:shopify_api, :throttling, :over_limit]
-- [:shopify_api, :throttling, :within_limit]
+The `shopify_api` library will emit events using the [`:telemetry`](https://github.com/beam-telemetry/telemetry) library. Consumers of `shopify_api` can then use these events for customized metrics aggregation and more.
+The following telemetry events are generated:
+- `[:shopify_api, :rest_request, :success]`
+- `[:shopify_api, :rest_request, :failure]`
+- `[:shopify_api, :throttling, :over_limit]`
+- `[:shopify_api, :throttling, :within_limit]`
   
-The telemetry events can be instrumented with 
+As an example, you could use an external module to instrument API requests made by `shopify_api`:
 
 ```elixir
 defmodule Instrumenter do
