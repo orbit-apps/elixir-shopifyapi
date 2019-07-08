@@ -35,19 +35,19 @@ defmodule ShopifyAPI.CallLimitTest do
     end
   end
 
-  describe "get_api_call_limit/1" do
+  describe "get_api_remaining_calls/1" do
     test "calculates the call limit from the header" do
       header = "32/50"
 
-      assert CallLimit.get_api_call_limit(header) == 18
+      assert CallLimit.get_api_remaining_calls(header) == 18
     end
 
     test "returns 0 for :over_limit" do
-      assert CallLimit.get_api_call_limit(:over_limit) == 0
+      assert CallLimit.get_api_remaining_calls(:over_limit) == 0
     end
 
     test "nil passes through" do
-      assert CallLimit.get_api_call_limit(nil) == 0
+      assert CallLimit.get_api_remaining_calls(nil) == 0
     end
   end
 

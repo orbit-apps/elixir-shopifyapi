@@ -15,11 +15,11 @@ defmodule ShopifyAPI.CallLimit do
 
   def limit_header_or_status_code(_conn), do: nil
 
-  def get_api_call_limit(nil), do: 0
+  def get_api_remaining_calls(nil), do: 0
 
-  def get_api_call_limit(:over_limit), do: 0
+  def get_api_remaining_calls(:over_limit), do: 0
 
-  def get_api_call_limit(header_value) do
+  def get_api_remaining_calls(header_value) do
     # comes in the form "1/40": 1 taken of 40
     header_value
     |> String.split("/")

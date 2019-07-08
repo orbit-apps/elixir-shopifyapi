@@ -51,7 +51,7 @@ defmodule ShopifyAPI.AvailabilityTracker do
   def update_api_call_limit(%AuthToken{} = token, http_response) do
     http_response
     |> CallLimit.limit_header_or_status_code()
-    |> CallLimit.get_api_call_limit()
+    |> CallLimit.get_api_remaining_calls()
     |> case do
       # Wait for a second to allow time for a bucket fill
       0 -> set(token, 0, 1_000)

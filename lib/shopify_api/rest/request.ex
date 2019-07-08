@@ -84,7 +84,7 @@ defmodule ShopifyAPI.REST.Request do
        ) do
     :telemetry.execute(
       [:shopify_api, :rest, :request],
-      %{request_time: time, call_limit: call_limit(response)},
+      %{request_time: time, remaining_calls: remaining_calls(response)},
       %{
         app: app,
         shop: shop,
@@ -104,7 +104,9 @@ defmodule ShopifyAPI.REST.Request do
       module = module_name()
       method = method |> to_string() |> String.upcase()
 
-      "#{module} #{method} #{url} #{app} #{shop} (#{call_limit(response)}) [#{div(time, 1_000)}ms]"
+      "#{module} #{method} #{url} #{app} #{shop} (#{remaining_calls(response)}) [#{
+        div(time, 1_000)
+      }ms]"
     end)
   end
 
@@ -112,13 +114,13 @@ defmodule ShopifyAPI.REST.Request do
     __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
   end
 
-  defp call_limit({:ok, response}) do
+  defp remaining_calls({:ok, response}) do
     response
     |> CallLimit.limit_header_or_status_code()
-    |> CallLimit.get_api_call_limit()
+    |> CallLimit.get_api_remaining_calls()
   end
 
-  defp call_limit(_), do: nil
+  defp remaining_calls(_), do: nil
 
   defp url(%{shop_name: domain}, path),
     do: "#{@transport}#{domain}/admin/api/#{version()}/#{path}"
