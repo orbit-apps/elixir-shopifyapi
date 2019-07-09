@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.4.3
+
 - Refactor `ShopifyAPI.REST.Request`, extract underlying `get`/`post`/`put`/`delete` to `ShopifyAPI.REST`.
 - Correct examples for `ShopifyAPI.REST.Collect`.
 - Refactor ThrottlingServer -> AvailabilityTracker
