@@ -10,7 +10,7 @@ defmodule ShopifyAPI.REST.Request do
   require Logger
 
   alias HTTPoison.Error
-  alias ShopifyAPI.{AuthToken, CallLimit, Throttled}
+  alias ShopifyAPI.{AuthToken, CallLimit, JSONSerializer, Throttled}
 
   @default_api_version "2019-04"
 
@@ -71,7 +71,7 @@ defmodule ShopifyAPI.REST.Request do
 
   @impl true
   def process_response_body(body) do
-    Poison.decode(body)
+    JSONSerializer.decode(body)
   end
 
   ## Private Helpers

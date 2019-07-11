@@ -4,7 +4,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
 
   alias Plug.Conn
   alias ShopifyAPI.Plugs.Webhook
-  alias ShopifyAPI.{App, AppServer, Shop, ShopServer}
+  alias ShopifyAPI.{App, AppServer, JSONSerializer, Shop, ShopServer}
 
   @app %App{name: "test"}
   @shop %Shop{domain: "test-shop.example.com"}
@@ -24,7 +24,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     # Create a test connection
     conn =
       :post
-      |> conn("/webhook/#{@app.name}", Poison.encode!(@req_body))
+      |> conn("/webhook/#{@app.name}", JSONSerializer.encode!(@req_body))
       |> Conn.put_req_header("x-shopify-hmac-sha256", "invalid")
       |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
 
@@ -41,7 +41,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     # Create a test connection
     conn =
       :post
-      |> conn("/webhook/#{@app.name}?", Poison.encode!(@req_body))
+      |> conn("/webhook/#{@app.name}?", JSONSerializer.encode!(@req_body))
       |> Conn.fetch_query_params()
       |> Conn.put_req_header(
         "x-shopify-hmac-sha256",
