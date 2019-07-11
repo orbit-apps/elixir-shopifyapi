@@ -30,7 +30,9 @@ config :shopify_api, ShopifyAPI.Webhook, %{
   uri: "https://example.com/shop/webhook"
 }
 
-config :shopify_api, http_timeout: 5000
+config :shopify_api,
+  http_timeout: 5000,
+  json_library: Poison
 
 config :exq,
   json_library: Jason,
