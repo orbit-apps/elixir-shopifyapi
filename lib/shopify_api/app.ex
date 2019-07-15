@@ -12,7 +12,7 @@ defmodule ShopifyAPI.App do
             scope: ""
 
   @typedoc """
-      Type that represents a Shopify App
+    Type that represents a Shopify App
   """
   @type t :: %__MODULE__{
           name: String.t(),
@@ -25,6 +25,7 @@ defmodule ShopifyAPI.App do
 
   require Logger
   alias ShopifyAPI.AuthRequest
+  alias ShopifyAPI.JSONSerializer
 
   @doc """
     Generates the install URL for an App and a Shop.
@@ -52,7 +53,7 @@ defmodule ShopifyAPI.App do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Logger.info(fn -> "#{__MODULE__} [#{domain}] fetched token" end)
         # TODO probably don't use the ! ver of decode
-        {:ok, body |> Poison.decode!() |> Map.get("access_token")}
+        {:ok, body |> JSONSerializer.decode!() |> Map.get("access_token")}
 
       {:ok, %HTTPoison.Response{} = response} ->
         Logger.warn(fn -> "#{__MODULE__} fetching token code: #{response.status_code}" end)
@@ -71,6 +72,8 @@ defmodule ShopifyAPI.AuthRequest do
     Shop domain, and the auth code from the App install.
   """
   require Logger
+
+  alias ShopifyAPI.JSONSerializer
   @headers [{"Content-Type", "application/json"}]
 
   @transport "https://"
@@ -91,6 +94,7 @@ defmodule ShopifyAPI.AuthRequest do
     }
 
     Logger.debug(fn -> "#{__MODULE__} requesting token from #{access_token_url(domain)}" end)
-    HTTPoison.post(access_token_url(domain), Poison.encode!(http_body), @headers)
+    encoded_body = JSONSerializer.encode!(http_body)
+    HTTPoison.post(access_token_url(domain), encoded_body, @headers)
   end
 end

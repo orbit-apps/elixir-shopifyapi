@@ -2,9 +2,7 @@ defmodule ShopifyAPI.REST.ProductTest do
   use ExUnit.Case
 
   alias Plug.Conn
-
-  alias ShopifyAPI.{AuthToken, Shop}
-
+  alias ShopifyAPI.{AuthToken, JSONSerializer, Shop}
   alias ShopifyAPI.REST.{Product, Request}
 
   setup _context do
@@ -28,7 +26,7 @@ defmodule ShopifyAPI.REST.ProductTest do
     }
 
     Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/products.json", fn conn ->
-      {:ok, body} = Poison.encode(products)
+      {:ok, body} = JSONSerializer.encode(products)
       Conn.resp(conn, 200, body)
     end)
 

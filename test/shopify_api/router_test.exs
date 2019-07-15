@@ -2,9 +2,8 @@ defmodule Test.ShopifyAPI.RouterTest do
   use ExUnit.Case
   use Plug.Test
 
+  alias ShopifyAPI.{AppServer, AuthTokenServer, JSONSerializer, Router, Security, ShopServer}
   alias Plug.{Conn, Parsers}
-
-  alias ShopifyAPI.{AppServer, AuthTokenServer, Router, Security, ShopServer}
 
   @moduletag :capture_log
 
@@ -82,7 +81,7 @@ defmodule Test.ShopifyAPI.RouterTest do
 
     test "fetches the token", %{bypass: bypass, shop_domain: shop_domain} do
       Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
-        {:ok, body} = Poison.encode(@token)
+        {:ok, body} = JSONSerializer.encode(@token)
         Conn.resp(conn, 200, body)
       end)
 

@@ -8,7 +8,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   require Logger
 
   alias Plug.Conn
-  alias ShopifyAPI.{ConnHelpers, Security}
+  alias ShopifyAPI.{ConnHelpers, JSONSerializer, Security}
   alias ShopifyAPI.EventPipe.Event
 
   def init(opts), do: opts
@@ -46,7 +46,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
          {:ok, content, conn} <- read_body(conn),
          signature <- ConnHelpers.hmac_from_header(conn),
          ^signature <- Security.base64_sha256_hmac(content, secret),
-         {:ok, params} <- Poison.decode(content) do
+         {:ok, params} <- JSONSerializer.decode(content) do
       {:ok, Map.put(conn, :body_params, params)}
     else
       _ -> {:error, conn}

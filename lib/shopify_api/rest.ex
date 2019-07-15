@@ -8,6 +8,7 @@ defmodule ShopifyAPI.REST do
   """
 
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.REST.Request
 
   @doc false
@@ -17,13 +18,13 @@ defmodule ShopifyAPI.REST do
 
   @doc false
   def post(%AuthToken{} = auth, path, object \\ %{}) do
-    with {:ok, body} <- Poison.encode(object),
+    with {:ok, body} <- JSONSerializer.encode(object),
          do: Request.perform(auth, :post, path, body)
   end
 
   @doc false
   def put(%AuthToken{} = auth, path, object) do
-    with {:ok, body} <- Poison.encode(object),
+    with {:ok, body} <- JSONSerializer.encode(object),
          do: Request.perform(auth, :put, path, body)
   end
 
