@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add Customer Authentication Plug [ch51782]
+
 ## 0.5.0
 
 - `AuthTokenServer.get` spec has been changed. It will return `{:error, any()}` if it can't find an AuthToken.
