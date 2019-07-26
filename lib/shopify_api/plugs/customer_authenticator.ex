@@ -17,11 +17,18 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   The payload itself can be modified to include additional fields so long as it is valid json and contains the `expiry`.
   The original intent was for this to generate a JWT, but Liquid does not include base64 encoding.
 
-  Include the payload and signatures in rest calls:
+  ### Including Auth in calls
 
+  Include the payload and signatures in rest calls by including it in the payload.
 
+  ```liquid
+  data: {
+    auth_payload: {{ AUTH_PAYLOAD | json }},
+    auth_signature: {{ AUTH_SIGNATURE | json }}
+  }
+  ```
 
-  Include the payload and signatures in a form:
+  You can also include the payload and signatures in a form.
 
   ```liquid
   <input
