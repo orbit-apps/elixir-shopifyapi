@@ -73,9 +73,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.Security
 
-  def init(_opts) do
-    %{customer_api_secret_keys: Application.get_env(:shopify_api, :customer_api_secret_keys)}
-  end
+  def init(opts), do: opts
 
   def call(
         %{params: %{"auth_payload" => payload, "auth_signature" => signature}} = conn,
