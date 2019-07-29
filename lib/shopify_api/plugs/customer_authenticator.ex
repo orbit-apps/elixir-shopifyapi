@@ -6,7 +6,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
 
   You can create the payload for and signature for that this plug will consume with the following `liquid` template:
   ```liquid
-    {% assign auth_expiry = "now" | date: "%s" | plus: 86400 | date: "%Y-%m-%dT%H:%M:%S.%L%z" %}
+    {% assign auth_expiry = "now" | date: "%s" | plus: 3600 | date: "%Y-%m-%dT%H:%M:%S.%L%z" %}
     {% capture json_string %}
       {"email":"{{ customer.email }}","id":"{{ customer.id }}","expiry":"{{ auth_expiry }}"}
     {% endcapture %}
@@ -92,8 +92,9 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
 
   def call(conn, _), do: send_unauthorized_response(conn, "Authorization failed")
 
-  defp validate_signature(auth_payload, signature, secrets) when is_list(secrets) do
+  defp validate_signature(auth_payload, signature, secrets) do
     secrets
+    |> List.wrap()
     |> Enum.any?(fn secret ->
       signature == Security.base16_sha256_hmac(auth_payload, secret)
     end)
@@ -102,9 +103,6 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
       false -> :bad_signature
     end
   end
-
-  defp validate_signature(auth_payload, signature, secret),
-    do: validate_signature(auth_payload, signature, [secret])
 
   defp validate_expiry(%{"expiry" => expiry_string}, now) do
     with {:ok, expiry_datetime, _} <- DateTime.from_iso8601(expiry_string),
@@ -116,17 +114,12 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
     end
   end
 
-  defp validate_expiry(_auth_context, _now) do
-    :no_expiry
-  end
+  defp validate_expiry(_auth_context, _now), do: :no_expiry
 
-  defp parse_payload(payload) do
-    JSONSerializer.decode(payload)
-  end
+  defp parse_payload(payload), do: JSONSerializer.decode(payload)
 
-  defp customer_api_secret_keys do
-    Application.get_env(:shopify_api, :customer_api_secret_keys, [])
-  end
+  defp customer_api_secret_keys,
+    do: Application.get_env(:shopify_api, :customer_api_secret_keys, [])
 
   defp send_unauthorized_response(conn, message) do
     conn
