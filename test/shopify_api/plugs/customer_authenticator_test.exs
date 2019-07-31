@@ -12,10 +12,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = auth_payload()
       signature = Security.base16_sha256_hmac(payload, @secret)
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert %{
                "email" => "email@example.com",
@@ -28,10 +25,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = auth_payload()
       signature = Security.base16_sha256_hmac(payload, "old_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert %{
                "email" => "email@example.com",
@@ -46,10 +40,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = DateTime.utc_now() |> add_seconds(-3600) |> auth_payload()
       signature = Security.base16_sha256_hmac(payload, "new_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "auth_payload has expired")
     end
@@ -58,10 +49,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = "this payload is invalid"
       signature = Security.base16_sha256_hmac(payload, "new_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "Could not parse auth_payload")
     end
@@ -70,10 +58,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = auth_payload()
       signature = Security.base16_sha256_hmac(payload, "wrong_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "Authorization failed")
     end
@@ -105,10 +90,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = ""
       signature = Security.base16_sha256_hmac(payload, "new_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "Could not parse auth_payload")
     end
@@ -117,10 +99,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = ~s({"email":"email@example.com","id":"12345","expiry":""})
       signature = Security.base16_sha256_hmac(payload, "new_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "A valid ISO8601 expiry must be included in auth_payload")
     end
@@ -129,10 +108,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = ~s({"email":"email@example.com","id":"12345","expiry":"baddate"})
       signature = Security.base16_sha256_hmac(payload, "new_secret")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "A valid ISO8601 expiry must be included in auth_payload")
     end
@@ -141,13 +117,16 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
       payload = auth_payload()
       signature = Security.base16_sha256_hmac(payload, "")
 
-      conn =
-        :post
-        |> conn("/", %{auth_payload: payload, auth_signature: signature})
-        |> CustomerAuthenticator.call([])
+      conn = post(payload, signature)
 
       assert_unauthorized(conn, "Authorization failed")
     end
+  end
+
+  defp post(payload, signature) do
+    :post
+    |> conn("/", %{auth_payload: payload, auth_signature: signature})
+    |> CustomerAuthenticator.call([])
   end
 
   defp assert_unauthorized(conn, message) do
