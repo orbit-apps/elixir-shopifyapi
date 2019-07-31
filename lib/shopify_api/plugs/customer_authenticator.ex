@@ -17,6 +17,8 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   The payload itself can be modified to include additional fields so long as it is valid json and contains the `expiry`.
   The original intent was for this to generate a JWT, but Liquid does not include base64 encoding.
 
+  The combination of the payload and signature should be considered an access token. If it is compromised, an attacker will have be able to make requests with the token until the token expires.
+
   ### Including Auth in calls
 
   Include the payload and signatures in rest calls by including it in the payload.
@@ -48,6 +50,8 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
 
   Include a shared secret in your Elixir config and in your Shopify settings. You can provide a list to make rotating secrets easier.
 
+  If the shared secret is compromised, an attacker would be able to generate their own payload/signature tokens. Be sure to keep the shared secret safe.
+
   ```elixir
   # config.exs
   config :shopify_api, :customer_api_secret_keys, ["new_secret", "old_secret"]
@@ -56,25 +60,25 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   ## Example Usage
 
   ```elixir
-  pipeline :customer_api do
-    plug ShopifyAPI.Plugs.CustomerAuthenticator
-  end
-
   scope "/api", YourAppWeb do
-    pipe_through :browser
-    pipe_through :customer_api
+    plug ShopifyAPI.Plugs.CustomerAuthenticator
+
     get "/", CustomerAPIController, :index
   end
   ```
   """
+
+  @behaviour Plug
 
   import Plug.Conn
 
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.Security
 
-  def init(opts), do: opts
+  @impl true
+  def init([]), do: []
 
+  @impl true
   def call(
         %{params: %{"auth_payload" => payload, "auth_signature" => signature}} = conn,
         _opts
