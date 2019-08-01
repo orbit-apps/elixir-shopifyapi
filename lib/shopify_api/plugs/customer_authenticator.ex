@@ -4,7 +4,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
 
   ## Liquid Template
 
-  You can create the payload for and signature for that this plug will consume with the following `liquid` template:
+  You can create the payload and signature that this plug will consume with the following `liquid` template:
   ```liquid
     {% assign auth_expiry = "now" | date: "%s" | plus: 3600 | date: "%Y-%m-%dT%H:%M:%S.%L%z" %}
     {% capture json_string %}
@@ -17,11 +17,11 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   The payload itself can be modified to include additional fields so long as it is valid json and contains the `expiry`.
   The original intent was for this to generate a JWT, but Liquid does not include base64 encoding.
 
-  The combination of the payload and signature should be considered an access token. If it is compromised, an attacker will have be able to make requests with the token until the token expires.
+  The combination of the payload and signature should be considered an access token. If it is compromised, an attacker will be able to make requests with the token until the token expires.
 
   ### Including Auth in calls
 
-  Include the payload and signatures in rest calls by including it in the payload.
+  Include the payload and signatures in API calls by including it in the payload.
 
   ```liquid
   data: {
@@ -60,8 +60,12 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   ## Example Usage
 
   ```elixir
-  scope "/api", YourAppWeb do
+  pipeline :customer_auth do
     plug ShopifyAPI.Plugs.CustomerAuthenticator
+  end
+
+  scope "/api", YourAppWeb do
+    pipe_through(:customer_auth)
 
     get "/", CustomerAPIController, :index
   end
