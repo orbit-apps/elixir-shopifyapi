@@ -13,5 +13,5 @@ defmodule ShopifyAPI.JSONSerializer do
   def encode(e), do: json_library().encode(e)
   def decode!(json), do: json_library().decode!(json)
   def encode!(e), do: json_library().encode!(e)
-  defp json_library, do: Application.fetch_env!(:shopify_api, :json_library)
+  defp json_library, do: Application.get_env(:shopify_api, :json_library, Jason)
 end
