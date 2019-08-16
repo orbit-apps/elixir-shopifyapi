@@ -1,0 +1,18 @@
+on: push
+name: Continuous Integration
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Get Deps
+      uses: jclem/action-mix/deps.get@v1.3.3
+    - name: Check Credo
+      uses: jclem/action-mix@v1.3.3
+      with:
+        args: credo --strict
+    - name: Check Formatting
+      uses: jclem/action-mix@v1.3.3
+      with:
+        args: format --check-formatted
