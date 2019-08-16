@@ -1,5 +1,7 @@
-on: push
 name: Continuous Integration
+
+on: push
+
 jobs:
   checks:
     name: Checks
