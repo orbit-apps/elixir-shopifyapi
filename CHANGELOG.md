@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.5.1
+
 - Add Customer Authentication Plug [ch51782]
 - Move to Jason as default json encoder, no longer has deps for Poison.
 
