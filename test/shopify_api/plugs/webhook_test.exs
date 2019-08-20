@@ -45,7 +45,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       |> Conn.fetch_query_params()
       |> Conn.put_req_header(
         "x-shopify-hmac-sha256",
-        "ezEuMM4V7mm7fWuNyMXARfODfP5gnyHLyVk9bW2cye4="
+        "VsxCOHbZ+BlpaPvV4cpAiBk4v2Zc35BpRBP3bYiuiog="
       )
       |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
 
