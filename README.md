@@ -10,6 +10,7 @@
     - [Apps](#Apps)
     - [AuthTokens](#AuthTokens)
   - [Webhooks](#Webhooks)
+  - [GraphQL](#GraphQL)
   - [Telemetry](#Telemetry)
 
 ## Installation
@@ -209,6 +210,33 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/shopify_api](https://hexdocs.pm/shopify_api).
 
+## GraphQL
+
+`GraphQL` implementation handles GraphQL Queries against Shopify API using HTTPoison library as client, this initial implementation consists of hitting Shopify GraphQL and returning the response in a tuple `{:ok, %Response{}} | {:error, %Response{}}` containing the response and metadata(actualQueryCost, throttleStatus).
+
+Configure the version to use in your config.exs, it will default to a stable version as ref'd in the [graphql module](lib/shopify_api/graphql.ex).
+
+
+```elixir
+config :shopify_api, ShopifyAPI.GraphQL, graphql_version: "2019-07"
+```
+
+### GraphQL Response
+
+Because `GraphQL responses` can be a little complex we are parsing/wraping responses `%HTTPoison.response` to `%GraphQL.Response`.
+
+Successful response:
+
+```elixir
+{:ok, %ShopifyAPI.GraphQL.Response{response: %{}, metadata: %{}, status_code: code}}
+```
+
+Failed response:
+
+```elixir
+{:error, %HTTPoison.Response{}}
+```
+
 ## Telemetry
 
 The `shopify_api` library will emit events using the [`:telemetry`](https://github.com/beam-telemetry/telemetry) library. Consumers of `shopify_api` can then use these events for customized metrics aggregation and more.
@@ -217,6 +245,8 @@ The following telemetry events are generated:
 - `[:shopify_api, :rest_request, :failure]`
 - `[:shopify_api, :throttling, :over_limit]`
 - `[:shopify_api, :throttling, :within_limit]`
+- `[:shopify_api, :graphql_request, :success]`
+- `[:shopify_api, :graphql_request, :failure]`
   
 As an example, you could use an external module to instrument API requests made by `shopify_api`:
 
