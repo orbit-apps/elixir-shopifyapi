@@ -43,7 +43,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   end
 
   defp metadata do
-    Enum.into(Logger.metadata(), %{})
+    %{trace_id: UUID.uuid4()}
   end
 
   defp verify_and_parse(conn) do

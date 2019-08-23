@@ -1,6 +1,6 @@
 defmodule ShopifyAPI.Middleware.MetadataLogger do
   @moduledoc """
-  Applies the metadata stored the Event to the Logger.
+  Applies the metadata stored the Event to the Logger's metadata for logging within Exq middleware
   """
 
   @behaviour Exq.Middleware.Behaviour

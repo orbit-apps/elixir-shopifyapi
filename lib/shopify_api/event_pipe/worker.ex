@@ -3,6 +3,9 @@ defmodule ShopifyAPI.EventPipe.Worker do
   Collection of helpful functions for Shopify workers.
   """
   require Logger
+
+  import ShopifyAPI.EventPipe.Logging
+
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.EventPipe.{Event, EventQueue}
 
@@ -11,7 +14,7 @@ defmodule ShopifyAPI.EventPipe.Worker do
 
   @spec execute_action(Event.t(), Event.callback()) :: any()
   def execute_action(event, work) when is_function(work) do
-    Logger.info(fn -> "#{__MODULE__} is processing an event: #{inspect(event)}" end)
+    log_metadata(event)
 
     with {:ok, token} <- fetch_token(event),
          auth_token <- ensure_auth_token(token),
