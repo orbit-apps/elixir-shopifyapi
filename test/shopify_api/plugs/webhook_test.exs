@@ -3,6 +3,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
   use Plug.Test
 
   alias Plug.Conn
+  alias Plug.RequestId
   alias ShopifyAPI.Plugs.Webhook
   alias ShopifyAPI.{App, AppServer, JSONSerializer, Shop, ShopServer}
 
@@ -65,6 +66,46 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       destination: "client",
       object: %{"app" => @app.name, "shop" => @shop.domain},
       shop: @shop,
+      token: %{}
+    }
+
+    assert_receive({:webhook_callback, ^expected_event})
+  end
+
+  test "includes Logger metadata in Event metadata" do
+    request_id = "abcdefghijk1234567890"
+
+    # Create a test connection
+    conn =
+      :post
+      |> conn("/webhook/#{@app.name}?", JSONSerializer.encode!(@req_body))
+      |> Conn.fetch_query_params()
+      |> Conn.put_req_header(
+        "x-shopify-hmac-sha256",
+        "VsxCOHbZ+BlpaPvV4cpAiBk4v2Zc35BpRBP3bYiuiog="
+      )
+      |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
+      |> Conn.put_req_header("x-request-id", request_id)
+
+    # Add RequestId to Logger metadata
+    conn = RequestId.call(conn, "x-request-id")
+
+    # Invoke the plug
+    conn = Webhook.call(conn, mount: "/webhook")
+
+    # Assert the Event metadata has request_id
+    assert conn.state == :sent
+    assert conn.status == 200
+
+    expected_event = %ShopifyAPI.EventPipe.Event{
+      action: nil,
+      app: @app,
+      assigns: %{},
+      callback: nil,
+      destination: "client",
+      object: %{"app" => @app.name, "shop" => @shop.domain},
+      shop: @shop,
+      metadata: %{request_id: request_id},
       token: %{}
     }
 

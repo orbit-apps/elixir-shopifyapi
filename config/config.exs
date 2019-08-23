@@ -46,6 +46,7 @@ config :exq,
     Exq.Middleware.Stats,
     Exq.Middleware.Job,
     Exq.Middleware.Manager,
+    ShopifyAPI.Middleware.MetadataLogger,
     Exq.Middleware.Logger,
     Exq.Middleware.AtomizeJobArguments,
     ShopifyAPI.Middleware.EventStructCoercer

@@ -37,8 +37,13 @@ defmodule ShopifyAPI.Plugs.Webhook do
       app: conn.assigns.app,
       shop: Map.get(conn.assigns, :shop),
       action: conn.assigns.shopify_event,
-      object: conn.body_params
+      object: conn.body_params,
+      metadata: metadata()
     }
+  end
+
+  defp metadata do
+    Enum.into(Logger.metadata(), %{})
   end
 
   defp verify_and_parse(conn) do
