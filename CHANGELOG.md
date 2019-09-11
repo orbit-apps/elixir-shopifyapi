@@ -1,4 +1,7 @@
 ## Unreleased
+
+## 0.6.0
+
 - Add internal GraphQL interface to Shopify's GraphQL API
 
 ## 0.5.1
