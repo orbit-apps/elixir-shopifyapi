@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Refactor caching servers startup, no longer started by ShopifyAPI.Application
+
 ## 0.6.0
 
 - Add internal GraphQL interface to Shopify's GraphQL API
