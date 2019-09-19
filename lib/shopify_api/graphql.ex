@@ -1,6 +1,6 @@
 defmodule ShopifyAPI.GraphQL do
   @moduledoc """
-  Interface to Shopify's GraphQL Admin API. 
+  Interface to Shopify's GraphQL Admin API.
   """
 
   require Logger
@@ -16,22 +16,21 @@ defmodule ShopifyAPI.GraphQL do
 
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
 
-  @doc ~S[
+  @doc """
     Makes requests against Shopify GraphQL and returns a tuple containig
     a %Response struct with %{response, metadata, status_code}
-    
+
     ## Example
-    
+
       iex> query =  %{
-        operationName: "metafieldDelete", 
-        query: "mutation metafieldDelete($input: MetafieldDeleteInput!){metafieldDelete(input: $input) {deletedId userErrors {field message }}}", 
+        operationName: "metafieldDelete",
+        query: "mutation metafieldDelete($input: MetafieldDeleteInput!){metafieldDelete(input: $input) {deletedId userErrors {field message }}}",
         variables: %{input: %{id: "gid://shopify/Metafield/9208558682200"}}
       }
-      """
-    
+
       iex> ShopifyAPI.GraphQL.query(auth, query)
       {:ok, %Response{...}}
-    ]
+  """
   def query(%AuthToken{} = auth, query_string, variables \\ %{}, opts \\ []) do
     url = build_url(auth, opts)
     headers = build_headers(auth, opts)
