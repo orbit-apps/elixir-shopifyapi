@@ -5,6 +5,7 @@
   - [Installing this app in a Shop](#Installing-this-app-in-a-Shop)
   - [Configuration](#Configuration)
     - [API Version](#API-Version)
+    - [CacheSupervisor](#cachesupervisor)
     - [Background Runner](#Background-Runner)
     - [Shops](#Shops)
     - [Apps](#Apps)
@@ -84,17 +85,37 @@ Configure the version to use in your config.exs, it will default to a stable ver
 config :shopify_api, ShopifyAPI.REST, api_version: "2019-04"
 ```
 
+### Cache Supervisor
+
+The ShopifyAPI has three cache servers, App, Shop, and Auth Token. These speed up access to data structures used for interacting with Shopify. A supervisor, ShopifyAPI.CacheSupervisor, is there to help manage start up and maintain all three. Add the CacheSupervisor to your application start up and define [some hooks for preloading data](#Installation).
+
+NOTE: Make sure you start the services or supervisor after services that are using in preloading the data. (ie Ecto)
+
+Add the following to your application:
+
+```elixir
+def start(_type, _args) do
+  # Define workers and child supervisors to be supervised
+  children = [
+    MyApp.Repo,
+    ShopifyAPI.CacheSupervisor
+  ]
+
+  Supervisor.start_link(children, strategy: :one_for_one)
+end
+```
+
 ### Background Runner
 
 By default [`InlineBackgroundJob`](lib/shopify_api/event_pipe/inline_background_job.ex) is used which will run the worker in the same process that [`EventQueue.enqueue/2`](lib/shopify_api/event_pipe/event_queue.ex) was called from. This option is ideal if you do not wish to configure Exq and Redis.
 ```elixir
-config :shopify_api, :background_job_implementation, 
+config :shopify_api, :background_job_implementation,
   ShopifyAPI.EventPipe.InlineBackgroundJob
 ```
 
-For a more complicated setup, use [`ExqBackgroundJob`](lib/shopify_api/event_pipe/exq_background_job.ex). It uses [Exq](https://github.com/akira/exq) which must be [configured](https://github.com/akira/exq#configuration) for your redis instance. 
+For a more complicated setup, use [`ExqBackgroundJob`](lib/shopify_api/event_pipe/exq_background_job.ex). It uses [Exq](https://github.com/akira/exq) which must be [configured](https://github.com/akira/exq#configuration) for your redis instance.
 ```elixir
-config :shopify_api, :background_job_implementation, 
+config :shopify_api, :background_job_implementation,
   ShopifyAPI.EventPipe.ExqBackgroundJob
 
 config :exq,
@@ -112,7 +133,7 @@ config :exq,
   shutdown_timeout: 5000
 ```
 
-A custom background task runner can be implemented through the [`BackgroundJobBehaviour`](lib/shopify_api/event_pipe/background_job_behaviour.ex) behaviour. 
+A custom background task runner can be implemented through the [`BackgroundJobBehaviour`](lib/shopify_api/event_pipe/background_job_behaviour.ex) behaviour.
 
 ### Shops
 
@@ -247,7 +268,7 @@ The following telemetry events are generated:
 - `[:shopify_api, :throttling, :within_limit]`
 - `[:shopify_api, :graphql_request, :success]`
 - `[:shopify_api, :graphql_request, :failure]`
-  
+
 As an example, you could use an external module to instrument API requests made by `shopify_api`:
 
 ```elixir
@@ -262,6 +283,6 @@ defmodule Instrumenter do
   end
 
   def handle_event([:shopify_api, :rest_request, :success], measurements, metadata, _config) do
-    # Ship success events 
+    # Ship success events
   end
 end```
