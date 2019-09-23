@@ -2,7 +2,16 @@ defmodule Test.ShopifyAPI.RouterTest do
   use ExUnit.Case
   use Plug.Test
 
-  alias ShopifyAPI.{AppServer, AuthTokenServer, JSONSerializer, Router, Security, ShopServer}
+  alias ShopifyAPI.{
+    AppServer,
+    AuthTokenServer,
+    CacheSupervisor,
+    JSONSerializer,
+    Router,
+    Security,
+    ShopServer
+  }
+
   alias Plug.{Conn, Parsers}
 
   @moduletag :capture_log
@@ -18,7 +27,9 @@ defmodule Test.ShopifyAPI.RouterTest do
   @redirect_uri "example.com"
   @shop_domain "shop.example.com"
 
-  setup do
+  setup_all do
+    {:ok, _} = CacheSupervisor.start_link([])
+
     AppServer.set(@app_name, %{
       auth_redirect_uri: @redirect_uri,
       client_secret: @client_secret,
@@ -28,6 +39,7 @@ defmodule Test.ShopifyAPI.RouterTest do
     })
 
     ShopServer.set(%{domain: @shop_domain})
+    :ok
   end
 
   describe "/install" do

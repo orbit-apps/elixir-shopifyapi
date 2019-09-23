@@ -9,11 +9,7 @@ defmodule ShopifyAPI.Application do
     AvailabilityTracker.init()
 
     # Define workers and child supervisors to be supervised
-    children = [
-      ShopifyAPI.ShopServer,
-      ShopifyAPI.AppServer,
-      ShopifyAPI.AuthTokenServer
-    ]
+    children = []
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
