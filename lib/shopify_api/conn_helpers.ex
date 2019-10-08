@@ -10,8 +10,9 @@ defmodule ShopifyAPI.ConnHelpers do
   @shopify_hmac_header "x-shopify-hmac-sha256"
 
   @doc false
+  @spec optionally_create_shop(:error | {:ok, Shop.t()}, any()) :: {:ok, Shop.t()}
   defp optionally_create_shop(:error, conn), do: {:ok, %Shop{domain: shop_domain(conn)}}
-  defp optionally_create_shop(shop, _), do: shop
+  defp optionally_create_shop({:ok, _} = resp, _), do: resp
 
   @doc false
   def hmac_from_header(conn) do
@@ -57,18 +58,14 @@ defmodule ShopifyAPI.ConnHelpers do
   def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
 
   @doc false
+  @spec fetch_shopify_shop(any(), String.t()) :: {:ok, Shop.t()}
   defp fetch_shopify_shop(conn, domain),
     do: domain |> ShopServer.get() |> optionally_create_shop(conn)
 
   @doc false
   def assign_shop(conn, domain \\ nil) do
-    case fetch_shopify_shop(conn, domain || shop_domain(conn)) do
-      {:ok, shop} ->
-        Conn.assign(conn, :shop, shop)
-
-      :error ->
-        conn
-    end
+    {:ok, shop} = fetch_shopify_shop(conn, domain || shop_domain(conn))
+    Conn.assign(conn, :shop, shop)
   end
 
   @doc false
@@ -100,6 +97,7 @@ defmodule ShopifyAPI.ConnHelpers do
   end
 
   @doc false
+  @spec verify_params_with_hmac(App.t(), map()) :: boolean()
   def verify_params_with_hmac(%App{client_secret: secret}, params) do
     params["hmac"] ==
       params

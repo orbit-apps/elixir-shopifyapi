@@ -1,6 +1,9 @@
 defmodule ShopifyAPI.AppServer do
   use GenServer
+
   require Logger
+
+  alias ShopifyAPI.App
 
   @name :shopify_api_app_server
 
@@ -10,14 +13,16 @@ defmodule ShopifyAPI.AppServer do
     GenServer.start_link(__MODULE__, %{}, name: @name)
   end
 
+  @spec all :: map()
   def all, do: GenServer.call(@name, :all)
 
+  @spec get(String.t()) :: {:ok, App.t()} | :error
   def get(name), do: GenServer.call(@name, {:get, name})
 
   @spec count :: integer
   def count, do: GenServer.call(@name, :count)
 
-  @spec set(%{:name => any, any => any}) :: atom
+  @spec set(%{:name => any(), any() => any()}) :: atom()
   def set(%{name: name} = new_values), do: set(name, new_values)
 
   @spec set(String.t(), %{:name => any, any => any}) :: atom

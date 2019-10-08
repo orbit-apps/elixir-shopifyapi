@@ -13,11 +13,13 @@ defmodule ShopifyAPI.ShopServer do
     GenServer.start_link(__MODULE__, %{}, name: @name)
   end
 
+  @spec all :: list()
   def all, do: GenServer.call(@name, :all)
 
+  @spec get(String.t()) :: {:ok, Shop.t()} | :error
   def get(domain), do: GenServer.call(@name, {:get, domain})
 
-  @spec count :: integer
+  @spec count :: integer()
   def count, do: GenServer.call(@name, :count)
 
   @spec set(%{:domain => any, any => any}) :: atom

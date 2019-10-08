@@ -44,7 +44,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
   defp do_authentication(conn) do
     with {:ok, app} <- fetch_shopify_app(conn),
-         {:hmac_verify, true} <- verify_hmac(app, conn.query_params) do
+         true <- verify_params_with_hmac(app, conn.query_params) do
       # store the App and Shop name in the session for use on other page views
       conn
       |> assign_app(app)
@@ -54,12 +54,11 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       |> put_session(:shop_domain, shop_domain(conn))
       |> put_session(@session_key, true)
     else
-      {:hmac_verify, _} ->
+      false ->
         Logger.info("#{__MODULE__} failed hmac validation")
         send_unauthorized_response(conn)
 
-      {:error, _} ->
-        Logger.info("#{__MODULE__} failed to find app")
+      :error ->
         send_unauthorized_response(conn)
     end
   end
@@ -70,6 +69,4 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
     |> resp(401, "Not Authorized.")
     |> halt()
   end
-
-  defp verify_hmac(app, params), do: {:hmac_verify, verify_params_with_hmac(app, params)}
 end
