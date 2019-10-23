@@ -1,6 +1,8 @@
 ## Unreleased
 
 - Refactor caching servers startup, no longer started by ShopifyAPI.Application
+- Fix nested tuple returns on things like Shopify timeouts.
+  WARNING This is a breaking change, errors returned as `{:error, {:error, any()}}` will be `{:error, any()}` now.
 
 ## 0.6.0
 
