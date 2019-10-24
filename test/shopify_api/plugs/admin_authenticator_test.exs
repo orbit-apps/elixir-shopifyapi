@@ -4,7 +4,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
 
   alias Plug.Conn
   alias ShopifyAPI.Plugs.AdminAuthenticator
-  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, CacheSupervisor, Shop, ShopServer}
+  alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Shop, ShopServer}
 
   @app %App{name: "test"}
   @shop %Shop{domain: "test-shop.example.com"}
@@ -16,7 +16,6 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   }
 
   setup_all do
-    {:ok, _} = CacheSupervisor.start_link([])
     ShopServer.set(@shop)
     AppServer.set(@app)
     AuthTokenServer.set(@auth_token)

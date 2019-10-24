@@ -5,7 +5,6 @@ defmodule Test.ShopifyAPI.RouterTest do
   alias ShopifyAPI.{
     AppServer,
     AuthTokenServer,
-    CacheSupervisor,
     JSONSerializer,
     Router,
     Security,
@@ -28,8 +27,6 @@ defmodule Test.ShopifyAPI.RouterTest do
   @shop_domain "shop.example.com"
 
   setup_all do
-    {:ok, _} = CacheSupervisor.start_link([])
-
     AppServer.set(@app_name, %{
       auth_redirect_uri: @redirect_uri,
       client_secret: @client_secret,

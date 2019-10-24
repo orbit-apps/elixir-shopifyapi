@@ -4,7 +4,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
 
   alias Plug.Conn
   alias ShopifyAPI.Plugs.Webhook
-  alias ShopifyAPI.{App, AppServer, CacheSupervisor, JSONSerializer, Shop, ShopServer}
+  alias ShopifyAPI.{App, AppServer, JSONSerializer, Shop, ShopServer}
 
   @app %App{name: "test"}
   @shop %Shop{domain: "test-shop.example.com"}
@@ -15,10 +15,10 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
   end
 
   setup_all do
-    {:ok, _} = CacheSupervisor.start_link([])
     Application.put_env(:shopify_api, :webhook_filter, {__MODULE__, :webhook_callback, []})
     ShopServer.set(@shop)
     AppServer.set(@app)
+    :ok
   end
 
   test "401s with invalid hmac" do
