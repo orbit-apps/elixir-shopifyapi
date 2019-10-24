@@ -39,6 +39,9 @@ defmodule ShopifyAPI.REST.Request do
       {:ok, response} ->
         {:error, response}
 
+      {:error, _} = value ->
+        value
+
       response ->
         {:error, response}
     end
