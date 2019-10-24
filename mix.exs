@@ -7,7 +7,7 @@ defmodule Plug.ShopifyAPI.MixProject do
     [
       app: :shopify_api,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [plt_add_deps: :transitive, plt_file: {:no_warn, "priv/plts/dialyzer.plt"}],
