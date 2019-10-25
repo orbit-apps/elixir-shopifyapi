@@ -1,6 +1,6 @@
 language: elixir
-elixir: '1.7.3'
-otp_release: '21.3'
+elixir: '1.9.2'
+otp_release: '22.0.7'
 sudo: required
 services:
   - redis-server
@@ -11,7 +11,7 @@ env:
 
 before_script:
   - mix do deps.get, compile --warnings-as-errors, coveralls.json
-  - MIX_ENV=dev travis_wait 20 mix dialyzer --plt
+  - MIX_ENV=dev travis_wait 30 mix dialyzer --plt
 
 script:
   - mix test

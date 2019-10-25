@@ -7,19 +7,20 @@ defmodule ShopifyAPI.AvailabilityTracker do
   @name :shopify_api_availability_tracker
   def all, do: :ets.tab2list(@name)
 
-  def get(%AuthToken{} = token, now \\ NaiveDateTime.utc_now()) do
+  @spec get(AuthToken.t(), DateTime.t()) :: {integer(), integer()}
+  def get(%AuthToken{} = token, now \\ DateTime.utc_now()) do
     case :ets.lookup(@name, AuthToken.create_key(token)) do
       [] ->
         {ShopifyAPI.request_bucket(token), 0}
 
       [{_token, count, time} | _] ->
-        diff = time |> NaiveDateTime.diff(now, :milliseconds) |> max(0)
+        diff = time |> DateTime.diff(now, :millisecond) |> max(0)
 
         {count, diff}
     end
   end
 
-  def set(token, available_count, availability_delay, now \\ NaiveDateTime.utc_now())
+  def set(token, available_count, availability_delay, now \\ DateTime.utc_now())
 
   # Do nothing
   def set(_token, nil, _availability_delay, _now), do: {0, 0}
@@ -31,13 +32,13 @@ defmodule ShopifyAPI.AvailabilityTracker do
         availability_delay,
         now
       ) do
-    available_at = NaiveDateTime.add(now, availability_delay, :millisecond)
+    available_at = DateTime.add(now, availability_delay, :millisecond)
 
     :ets.insert(@name, {AuthToken.create_key(token), available_count, available_at})
     {available_count, availability_delay}
   end
 
-  def api_hit_limit(%AuthToken{} = token, http_response, now \\ NaiveDateTime.utc_now()) do
+  def api_hit_limit(%AuthToken{} = token, http_response, now \\ DateTime.utc_now()) do
     available_modifier =
       http_response
       |> CallLimit.get_retry_after_header()
