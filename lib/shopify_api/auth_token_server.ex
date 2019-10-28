@@ -12,6 +12,7 @@ defmodule ShopifyAPI.AuthTokenServer do
     GenServer.start_link(__MODULE__, %{}, name: @name)
   end
 
+  @spec all :: map()
   def all, do: GenServer.call(@name, :all)
 
   @doc """
@@ -32,12 +33,16 @@ defmodule ShopifyAPI.AuthTokenServer do
   @spec get(String.t(), String.t()) :: {:ok, AuthToken.t()} | {:error, any()}
   def get(shop, app), do: GenServer.call(@name, {:get, AuthToken.create_key(shop, app)})
 
+  @spec get_for_app(String.t()) :: list(AuthToken.t())
   def get_for_app(app), do: GenServer.call(@name, {:get_for_app, app})
+
+  @spec get_for_shop(String.t()) :: list(AuthToken.t())
   def get_for_shop(shop), do: GenServer.call(@name, {:get_for_shop, shop})
 
-  @spec count :: integer
+  @spec count :: integer()
   def count, do: GenServer.call(@name, :count)
 
+  @spec set(AuthToken.t(), boolean()) :: any()
   def set(token, call_persist \\ true)
 
   def set(%AuthToken{shop_name: shop, app_name: app} = token, false) do

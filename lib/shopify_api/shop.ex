@@ -13,6 +13,7 @@ defmodule ShopifyAPI.Shop do
           domain: String.t()
         }
 
+  @spec post_install(AuthToken.t()) :: any()
   def post_install(%AuthToken{} = token) do
     :post_install
     |> shop_config

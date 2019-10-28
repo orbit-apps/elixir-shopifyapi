@@ -21,15 +21,7 @@ defmodule ShopifyAPI.GraphQL.Config.Resolver do
     {:ok, apps}
   end
 
-  def tokens_for_app(app, _, _) do
-    tokens =
-      case AuthTokenServer.get_for_app(app.name) do
-        nil -> []
-        results -> results
-      end
-
-    {:ok, tokens}
-  end
+  def tokens_for_app(app, _, _), do: {:ok, AuthTokenServer.get_for_app(app.name)}
 
   def update_app(_root, args, _info) do
     with :ok <- AppServer.set(args.name, args),

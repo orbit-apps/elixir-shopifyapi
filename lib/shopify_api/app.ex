@@ -47,7 +47,8 @@ defmodule ShopifyAPI.App do
     need to request an AuthToken. This function uses ShopifyAPI.AuthRequest.post/3 to
     fetch and parse the AuthToken.
   """
-  @spec fetch_token(__MODULE__.t(), String.t(), String.t()) :: {:ok, map()} | {:error, String.t()}
+  @spec fetch_token(__MODULE__.t(), String.t(), String.t()) ::
+          {:ok, String.t()} | {:error, String.t()}
   def fetch_token(%__MODULE__{} = app, domain, auth_code) do
     case AuthRequest.post(app, domain, auth_code) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->

@@ -22,7 +22,9 @@ defmodule ShopifyAPI.AuthToken do
           plus: boolean()
         }
 
+  @spec create_key(t()) :: String.t()
   def create_key(%__MODULE__{shop_name: shop, app_name: app}), do: create_key(shop, app)
 
+  @spec create_key(String.t(), String.t()) :: String.t()
   def create_key(shop, app), do: "#{shop}:#{app}"
 end
