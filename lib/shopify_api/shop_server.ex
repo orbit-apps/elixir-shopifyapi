@@ -13,7 +13,7 @@ defmodule ShopifyAPI.ShopServer do
     GenServer.start_link(__MODULE__, %{}, name: @name)
   end
 
-  @spec all :: list()
+  @spec all :: map()
   def all, do: GenServer.call(@name, :all)
 
   @spec get(String.t()) :: {:ok, Shop.t()} | :error
