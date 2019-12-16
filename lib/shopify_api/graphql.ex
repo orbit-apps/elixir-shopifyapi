@@ -17,7 +17,7 @@ defmodule ShopifyAPI.GraphQL do
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
 
   @doc """
-    Makes requests against Shopify GraphQL and returns a tuple containig
+    Makes requests against Shopify GraphQL and returns a tuple containing
     a %Response struct with %{response, metadata, status_code}
 
     ## Example
