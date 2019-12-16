@@ -17,18 +17,14 @@ defmodule ShopifyAPI.GraphQL do
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
 
   @doc """
-    Makes requests against Shopify GraphQL and returns a tuple containig
+    Makes requests against Shopify GraphQL and returns a tuple containing
     a %Response struct with %{response, metadata, status_code}
 
     ## Example
 
-      iex> query =  %{
-        operationName: "metafieldDelete",
-        query: "mutation metafieldDelete($input: MetafieldDeleteInput!){metafieldDelete(input: $input) {deletedId userErrors {field message }}}",
-        variables: %{input: %{id: "gid://shopify/Metafield/9208558682200"}}
-      }
-
-      iex> ShopifyAPI.GraphQL.query(auth, query)
+      iex> query = "mutation metafieldDelete($input: MetafieldDeleteInput!){ metafieldDelete(input: $input) {deletedId userErrors {field message }}}",
+      iex> variables = %{input: %{id: "gid://shopify/Metafield/9208558682200"}}
+      iex> ShopifyAPI.GraphQL.query(auth, query, variables)
       {:ok, %Response{...}}
   """
   def query(%AuthToken{} = auth, query_string, variables \\ %{}, opts \\ []) do
