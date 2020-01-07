@@ -34,7 +34,7 @@ defmodule ShopifyAPI.GraphQL.Response do
     end
   end
 
-  def handle({:error, _} = response, _), do: response
+  def handle({:error, _} = response), do: response
 
   @doc false
   def build_response(%{body: %{"data" => data, "extensions" => extensions}} = response) do
