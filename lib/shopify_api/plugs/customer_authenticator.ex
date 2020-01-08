@@ -8,7 +8,7 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
   ```liquid
     {% assign auth_expiry = "now" | date: "%s" | plus: 3600 | date: "%Y-%m-%dT%H:%M:%S.%L%z" %}
     {% capture json_string %}
-      {"email":"{{ customer.email }}","id":"{{ customer.id }}","expiry":"{{ auth_expiry }}"}
+      {"id":"{{ customer.id }}","expiry":"{{ auth_expiry }}"}
     {% endcapture %}
     {% assign AUTH_PAYLOAD = json_string | strip %}
     {% assign AUTH_SIGNATURE = AUTH_PAYLOAD | hmac_sha256: settings.secret %}
