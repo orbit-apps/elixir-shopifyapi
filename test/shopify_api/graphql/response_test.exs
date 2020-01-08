@@ -38,41 +38,43 @@ defmodule ShopifyAPI.GraphQL.ResponseTest do
                          status_code: 200
                        }}
 
-  @httpoison_error_response {:ok,
-                             %HTTPoison.Response{
-                               body:
-                                 "[{\"message\":\"Query has a cost of 1100, which exceeds the max cost of 1000\"}]",
-                               headers: [
-                                 {"cache-control", "max-age=0, private, must-revalidate"},
-                                 {"content-length", "76"},
-                                 {"date", "Tue, 20 Aug 2019 20:30:20 GMT"},
-                                 {"server", "Cowboy"}
-                               ],
-                               request: %HTTPoison.Request{
-                                 body:
-                                   "mutation {\n    metafield1: metafieldDelete (input: {id: \"gid://shopify/Metafield/123456789\"}){\n    deletedId\n    userErrors {\n      field\n      message\n      }\n    }\n  }",
-                                 headers: [
-                                   {"Content-Type", "application/graphql"},
-                                   {"X-Shopify-Access-Token", "1234"}
-                                 ],
-                                 method: :post,
-                                 options: [
-                                   token: %ShopifyAPI.AuthToken{
-                                     app_name: "",
-                                     code: "",
-                                     plus: false,
-                                     shop_name: "localhost:60536",
-                                     timestamp: 0,
-                                     token: "1234"
-                                   }
-                                 ],
-                                 params: %{},
-                                 url: "http://localhost:60536/admin/api/2019-07/graphql.json"
-                               },
-                               request_url:
-                                 "http://localhost:60536/admin/api/2019-07/graphql.json",
-                               status_code: 200
-                             }}
+  @httpoison_throttled_response {:ok,
+                                 %HTTPoison.Response{
+                                   body:
+                                     "[{\"message\":\"Query has a cost of 1100, which exceeds the max cost of 1000\"}]",
+                                   headers: [
+                                     {"cache-control", "max-age=0, private, must-revalidate"},
+                                     {"content-length", "76"},
+                                     {"date", "Tue, 20 Aug 2019 20:30:20 GMT"},
+                                     {"server", "Cowboy"}
+                                   ],
+                                   request: %HTTPoison.Request{
+                                     body:
+                                       "mutation {\n    metafield1: metafieldDelete (input: {id: \"gid://shopify/Metafield/123456789\"}){\n    deletedId\n    userErrors {\n      field\n      message\n      }\n    }\n  }",
+                                     headers: [
+                                       {"Content-Type", "application/graphql"},
+                                       {"X-Shopify-Access-Token", "1234"}
+                                     ],
+                                     method: :post,
+                                     options: [
+                                       token: %ShopifyAPI.AuthToken{
+                                         app_name: "",
+                                         code: "",
+                                         plus: false,
+                                         shop_name: "localhost:60536",
+                                         timestamp: 0,
+                                         token: "1234"
+                                       }
+                                     ],
+                                     params: %{},
+                                     url: "http://localhost:60536/admin/api/2019-07/graphql.json"
+                                   },
+                                   request_url:
+                                     "http://localhost:60536/admin/api/2019-07/graphql.json",
+                                   status_code: 200
+                                 }}
+
+  @httpoison_error_response {:error, %HTTPoison.Error{id: nil, reason: :timeout}}
 
   describe "Response handle/1" do
     test "when response is succesful" do
@@ -116,7 +118,7 @@ defmodule ShopifyAPI.GraphQL.ResponseTest do
       assert success == Response.handle(@httpoison_response)
     end
 
-    test "when request fails" do
+    test "when request is throttled" do
       error =
         {:error,
          %HTTPoison.Response{
@@ -152,7 +154,7 @@ defmodule ShopifyAPI.GraphQL.ResponseTest do
            status_code: 200
          }}
 
-      assert error == Response.handle(@httpoison_error_response)
+      assert error == Response.handle(@httpoison_throttled_response)
     end
 
     test "when json decode fails" do
@@ -176,6 +178,10 @@ defmodule ShopifyAPI.GraphQL.ResponseTest do
       payload = {:ok, %HTTPoison.Response{body: ~s/{"data": null, "errors": }/}}
 
       assert error == Response.handle(payload)
+    end
+
+    test "when request fails" do
+      assert @httpoison_error_response == Response.handle(@httpoison_error_response)
     end
   end
 end

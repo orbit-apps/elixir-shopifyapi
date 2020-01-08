@@ -24,8 +24,10 @@ defmodule ShopifyAPI.GraphQL.Response do
   Returns `{:ok, %Response{}}` if the API response was successful.
   If there were query errors, or a rate limit was exceeded, `{:error, %HTTPoison.Response{}}` is returned.
   If an error occurs while parsing the JSON response, `{:error, %JSONParseError{}}` is returned.
+  If a request error occurs, `{:error, %HTTPoison.Error()}` is returned.
   """
-
+  @spec handle({:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}) ::
+          {:ok, t()} | {:error, HTTPoison.Response.t() | JSONParseError.t() | HTTPoison.Error.t()}
   def handle({:ok, response}) do
     case JSONSerializer.decode(response.body) do
       {:ok, body} -> build_response(%{response | body: body})
@@ -34,7 +36,7 @@ defmodule ShopifyAPI.GraphQL.Response do
     end
   end
 
-  def handle({:error, _} = response, _), do: response
+  def handle({:error, _} = response), do: response
 
   @doc false
   def build_response(%{body: %{"data" => nil}} = response), do: {:error, response}

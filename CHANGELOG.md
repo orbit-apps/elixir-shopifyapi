@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.7.2
+
+- Fixes an incorrect arity bug in `GraphQL.Response.handle`
+
 ## 0.7.0
 
 - Refactor caching servers startup, no longer started by ShopifyAPI.Application
