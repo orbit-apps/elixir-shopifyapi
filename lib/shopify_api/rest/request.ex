@@ -186,11 +186,11 @@ defmodule ShopifyAPI.REST.Request do
       "http://example.com/wat?q=3&s=4&t=2"
   """
   @spec add_params_to_url(binary, list) :: binary
-  def add_params_to_url(url, params) do
+  defp add_params_to_url(url, params) do
     url
     |> URI.parse()
     |> merge_uri_params(params)
-    |> String.Chars.to_string()
+    |> to_string()
   end
 
   @spec merge_uri_params(URI.t(), list) :: URI.t()
