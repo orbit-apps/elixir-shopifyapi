@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.Order do
     Return all of a shops Orders filtered by query parameters.
 
   iex> ShopifyAPI.REST.Order.all(token)
-  iex> ShopifyAPI.REST.Order.all(auth, %{param1: "value", param2: "value2"})
+  iex> ShopifyAPI.REST.Order.all(auth, [param1: "value", param2: "value2"])
   """
   def all(%AuthToken{} = auth, params \\ []),
     do: REST.get(auth, "orders.json", params)
