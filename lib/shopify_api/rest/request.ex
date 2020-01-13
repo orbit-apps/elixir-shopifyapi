@@ -21,8 +21,8 @@ defmodule ShopifyAPI.REST.Request do
 
   ## Public Interface
 
-  def perform(%AuthToken{} = token, method, path, body \\ "") do
-    url = url(token, path)
+  def perform(%AuthToken{} = token, method, path, body \\ "", params \\ []) do
+    url = url(token, path) |> add_params_to_url(params)
     headers = headers(token)
 
     response =
@@ -161,5 +161,60 @@ defmodule ShopifyAPI.REST.Request do
     with {:ok, map_fetched} <- Map.fetch(http_response, :body),
          {:ok, body} <- map_fetched,
          do: body
+  end
+
+  @doc """
+  Take an existing URI and add additional params, appending and replacing as necessary
+  ## Examples
+      iex> add_params_to_url("http://example.com/wat", [])
+      "http://example.com/wat"
+      iex> add_params_to_url("http://example.com/wat", [q: 1])
+      "http://example.com/wat?q=1"
+      iex> add_params_to_url("http://example.com/wat", [q: 1, t: 2])
+      "http://example.com/wat?q=1&t=2"
+      iex> add_params_to_url("http://example.com/wat", %{q: 1, t: 2})
+      "http://example.com/wat?q=1&t=2"
+      iex> add_params_to_url("http://example.com/wat?q=1&t=2", [])
+      "http://example.com/wat?q=1&t=2"
+      iex> add_params_to_url("http://example.com/wat?q=1", [t: 2])
+      "http://example.com/wat?q=1&t=2"
+      iex> add_params_to_url("http://example.com/wat?q=1", [q: 3, t: 2])
+      "http://example.com/wat?q=3&t=2"
+      iex> add_params_to_url("http://example.com/wat?q=1&s=4", [q: 3, t: 2])
+      "http://example.com/wat?q=3&s=4&t=2"
+      iex> add_params_to_url("http://example.com/wat?q=1&s=4", %{q: 3, t: 2})
+      "http://example.com/wat?q=3&s=4&t=2"
+  """
+  @spec add_params_to_url(binary, list) :: binary
+  def add_params_to_url(url, params) do
+    url
+    |> URI.parse()
+    |> merge_uri_params(params)
+    |> String.Chars.to_string()
+  end
+
+  @spec merge_uri_params(URI.t(), list) :: URI.t()
+  defp merge_uri_params(uri, []), do: uri
+
+  defp merge_uri_params(%URI{query: nil} = uri, params) when is_list(params) or is_map(params) do
+    uri
+    |> Map.put(:query, URI.encode_query(params))
+  end
+
+  defp merge_uri_params(%URI{} = uri, params) when is_list(params) or is_map(params) do
+    uri
+    |> Map.update!(:query, fn q ->
+      q
+      |> URI.decode_query()
+      |> Map.merge(param_list_to_map_with_string_keys(params))
+      |> URI.encode_query()
+    end)
+  end
+
+  @spec param_list_to_map_with_string_keys(list) :: map
+  defp param_list_to_map_with_string_keys(list) when is_list(list) or is_map(list) do
+    for {key, value} <- list, into: Map.new() do
+      {"#{key}", value}
+    end
   end
 end

@@ -17,8 +17,8 @@ defmodule ShopifyAPI.REST.Order do
   iex> ShopifyAPI.REST.Order.all(token)
   iex> ShopifyAPI.REST.Order.all(auth, %{param1: "value", param2: "value2"})
   """
-  def all(%AuthToken{} = auth, params \\ %{}),
-    do: REST.get(auth, "orders.json?" <> URI.encode_query(params))
+  def all(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "orders.json", params)
 
   @doc """
     Delete an Order.
