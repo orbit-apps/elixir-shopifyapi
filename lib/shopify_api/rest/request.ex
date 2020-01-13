@@ -22,7 +22,7 @@ defmodule ShopifyAPI.REST.Request do
   ## Public Interface
 
   def perform(%AuthToken{} = token, method, path, body \\ "", params \\ []) do
-    url = url(token, path) |> add_params_to_url(params)
+    url = add_params_to_url(url(token, path), params)
     headers = headers(token)
 
     response =
@@ -197,13 +197,11 @@ defmodule ShopifyAPI.REST.Request do
   defp merge_uri_params(uri, []), do: uri
 
   defp merge_uri_params(%URI{query: nil} = uri, params) when is_list(params) or is_map(params) do
-    uri
-    |> Map.put(:query, URI.encode_query(params))
+    Map.put(uri, :query, URI.encode_query(params))
   end
 
   defp merge_uri_params(%URI{} = uri, params) when is_list(params) or is_map(params) do
-    uri
-    |> Map.update!(:query, fn q ->
+    Map.update!(uri, :query, fn q ->
       q
       |> URI.decode_query()
       |> Map.merge(param_list_to_map_with_string_keys(params))
