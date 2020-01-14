@@ -14,8 +14,8 @@ defmodule ShopifyAPI.REST.Asset do
       iex> ShopifyAPI.REST.Asset.get(auth, integer, params)
       {:ok, { "asset" => %{} }}
   """
-  def get(%AuthToken{} = auth, theme_id, params),
-    do: REST.get(auth, "themes/#{theme_id}/assets.json?" <> URI.encode_query(params))
+  def get(%AuthToken{} = auth, theme_id, params \\ []),
+    do: REST.get(auth, "themes/#{theme_id}/assets.json", params)
 
   @doc """
   Return a list of all theme assets.
@@ -25,7 +25,8 @@ defmodule ShopifyAPI.REST.Asset do
       iex> ShopifyAPI.REST.Asset.all(auth, theme_id)
       {:ok, { "assets" => [] }}
   """
-  def all(%AuthToken{} = auth, theme_id), do: REST.get(auth, "themes/#{theme_id}/assets.json")
+  def all(%AuthToken{} = auth, theme_id, params \\ []),
+    do: REST.get(auth, "themes/#{theme_id}/assets.json", params)
 
   @doc """
   Update a theme asset.

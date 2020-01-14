@@ -45,7 +45,7 @@ defmodule ShopifyAPI.REST.DraftOrder do
       iex> ShopifyAPI.REST.DraftOrder.all(auth)
       {:ok, %{"draft_orders" => []}}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "draft_orders.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "draft_orders.json", params)
 
   @doc """
   Retrieve a specific draft order
@@ -55,8 +55,8 @@ defmodule ShopifyAPI.REST.DraftOrder do
       iex> ShopifyAPI.REST.DraftOrder.get(auth, integer)
       {:ok, %{"draft_order" => %{...}}}
   """
-  def get(%AuthToken{} = auth, draft_order_id),
-    do: REST.get(auth, "draft_orders/#{draft_order_id}.json")
+  def get(%AuthToken{} = auth, draft_order_id, params \\ []),
+    do: REST.get(auth, "draft_orders/#{draft_order_id}.json", params)
 
   @doc """
   Retrieve a count of all draft orders
@@ -66,7 +66,8 @@ defmodule ShopifyAPI.REST.DraftOrder do
       iex> ShopifyAPI.REST.DraftOrder.count(auth)
       {:ok, %{count: integer}}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "draft_orders/count.json")
+  def count(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "draft_orders/count.json", params)
 
   @doc """
   Send an invoice for a draft order

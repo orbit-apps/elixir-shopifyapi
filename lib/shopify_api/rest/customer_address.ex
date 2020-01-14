@@ -15,8 +15,8 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       iex> ShopifyAPI.REST.CustomerAddress.all(auth, string)
       {:ok, %{ "addresses" => [] }}
   """
-  def all(%AuthToken{} = auth, customer_id),
-    do: REST.get(auth, "customers/#{customer_id}/addresses.json")
+  def all(%AuthToken{} = auth, customer_id, params \\ []),
+    do: REST.get(auth, "customers/#{customer_id}/addresses.json", params)
 
   @doc """
   Return a single address for a customer.
@@ -26,8 +26,8 @@ defmodule ShopifyAPI.REST.CustomerAddress do
       iex> ShopifyAPI.REST.CustomerAddress.get(auth, string, string)
       {:ok, %{ "customer_address" => %{} }}
   """
-  def get(%AuthToken{} = auth, customer_id, address_id),
-    do: REST.get(auth, "customers/#{customer_id}/addresses/#{address_id}.json")
+  def get(%AuthToken{} = auth, customer_id, address_id, params \\ []),
+    do: REST.get(auth, "customers/#{customer_id}/addresses/#{address_id}.json", params)
 
   @doc """
   Create a new address for a customer.

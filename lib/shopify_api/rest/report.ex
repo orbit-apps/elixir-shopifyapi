@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.all(auth)
       {:ok, { "reports" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "reports.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "reports.json", params)
 
   @doc """
   Return a single report.
@@ -24,7 +24,8 @@ defmodule ShopifyAPI.REST.Report do
       iex> ShopifyAPI.REST.Report.get(auth, integer)
       {:ok, { "report" => %{} }}
   """
-  def get(%AuthToken{} = auth, report_id), do: REST.get(auth, "reports/#{report_id}.json")
+  def get(%AuthToken{} = auth, report_id, params \\ []),
+    do: REST.get(auth, "reports/#{report_id}.json", params)
 
   @doc """
   Create a new report.

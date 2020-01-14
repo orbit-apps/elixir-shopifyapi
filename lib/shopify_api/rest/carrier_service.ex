@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.CarrierService do
       iex> ShopifyAPI.REST.CarrierService.all(auth)
       {:ok, { "carrier_services" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "carrier_services.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "carrier_services.json", params)
 
   @doc """
   Get a single carrier service.
@@ -24,8 +24,8 @@ defmodule ShopifyAPI.REST.CarrierService do
       iex> ShopifyAPI.REST.CarrierService.get(auth, string)
       {:ok, { "carrier_service" => %{} }}
   """
-  def get(%AuthToken{} = auth, carrier_service_id),
-    do: REST.get(auth, "carrier_services/#{carrier_service_id}.json")
+  def get(%AuthToken{} = auth, carrier_service_id, params \\ []),
+    do: REST.get(auth, "carrier_services/#{carrier_service_id}.json", params)
 
   @doc """
   Create a carrier service.

@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Product do
     iex> ShopifyAPI.REST.Product.all(auth)
     {:ok, %{ "products" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "products.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "products.json", params)
 
   @doc """
   Return a single product.
@@ -24,7 +24,8 @@ defmodule ShopifyAPI.REST.Product do
     iex> ShopifyAPI.REST.Product.get(auth, integer)
     {:ok, %{ "product" => %{} }}
   """
-  def get(%AuthToken{} = auth, product_id), do: REST.get(auth, "products/#{product_id}.json")
+  def get(%AuthToken{} = auth, product_id, params \\ []),
+    do: REST.get(auth, "products/#{product_id}.json", params)
 
   @doc """
   Return a count of products.
@@ -34,7 +35,7 @@ defmodule ShopifyAPI.REST.Product do
     iex> ShopifyAPI.REST.Product.count(auth)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "products/count.json")
+  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "products/count.json", params)
 
   @doc """
   Update a product.

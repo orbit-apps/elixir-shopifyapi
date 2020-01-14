@@ -14,8 +14,8 @@ defmodule ShopifyAPI.REST.Theme do
       iex> ShopifyAPI.REST.Theme.get(auth, integer)
       {:ok, { "theme" => %{} }}
   """
-  def get(%AuthToken{} = auth, theme_id, params \\ %{}),
-    do: REST.get(auth, "themes/#{theme_id}.json?" <> URI.encode_query(params))
+  def get(%AuthToken{} = auth, theme_id, params \\ []),
+    do: REST.get(auth, "themes/#{theme_id}.json", params)
 
   @doc """
   Return a list of all themes.
@@ -25,8 +25,8 @@ defmodule ShopifyAPI.REST.Theme do
       iex> ShopifyAPI.REST.Theme.all(auth)
       {:ok, { "themes" => [] }}
   """
-  def all(%AuthToken{} = auth, params \\ %{}),
-    do: REST.get(auth, "themes.json?" <> URI.encode_query(params))
+  def all(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "themes.json", params)
 
   @doc """
   Update a theme.

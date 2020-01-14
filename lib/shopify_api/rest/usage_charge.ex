@@ -37,13 +37,15 @@ defmodule ShopifyAPI.REST.UsageCharge do
   def get(
         %AuthToken{} = auth,
         recurring_application_charge_id,
-        %{usage_charge: %{id: usage_charge_id}}
+        %{usage_charge: %{id: usage_charge_id}},
+        params \\ []
       ) do
     REST.get(
       auth,
       "recurring_application_charges/#{recurring_application_charge_id}/usage_charges/#{
         usage_charge_id
-      }.json"
+      }.json",
+      params
     )
   end
 
@@ -55,10 +57,11 @@ defmodule ShopifyAPI.REST.UsageCharge do
       iex> ShopifyAPI.REST.UsageCharge.all(auth, integer)
       {:ok, { "usage_charges" => [] }}
   """
-  def all(%AuthToken{} = auth, recurring_application_charge_id) do
+  def all(%AuthToken{} = auth, recurring_application_charge_id, params \\ []) do
     REST.get(
       auth,
-      "recurring_application_charge_id/#{recurring_application_charge_id}/usage_charges.json"
+      "recurring_application_charge_id/#{recurring_application_charge_id}/usage_charges.json",
+      params
     )
   end
 end

@@ -14,5 +14,6 @@ defmodule ShopifyAPI.REST.AccessScope do
       iex> ShopifyAPI.REST.AccessScope.get(auth)
       {:ok, %{ "access_scopes" => [] }}
   """
-  def get(%AuthToken{} = auth), do: REST.get(auth, "oauth/access_scopes.json")
+  def get(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "oauth/access_scopes.json", params)
 end

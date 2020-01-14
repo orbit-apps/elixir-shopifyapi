@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       iex> ShopifyAPI.REST.MarketingEvent.all(auth)
       {:ok, { "marketing_events" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "marketing_events.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "marketing_events.json", params)
 
   @doc """
   Get a count of all marketing events.
@@ -25,7 +25,8 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       iex> ShopifyAPI.REST.MarketingEvent.count(auth)
       {:ok, { "count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "marketing_events/count.json")
+  def count(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "marketing_events/count.json", params)
 
   @doc """
   Get a single marketing event.
@@ -35,8 +36,8 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       iex> ShopifyAPI.REST.MarketingEvent.get(auth, integer)
       {:ok, { "marketing_event" => %{} }}
   """
-  def get(%AuthToken{} = auth, marketing_event_id),
-    do: REST.get(auth, "marketing_events/#{marketing_event_id}.json")
+  def get(%AuthToken{} = auth, marketing_event_id, params \\ []),
+    do: REST.get(auth, "marketing_events/#{marketing_event_id}.json", params)
 
   @doc """
   Create a marketing event.

@@ -29,8 +29,8 @@ defmodule ShopifyAPI.REST.InventoryItem do
       iex> ShopifyAPI.REST.InventoryItem.get(auth, integer)
       {:ok, { "inventory_item" => %{} }}
   """
-  def get(%AuthToken{} = auth, inventory_item_id),
-    do: REST.get(auth, "inventory_items/#{inventory_item_id}.json")
+  def get(%AuthToken{} = auth, inventory_item_id, params \\ []),
+    do: REST.get(auth, "inventory_items/#{inventory_item_id}.json", params)
 
   @doc """
   Update an existing inventory item.

@@ -22,7 +22,7 @@ defmodule ShopifyAPI.REST.Request do
   ## Public Interface
 
   def perform(%AuthToken{} = token, method, path, body \\ "", params \\ []) do
-    url = add_params_to_url(url(token, path), params)
+    url = token |> url(path) |> add_params_to_url(params)
     headers = headers(token)
 
     response =
@@ -185,7 +185,12 @@ defmodule ShopifyAPI.REST.Request do
       iex> add_params_to_url("http://example.com/wat?q=1&s=4", %{q: 3, t: 2})
       "http://example.com/wat?q=3&s=4&t=2"
   """
-  @spec add_params_to_url(binary, list) :: binary
+  @spec add_params_to_url(binary, list | map) :: binary
+  defp add_params_to_url(url, params) when is_map(params) do
+    list_params = Enum.map(params, fn {key, value} -> {String.to_existing_atom(key), value} end)
+    add_params_to_url(url, list_params)
+  end
+
   defp add_params_to_url(url, params) do
     url
     |> URI.parse()
