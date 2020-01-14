@@ -163,28 +163,6 @@ defmodule ShopifyAPI.REST.Request do
          do: body
   end
 
-  @doc """
-  Take an existing URI and add additional params, appending and replacing as necessary
-  ## Examples
-      iex> add_params_to_url("http://example.com/wat", [])
-      "http://example.com/wat"
-      iex> add_params_to_url("http://example.com/wat", [q: 1])
-      "http://example.com/wat?q=1"
-      iex> add_params_to_url("http://example.com/wat", [q: 1, t: 2])
-      "http://example.com/wat?q=1&t=2"
-      iex> add_params_to_url("http://example.com/wat", %{q: 1, t: 2})
-      "http://example.com/wat?q=1&t=2"
-      iex> add_params_to_url("http://example.com/wat?q=1&t=2", [])
-      "http://example.com/wat?q=1&t=2"
-      iex> add_params_to_url("http://example.com/wat?q=1", [t: 2])
-      "http://example.com/wat?q=1&t=2"
-      iex> add_params_to_url("http://example.com/wat?q=1", [q: 3, t: 2])
-      "http://example.com/wat?q=3&t=2"
-      iex> add_params_to_url("http://example.com/wat?q=1&s=4", [q: 3, t: 2])
-      "http://example.com/wat?q=3&s=4&t=2"
-      iex> add_params_to_url("http://example.com/wat?q=1&s=4", %{q: 3, t: 2})
-      "http://example.com/wat?q=3&s=4&t=2"
-  """
   @spec add_params_to_url(binary, list | map) :: binary
   defp add_params_to_url(url, params) when is_map(params) do
     list_params = Enum.map(params, fn {key, value} -> {String.to_existing_atom(key), value} end)
