@@ -49,8 +49,8 @@ defmodule ShopifyAPI.REST.DiscountCode do
       iex> ShopifyAPI.REST.DiscountCode.all(auth, integer)
       {:ok, { "discount_codes" => [] }}
   """
-  def all(%AuthToken{} = auth, price_rule_id) do
-    REST.get(auth, "price_rules/#{price_rule_id}/discount_codes.json")
+  def all(%AuthToken{} = auth, price_rule_id, params \\ []) do
+    REST.get(auth, "price_rules/#{price_rule_id}/discount_codes.json", params)
   end
 
   @doc """
@@ -61,8 +61,13 @@ defmodule ShopifyAPI.REST.DiscountCode do
       iex> ShopifyAPI.REST.DiscountCode.get(auth, integer, integer)
       {:ok, { "discount_code" => %{} }}
   """
-  def get(%AuthToken{} = auth, price_rule_id, discount_code_id),
-    do: REST.get(auth, "price_rules/#{price_rule_id}/discount_codes/#{discount_code_id}.json")
+  def get(%AuthToken{} = auth, price_rule_id, discount_code_id, params \\ []),
+    do:
+      REST.get(
+        auth,
+        "price_rules/#{price_rule_id}/discount_codes/#{discount_code_id}.json",
+        params
+      )
 
   @doc """
   Retrieve the location of a discount code.
@@ -72,6 +77,9 @@ defmodule ShopifyAPI.REST.DiscountCode do
       iex> ShopifyAPI.REST.DiscountCode.query(auth, string)
       {:ok, { "location" => "" }}
   """
+  # TODO (BJ) - This could be refactored to use the query params helpers
+  # iex> ShopifyAPI.REST.DiscountCode.query(auth, code: coupon_code)
+  # {:ok, { "location" => "" }}
   def query(%AuthToken{} = auth, coupon_code),
     do: REST.get(auth, "discount_codes/lookup.json?code=#{coupon_code}")
 
@@ -105,8 +113,8 @@ defmodule ShopifyAPI.REST.DiscountCode do
       iex> ShopifyAPI.REST.DiscountCode.get_batch(auth, integer, integer)
       {:ok, "discount_code_creation" => %{} }
   """
-  def get_batch(%AuthToken{} = auth, price_rule_id, batch_id),
-    do: REST.get(auth, "price_rules/#{price_rule_id}/batch/#{batch_id}.json")
+  def get_batch(%AuthToken{} = auth, price_rule_id, batch_id, params \\ []),
+    do: REST.get(auth, "price_rules/#{price_rule_id}/batch/#{batch_id}.json", params)
 
   @doc """
   Return a list of discount codes for a discount code creation job.
@@ -116,6 +124,8 @@ defmodule ShopifyAPI.REST.DiscountCode do
       iex> ShopifyAPI.REST.DiscountCode.all_batch(auth, integer, integer)
       {:ok, "discount_codes" => [] }
   """
-  def all_batch(%AuthToken{} = auth, price_rule_id, batch_id),
-    do: REST.get(auth, "price_rules/#{price_rule_id}/batch/#{batch_id}/discount_code.json")
+  def(all_batch(%AuthToken{} = auth, price_rule_id, batch_id, params \\ []),
+    do:
+      REST.get(auth, "price_rules/#{price_rule_id}/batch/#{batch_id}/discount_code.json", params)
+  )
 end

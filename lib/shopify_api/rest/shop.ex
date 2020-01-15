@@ -14,5 +14,5 @@ defmodule ShopifyAPI.REST.Shop do
       iex> ShopifyAPI.REST.Shop.get(auth)
       {:ok, { "shop" => %{} }}
   """
-  def get(%AuthToken{} = auth), do: REST.get(auth, "shop.json")
+  def get(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "shop.json", params)
 end

@@ -13,7 +13,8 @@ defmodule ShopifyAPI.REST.CustomCollection do
       iex> ShopifyAPI.REST.CustomCollection.all(token)
       {:ok, %{ "custom_collections" => %{} }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "admin/custom_collections.json")
+  def all(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "admin/custom_collections.json", params)
 
   @doc """
   Get a count of all custom collections.
@@ -22,7 +23,8 @@ defmodule ShopifyAPI.REST.CustomCollection do
       iex> ShopifyAPI.REST.CustomCollection.count(token)
       {:ok, { "count": integer }}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "custom_collections/count.json")
+  def count(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "custom_collections/count.json", params)
 
   @doc """
   Return a single custom collection.
@@ -31,8 +33,8 @@ defmodule ShopifyAPI.REST.CustomCollection do
       iex> ShopifyAPI.REST.CustomCollection.get(auth, string)
       {:ok, %{ "custom_collections" => %{} }}
   """
-  def get(%AuthToken{} = auth, custom_collection_id),
-    do: REST.get(auth, "custom_collections/#{custom_collection_id}.json")
+  def get(%AuthToken{} = auth, custom_collection_id, params \\ []),
+    do: REST.get(auth, "custom_collections/#{custom_collection_id}.json", params)
 
   @doc """
   Create a custom collection.

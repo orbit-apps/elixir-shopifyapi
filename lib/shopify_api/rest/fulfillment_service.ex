@@ -14,7 +14,8 @@ defmodule ShopifyAPI.REST.FulfillmentService do
       iex> ShopifyAPI.REST.FulfillmentService.all(auth)
       {:ok, { "fulfillment_services" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "fulfillment_services.json")
+  def all(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "fulfillment_services.json", params)
 
   @doc """
   Get a single fulfillment service.
@@ -24,8 +25,8 @@ defmodule ShopifyAPI.REST.FulfillmentService do
       iex> ShopifyAPI.REST.FulfillmentService.get(auth, string)
       {:ok, { "fulfillment_service" => %{} }}
   """
-  def get(%AuthToken{} = auth, fulfillment_service_id),
-    do: REST.get(auth, "fulfillment_services/#{fulfillment_service_id}.json")
+  def get(%AuthToken{} = auth, fulfillment_service_id, params \\ []),
+    do: REST.get(auth, "fulfillment_services/#{fulfillment_service_id}.json", params)
 
   @doc """
   Create a new fulfillment service.

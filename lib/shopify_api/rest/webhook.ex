@@ -23,9 +23,10 @@ defmodule ShopifyAPI.REST.Webhook do
   iex> ShopifyAPI.REST.Webhook.all(auth)
   {:ok, %{"webhooks" => [%{"webhook_id" => "_", "address" => "https://example.com"}]}}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "webhooks.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "webhooks.json", params)
 
-  def get(%AuthToken{} = auth, webhook_id), do: REST.get(auth, "webhooks/#{webhook_id}.json")
+  def get(%AuthToken{} = auth, webhook_id, params \\ []),
+    do: REST.get(auth, "webhooks/#{webhook_id}.json", params)
 
   def update(%AuthToken{} = auth, %{webhook: %{webhook_id: webhook_id}} = webhook),
     do: REST.put(auth, "webhooks/#{webhook_id}.json", webhook)

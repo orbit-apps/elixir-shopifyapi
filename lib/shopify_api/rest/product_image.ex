@@ -14,8 +14,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.all(auth, integer)
       {:ok, { "images" => [] }}
   """
-  def all(%AuthToken{} = auth, product_id),
-    do: REST.get(auth, "products/#{product_id}/images.json")
+  def all(%AuthToken{} = auth, product_id, params \\ []),
+    do: REST.get(auth, "products/#{product_id}/images.json", params)
 
   @doc """
   Get a count of all product images.
@@ -25,8 +25,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.count(auth)
       {:ok, { "count" => integer }}
   """
-  def count(%AuthToken{} = auth, product_id),
-    do: REST.get(auth, "products/#{product_id}/images/count.json")
+  def count(%AuthToken{} = auth, product_id, params \\ []),
+    do: REST.get(auth, "products/#{product_id}/images/count.json", params)
 
   @doc """
   Get all images for a single product.
@@ -36,6 +36,7 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.get(auth, map)
       {:ok, { "image" => %{} }}
   """
+  @deprecated "Duplicate of all/2"
   def get(%AuthToken{} = auth, product_id),
     do: REST.get(auth, "products/#{product_id}/images.json")
 
@@ -47,8 +48,8 @@ defmodule ShopifyAPI.REST.ProductImage do
       iex> ShopifyApi.Rest.ProductImage.get(auth, map)
       {:ok, { "image" => %{} }}
   """
-  def get(%AuthToken{} = auth, product_id, image_id),
-    do: REST.get(auth, "products/#{product_id}/images/#{image_id}.json")
+  def get(%AuthToken{} = auth, product_id, image_id, params \\ []),
+    do: REST.get(auth, "products/#{product_id}/images/#{image_id}.json", params)
 
   @doc """
   Create a new product image.

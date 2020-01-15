@@ -36,7 +36,7 @@ defmodule ShopifyAPI.REST.PriceRule do
       iex> ShopifyAPI.REST.PriceRule.all(auth)
       {:ok, { "price_rules" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "price_rules.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "price_rules.json", params)
 
   @doc """
   Get a single price rule.
@@ -46,8 +46,8 @@ defmodule ShopifyAPI.REST.PriceRule do
       iex> ShopifyAPI.REST.PriceRule.get(auth, integer)
       {:ok, { "price_rule" => %{} }}
   """
-  def get(%AuthToken{} = auth, price_rule_id),
-    do: REST.get(auth, "price_rules/#{price_rule_id}.json")
+  def get(%AuthToken{} = auth, price_rule_id, params \\ []),
+    do: REST.get(auth, "price_rules/#{price_rule_id}.json", params)
 
   @doc """
   Delete a price rule.

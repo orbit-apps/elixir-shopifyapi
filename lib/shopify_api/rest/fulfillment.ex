@@ -14,8 +14,8 @@ defmodule ShopifyAPI.REST.Fulfillment do
       iex> ShopifyAPI.REST.Fulfillment.all(auth, string)
       {:ok, { "fulfillments" => [] }}
   """
-  def all(%AuthToken{} = auth, order_id),
-    do: REST.get(auth, "orders/#{order_id}/fulfillments.json")
+  def all(%AuthToken{} = auth, order_id, params \\ []),
+    do: REST.get(auth, "orders/#{order_id}/fulfillments.json", params)
 
   @doc """
   Return a count of all fulfillments.
@@ -25,8 +25,8 @@ defmodule ShopifyAPI.REST.Fulfillment do
       iex> ShopifyAPI.REST.Fulfillment.count(auth, string)
       {:ok, { "count" => integer }}
   """
-  def count(%AuthToken{} = auth, order_id),
-    do: REST.get(auth, "orders/#{order_id}/fulfillments/count.json")
+  def count(%AuthToken{} = auth, order_id, params \\ []),
+    do: REST.get(auth, "orders/#{order_id}/fulfillments/count.json", params)
 
   @doc """
   Get a single fulfillment.
@@ -36,8 +36,8 @@ defmodule ShopifyAPI.REST.Fulfillment do
       iex> ShopifyAPI.REST.Fulfillment.get(auth, string, string)
       {:ok, { "fulfillment" => %{} }}
   """
-  def get(%AuthToken{} = auth, order_id, fulfillment_id),
-    do: REST.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json")
+  def get(%AuthToken{} = auth, order_id, fulfillment_id, params \\ []),
+    do: REST.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json", params)
 
   @doc """
   Create a new fulfillment.

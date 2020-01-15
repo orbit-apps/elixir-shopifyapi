@@ -9,16 +9,17 @@ defmodule ShopifyAPI.REST.Order do
   @doc """
     Return a single Order.
   """
-  def get(%AuthToken{} = auth, order_id), do: REST.get(auth, "orders/#{order_id}.json")
+  def get(%AuthToken{} = auth, order_id, params \\ []),
+    do: REST.get(auth, "orders/#{order_id}.json", params)
 
   @doc """
     Return all of a shops Orders filtered by query parameters.
 
   iex> ShopifyAPI.REST.Order.all(token)
-  iex> ShopifyAPI.REST.Order.all(auth, %{param1: "value", param2: "value2"})
+  iex> ShopifyAPI.REST.Order.all(auth, [param1: "value", param2: "value2"])
   """
-  def all(%AuthToken{} = auth, params \\ %{}),
-    do: REST.get(auth, "orders.json?" <> URI.encode_query(params))
+  def all(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "orders.json", params)
 
   @doc """
     Delete an Order.
@@ -49,7 +50,7 @@ defmodule ShopifyAPI.REST.Order do
   iex> ShopifyAPI.REST.Order.get(token)
   {:ok, %{"count" => integer}}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "orders/count.json")
+  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "orders/count.json", params)
 
   @doc """
     Close an Order.

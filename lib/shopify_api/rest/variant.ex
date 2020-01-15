@@ -7,7 +7,8 @@ defmodule ShopifyAPI.REST.Variant do
   @doc """
     Return a single Product Variant
   """
-  def get(%AuthToken{} = auth, variant_id), do: REST.get(auth, "variants/#{variant_id}.json")
+  def get(%AuthToken{} = auth, variant_id, params \\ []),
+    do: REST.get(auth, "variants/#{variant_id}.json", params)
 
   @doc """
     Return all of a Product's Variants.
@@ -15,8 +16,8 @@ defmodule ShopifyAPI.REST.Variant do
     iex> ShopifyAPI.REST.Variant.get(auth, product_id)
 
   """
-  def all(%AuthToken{} = auth, product_id),
-    do: REST.get(auth, "products/#{product_id}/variants.json")
+  def all(%AuthToken{} = auth, product_id, params \\ []),
+    do: REST.get(auth, "products/#{product_id}/variants.json", params)
 
   @doc """
     Return a count of all Product Variants.
@@ -25,8 +26,8 @@ defmodule ShopifyAPI.REST.Variant do
   {:ok, %{"count" => integer}}
   """
 
-  def count(%AuthToken{} = auth, product_id),
-    do: REST.get(auth, "products/#{product_id}/variants/count.json")
+  def count(%AuthToken{} = auth, product_id, params \\ []),
+    do: REST.get(auth, "products/#{product_id}/variants/count.json", params)
 
   @doc """
     Delete a Product Variant.

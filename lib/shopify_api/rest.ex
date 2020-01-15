@@ -12,8 +12,8 @@ defmodule ShopifyAPI.REST do
   alias ShopifyAPI.REST.Request
 
   @doc false
-  def get(%AuthToken{} = auth, path) do
-    Request.perform(auth, :get, path)
+  def get(%AuthToken{} = auth, path, params \\ []) do
+    Request.perform(auth, :get, path, "", params)
   end
 
   @doc false

@@ -23,11 +23,11 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.all(token, atom, integer)
     {:ok, %{ "metafields" => [] }}
   """
-  def all(%AuthToken{} = auth, params \\ %{}),
-    do: REST.get(auth, "metafields.json?" <> URI.encode_query(params))
+  def all(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "metafields.json", params)
 
-  def all(%AuthToken{} = auth, type, resource_id, params \\ %{}),
-    do: REST.get(auth, resource_path(type, resource_id) <> "?" <> URI.encode_query(params))
+  def all(%AuthToken{} = auth, type, resource_id, params \\ []),
+    do: REST.get(auth, resource_path(type, resource_id), params)
 
   @doc """
   Return a count of metafields that belong to a Shop resource.
@@ -37,7 +37,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.count(token)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "metafields/count.json")
+  def count(%AuthToken{} = auth, params \\ []),
+    do: REST.get(auth, "metafields/count.json", params)
 
   @doc """
   Return a count that belong to a resource and its metafields.
@@ -47,8 +48,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.count(auth, atom, integer)
     {:ok, %{ "count" => integer }}
   """
-  def count(%AuthToken{} = auth, type, resource_id),
-    do: REST.get(auth, resource_path(type, resource_id))
+  def count(%AuthToken{} = auth, type, resource_id, params \\ []),
+    do: REST.get(auth, resource_path(type, resource_id), params)
 
   @doc """
   Return a list of metafields for a resource by it's ID.
@@ -58,8 +59,8 @@ defmodule ShopifyAPI.REST.Metafield do
     iex> ShopifyAPI.REST.Metafields.get(auth, atom, integer)
     {:ok, %{ "metafields" => [] }}
   """
-  def get(%AuthToken{} = auth, type, resource_id),
-    do: REST.get(auth, resource_path(type, resource_id))
+  def get(%AuthToken{} = auth, type, resource_id, params \\ []),
+    do: REST.get(auth, resource_path(type, resource_id), params)
 
   @doc """
   Creates a new metafield.

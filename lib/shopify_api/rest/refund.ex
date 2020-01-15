@@ -14,7 +14,8 @@ defmodule ShopifyAPI.REST.Refund do
       iex> ShopifyAPI.REST.Refund.all(auth, string)
       {:ok, { "refunds" => [] }}
   """
-  def all(%AuthToken{} = auth, order_id), do: REST.get(auth, "orders/#{order_id}/refunds.json")
+  def all(%AuthToken{} = auth, order_id, params \\ []),
+    do: REST.get(auth, "orders/#{order_id}/refunds.json", params)
 
   @doc """
   Get a specific refund.
@@ -24,8 +25,8 @@ defmodule ShopifyAPI.REST.Refund do
       iex> ShopifyAPI.REST.Refund.get(auth, string, string)
       {:ok, { "refund" => %{} }}
   """
-  def get(%AuthToken{} = auth, order_id, refund_id),
-    do: REST.get(auth, "orders/#{order_id}/refunds/#{refund_id}.json")
+  def get(%AuthToken{} = auth, order_id, refund_id, params \\ []),
+    do: REST.get(auth, "orders/#{order_id}/refunds/#{refund_id}.json", params)
 
   @doc """
   Calculate a refund.

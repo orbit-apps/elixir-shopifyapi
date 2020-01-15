@@ -15,7 +15,7 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.all(auth)
       {:ok, {"customers" => []}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "customers.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "customers.json", params)
 
   @doc """
   Return a single customer.
@@ -25,8 +25,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.get(auth, integer)
       {:ok, {"customer" = > %{}}
   """
-  def get(%AuthToken{} = auth, customer_id),
-    do: REST.get(auth, "customers/#{customer_id}.json")
+  def get(%AuthToken{} = auth, customer_id, params \\ []),
+    do: REST.get(auth, "customers/#{customer_id}.json", params)
 
   @doc """
   Return a customers that match supplied query.
@@ -109,7 +109,7 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.count(auth)
       {:ok, {"count" => integer }}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "customers/count.json")
+  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "customers/count.json", params)
 
   @doc """
   Return all orders from a customer.
@@ -119,8 +119,8 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.GetOrder(auth, integer)
       {:ok, {"orders" => [] }}
   """
-  def get_orders(%AuthToken{} = auth, customer_id),
-    do: REST.get(auth, "customers/#{customer_id}/orders.json")
+  def get_orders(%AuthToken{} = auth, customer_id, params \\ []),
+    do: REST.get(auth, "customers/#{customer_id}/orders.json", params)
 
   @doc """
   Search for customers that match a supplied query
@@ -135,6 +135,7 @@ defmodule ShopifyAPI.REST.Customer do
   %{"query" => "country:Canada"} - returns all customers with an address in Canada
   %{"query" => "Bob country:Canada"} - returns all customers with an address in Canada and the name "Bob"
   """
+  # TODO (BJ) - Consider refactoring to use a KW List of options params
   def search(%AuthToken{} = auth, params),
-    do: REST.get(auth, "customers/search.json?" <> URI.encode_query(params))
+    do: REST.get(auth, "customers/search.json", params)
 end

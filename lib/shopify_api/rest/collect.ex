@@ -36,7 +36,7 @@ defmodule ShopifyAPI.REST.Collect do
       iex> ShopifyAPI.REST.Collect.all(auth)
       {:ok, %{ "collects" => [] }}
   """
-  def all(%AuthToken{} = auth), do: REST.get(auth, "collects.json")
+  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "collects.json", params)
 
   @doc """
   Get a count of collects.
@@ -46,7 +46,7 @@ defmodule ShopifyAPI.REST.Collect do
       iex> ShopifyAPI.REST.Collect.count(auth)
       {:ok, %{ "count" => 123 }}
   """
-  def count(%AuthToken{} = auth), do: REST.get(auth, "collects/count.json")
+  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "collects/count.json", params)
 
   @doc """
   Get a specific collect.
@@ -56,5 +56,6 @@ defmodule ShopifyAPI.REST.Collect do
       iex> ShopifyAPI.REST.Collect.get(auth, id)
       {:ok, %{ "collect" => %{} }}
   """
-  def get(%AuthToken{} = auth, collect_id), do: REST.get(auth, "collects/#{collect_id}.json")
+  def get(%AuthToken{} = auth, collect_id, params \\ []),
+    do: REST.get(auth, "collects/#{collect_id}.json", params)
 end
