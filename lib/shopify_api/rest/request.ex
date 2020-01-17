@@ -12,15 +12,24 @@ defmodule ShopifyAPI.REST.Request do
   alias HTTPoison.Error
   alias ShopifyAPI.{AuthToken, CallLimit, JSONSerializer, Throttled}
 
-  @default_api_version "2019-04"
+  @default_api_version "2020-01"
 
   # Use HTTP in test for Bypass, HTTPS in all other environments
   @transport if Mix.env() == :test, do: "http://", else: "https://"
 
   @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
 
+  @type http_method :: :get | :post | :put | :delete
+
   ## Public Interface
 
+  @spec perform(
+          AuthToken.t(),
+          http_method(),
+          path :: String.t(),
+          body :: String.t(),
+          params :: keyword()
+        ) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Response.t() | any()}
   def perform(%AuthToken{} = token, method, path, body \\ "", params \\ []) do
     url = token |> url(path) |> add_params_to_url(params)
     headers = headers(token)
@@ -33,8 +42,7 @@ defmodule ShopifyAPI.REST.Request do
 
     case response do
       {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
-        # TODO probably have to return the response here if we want to use the headers
-        {:ok, fetch_body(response)}
+        {:ok, response}
 
       {:ok, response} ->
         {:error, response}
@@ -155,12 +163,6 @@ defmodule ShopifyAPI.REST.Request do
       {"Content-Type", "application/json"},
       {"X-Shopify-Access-Token", access_token}
     ]
-  end
-
-  defp fetch_body(http_response) do
-    with {:ok, map_fetched} <- Map.fetch(http_response, :body),
-         {:ok, body} <- map_fetched,
-         do: body
   end
 
   @spec add_params_to_url(binary, list | map) :: binary
