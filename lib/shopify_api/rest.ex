@@ -33,8 +33,7 @@ defmodule ShopifyAPI.REST do
         PaginatedRequest.product_stream(auth.shop_name, auth.token)
 
       _auto_or_nil ->
-        PaginatedRequest.product_stream(auth.shop_name, auth.token)
-        |> Enum.to_list()
+        Enum.to_list(PaginatedRequest.product_stream(auth.shop_name, auth.token))
     end
   end
 
