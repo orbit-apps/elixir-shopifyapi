@@ -29,10 +29,10 @@ defmodule ShopifyAPI.REST do
         end
 
       :stream ->
-        Request.stream(auth, path)
+        Request.stream(auth, path, params)
 
       _auto_or_nil ->
-        Enum.to_list(Request.stream(auth, path))
+        Enum.to_list(Request.stream(auth, path, params))
     end
   end
 
