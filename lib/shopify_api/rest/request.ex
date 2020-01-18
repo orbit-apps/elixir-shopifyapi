@@ -55,14 +55,14 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  @spec stream(AuthToken.t(), String.t()) :: Enumerable.t() | no_return()
-  def stream(auth, path) do
+  @spec stream(AuthToken.t(), String.t(), keyword()) :: Enumerable.t() | no_return()
+  def stream(auth, path, params) do
     headers = headers(auth)
 
     Stream.resource(
       fn -> url(auth, path) end,
       fn url ->
-        {:ok, response} = HTTPoison.get(url, headers)
+        {:ok, response} = HTTPoison.get(url, headers, params)
         results = extract_results!(response)
 
         case extract_next_link(response) do
@@ -221,8 +221,8 @@ defmodule ShopifyAPI.REST.Request do
   end
 
   defp extract_results!(%{body: body}) do
-    {:ok, %{orders: results}} = JSONSerializer.decode(body)
-    results
+    {:ok, results_map} = JSONSerializer.decode(body)
+    results_map
   end
 
   defp extract_next_link(%{headers: headers}) do
