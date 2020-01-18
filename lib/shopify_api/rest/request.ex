@@ -55,6 +55,25 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
+  @spec stream(AuthToken.t(), String.t()) :: Enumerable.t() | no_return()
+  def stream(auth, path) do
+    headers = headers(auth)
+
+    Stream.resource(
+      fn -> url(auth, path) end,
+      fn url ->
+        {:ok, response} = HTTPoison.get(url, headers)
+        results = extract_results!(response)
+
+        case extract_next_link(response) do
+          {:ok, next_url} -> {results, next_url}
+          :error -> {:halt, results}
+        end
+      end,
+      fn _ -> :ok end
+    )
+  end
+
   def version do
     Keyword.get(
       Application.get_env(:shopify_api, ShopifyAPI.REST) || [],
@@ -199,5 +218,24 @@ defmodule ShopifyAPI.REST.Request do
     for {key, value} <- list, into: Map.new() do
       {"#{key}", value}
     end
+  end
+
+  defp extract_results!(%{body: body}) do
+    {:ok, %{orders: results}} = JSONSerializer.decode(body)
+    results
+  end
+
+  defp extract_next_link(%{headers: headers}) do
+    headers
+    |> Enum.find_value(fn {name, value} -> name == "Link" and value end)
+    |> String.split(", ")
+    |> Enum.map(&String.split(&1, "; "))
+    |> Map.new(fn [url, rel] ->
+      [_, rel] = Regex.run(~r/rel="(.*)"/, rel)
+      [_, url] = Regex.run(~r/<(.*)>/, url)
+
+      {rel, url}
+    end)
+    |> Map.fetch("next")
   end
 end
