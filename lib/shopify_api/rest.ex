@@ -9,7 +9,6 @@ defmodule ShopifyAPI.REST do
 
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.JSONSerializer
-  alias ShopifyAPI.REST.PaginatedRequest
   alias ShopifyAPI.REST.Request
 
   @doc """
@@ -30,10 +29,10 @@ defmodule ShopifyAPI.REST do
         end
 
       :stream ->
-        PaginatedRequest.product_stream(auth.shop_name, auth.token)
+        Request.stream(auth, path)
 
       _auto_or_nil ->
-        Enum.to_list(PaginatedRequest.product_stream(auth.shop_name, auth.token))
+        Enum.to_list(Request.stream(auth, path))
     end
   end
 
