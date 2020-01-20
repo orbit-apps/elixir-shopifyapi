@@ -60,10 +60,12 @@ defmodule ShopifyAPI.REST.Request do
     headers = headers(auth)
 
     Stream.resource(
-      fn -> url(auth, path) end,
+      fn -> auth |> url(path) |> add_params_to_url(params) end,
       fn url ->
-        {:ok, response} = HTTPoison.get(url, headers, params)
-        results = extract_results!(response)
+        {:ok, response} =
+          Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
+
+        results = extract_results!(response.body)
 
         case extract_next_link(response) do
           {:ok, next_url} -> {results, next_url}
