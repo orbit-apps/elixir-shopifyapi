@@ -21,6 +21,8 @@ defmodule ShopifyAPI.REST do
       `:auto` will block until all the pages have been retrieved and concatenated together.
       `:stream` will return a `Stream`, prepopulated with the first page.
   """
+  @spec get(AuthToken.t(), path :: String.t(), keyword(), keyword()) ::
+          {:ok, %{required(String.t()) => [map()]}} | Enumerable.t()
   def get(%AuthToken{} = auth, path, params \\ [], options \\ []) do
     case pagination(options) do
       :none ->
