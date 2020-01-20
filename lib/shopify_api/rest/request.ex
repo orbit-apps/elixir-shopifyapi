@@ -65,7 +65,7 @@ defmodule ShopifyAPI.REST.Request do
         {:ok, response} =
           Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
 
-        results = extract_results!(response.body)
+        results = extract_results!(response)
 
         case extract_next_link(response) do
           {:ok, next_url} -> {results, next_url}
@@ -222,9 +222,12 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  defp extract_results!(%{body: body}) do
-    {:ok, results_map} = JSONSerializer.decode(body)
-    results_map
+  @spec extract_results!(HTTPoison.Response.t()) :: list() | no_return()
+  defp extract_results!(%HTTPoison.Response{body: body}) do
+    with {:ok, results_map} <- body,
+         [{_key, results}] <- Map.to_list(results_map) do
+      results
+    end
   end
 
   defp extract_next_link(%{headers: headers}) do
