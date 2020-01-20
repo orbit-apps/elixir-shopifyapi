@@ -42,31 +42,29 @@ defmodule ShopifyAPI.REST do
 
   @doc false
   def post(%AuthToken{} = auth, path, object \\ %{}) do
-    with {:ok, body} <- JSONSerializer.encode(object),
-         {:ok, response} <- Request.perform(auth, :post, path, body),
-         response_body <- fetch_body(response) do
-      {:ok, response_body}
+    with {:ok, body} <- JSONSerializer.encode(object) do
+      perform_request(auth, :post, path, body)
     end
   end
 
   @doc false
   def put(%AuthToken{} = auth, path, object) do
-    with {:ok, body} <- JSONSerializer.encode(object),
-         {:ok, response} <- Request.perform(auth, :put, path, body),
-         response_body <- fetch_body(response) do
-      {:ok, response_body}
+    with {:ok, body} <- JSONSerializer.encode(object) do
+      perform_request(auth, :put, path, body)
     end
   end
 
   @doc false
-  def delete(%AuthToken{} = auth, path) do
-    with {:ok, response} <- Request.perform(auth, :delete, path),
+  def delete(%AuthToken{} = auth, path), do: perform_request(auth, :delete, path)
+
+  defp perform_request(auth, method, path, body \\ "") do
+    with {:ok, response} <- Request.perform(auth, method, path, body),
          response_body <- fetch_body(response) do
       {:ok, response_body}
     end
   end
 
-  def fetch_body(http_response) do
+  defp fetch_body(http_response) do
     with {:ok, map_fetched} <- Map.fetch(http_response, :body),
          {:ok, body} <- map_fetched,
          do: body
