@@ -24,6 +24,11 @@ defmodule ShopifyAPI.REST do
   @spec get(AuthToken.t(), path :: String.t(), keyword(), keyword()) ::
           {:ok, %{required(String.t()) => [map()]}} | Enumerable.t()
   def get(%AuthToken{} = auth, path, params \\ [], options \\ []) do
+    collect_results = fn
+      %{} = result, {:ok, acc} -> {:cont, {:ok, [result | acc]}}
+      error, {:ok, _acc} -> {:halt, error}
+    end
+
     case pagination(options) do
       :none ->
         with {:ok, response} <- Request.perform(auth, :get, path, "", params) do
@@ -34,9 +39,12 @@ defmodule ShopifyAPI.REST do
         Request.stream(auth, path, params)
 
       _auto_or_nil ->
-        stream = Request.stream(auth, path, params)
-
-        {:ok, Enum.to_list(stream)}
+        Request.stream(auth, path, params)
+        |> Enum.reduce_while({:ok, []}, collect_results)
+        |> case do
+          {:ok, results} -> {:ok, Enum.reverse(results)}
+          error -> error
+        end
     end
   end
 
