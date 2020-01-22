@@ -34,11 +34,12 @@ defmodule ShopifyAPI.REST.Request do
     url = token |> url(path) |> add_params_to_url(params)
     headers = headers(token)
 
-    Throttled.request(
-      fn -> logged_request(method, url, body, headers, token: token) end,
-      token
+    transform_response(
+      Throttled.request(
+        fn -> logged_request(method, url, body, headers, token: token) end,
+        token
+      )
     )
-    |> transform_response()
   end
 
   def transform_response(response) do
@@ -67,15 +68,18 @@ defmodule ShopifyAPI.REST.Request do
         shopify_response =
           Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
 
-        with {:ok, resp} <- transform_response(shopify_response) do
-          results = extract_results!(resp)
+        case transform_response(shopify_response) do
+          {:ok, resp} ->
+            results = extract_results!(resp)
 
-          case extract_next_link(resp.headers) do
-            nil -> {:halt, results}
-            next_url -> {results, next_url}
-          end
-        else
-          value -> {:halt, value}
+            # TODO(BJ) - Credo complaining about nesting depth
+            case extract_next_link(resp.headers) do
+              nil -> {:halt, results}
+              next_url -> {results, next_url}
+            end
+
+          value ->
+            {:halt, value}
         end
       end,
       fn _ -> :ok end
