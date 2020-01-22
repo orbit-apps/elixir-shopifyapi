@@ -34,12 +34,14 @@ defmodule ShopifyAPI.REST.Request do
     url = token |> url(path) |> add_params_to_url(params)
     headers = headers(token)
 
-    response =
-      Throttled.request(
-        fn -> logged_request(method, url, body, headers, token: token) end,
-        token
-      )
+    Throttled.request(
+      fn -> logged_request(method, url, body, headers, token: token) end,
+      token
+    )
+    |> transform_response()
+  end
 
+  def transform_response(response) do
     case response do
       {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
         {:ok, response}
@@ -62,14 +64,18 @@ defmodule ShopifyAPI.REST.Request do
     Stream.resource(
       fn -> auth |> url(path) |> add_params_to_url(params) end,
       fn url ->
-        {:ok, response} =
+        shopify_response =
           Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
 
-        results = extract_results!(response)
+        with {:ok, resp} <- transform_response(shopify_response) do
+          results = extract_results!(resp)
 
-        case extract_next_link(response) do
-          {:ok, next_url} -> {results, next_url}
-          :error -> {:halt, results}
+          case extract_next_link(resp.headers) do
+            nil -> {:halt, results}
+            next_url -> {results, next_url}
+          end
+        else
+          value -> {:halt, value}
         end
       end,
       fn _ -> :ok end
@@ -230,17 +236,18 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  defp extract_next_link(%{headers: headers}) do
-    headers
-    |> Enum.find_value(fn {name, value} -> name == "Link" and value end)
-    |> String.split(", ")
-    |> Enum.map(&String.split(&1, "; "))
-    |> Map.new(fn [url, rel] ->
-      [_, rel] = Regex.run(~r/rel="(.*)"/, rel)
-      [_, url] = Regex.run(~r/<(.*)>/, url)
+  @link_regex ~r/<(?<link>.*)>;\s*rel=\"(?<rel>.*)\"/
 
-      {rel, url}
-    end)
-    |> Map.fetch("next")
+  @spec extract_next_link(list) :: binary | nil
+  defp extract_next_link(headers) do
+    for {"Link", link_header} <- headers,
+        links <- String.split(link_header, ",") do
+      case Regex.named_captures(@link_regex, links) do
+        %{"link" => link, "rel" => "next"} -> link
+        _ -> nil
+      end
+    end
+    |> Enum.filter(&(not is_nil(&1)))
+    |> List.first()
   end
 end
