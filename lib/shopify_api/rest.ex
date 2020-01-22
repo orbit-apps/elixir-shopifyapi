@@ -34,9 +34,11 @@ defmodule ShopifyAPI.REST do
         Request.stream(auth, path, params)
 
       _auto_or_nil ->
-        auth
-        |> Request.stream(path, params)
-        |> Enum.to_list()
+        stream =
+          auth
+          |> Request.stream(path, params)
+
+        {:ok, Enum.to_list(stream)}
     end
   end
 
@@ -72,6 +74,6 @@ defmodule ShopifyAPI.REST do
 
   @spec pagination(keyword) :: atom | nil
   defp pagination(options) do
-    Keyword.get(options, :pagination, Application.get_env(:shopify_api, :pagination, :none))
+    Keyword.get(options, :pagination, Application.get_env(:shopify_api, :pagination, :auto))
   end
 end
