@@ -20,32 +20,33 @@ defmodule ShopifyAPI.Throttled do
   """
   require Logger
 
-  alias ShopifyAPI.AvailabilityTracker
+  alias ShopifyAPI.RateLimiting
 
   @request_max_tries 10
 
-  def request(func, token, max_tries \\ @request_max_tries, depth \\ 1)
+  def request(func, token, max_tries \\ @request_max_tries, depth \\ 1, tracker_impl)
 
-  def request(func, _token, max_tries, depth) when is_function(func) and max_tries == depth,
-    do: func.()
+  def request(func, _token, max_tries, depth, _tracker_impl)
+      when is_function(func) and max_tries == depth,
+      do: func.()
 
-  def request(func, token, max_tries, depth) when is_function(func) do
-    over_limit_status_code = ShopifyAPI.over_limit_status_code()
+  def request(func, token, max_tries, depth, tracker_impl) when is_function(func) do
+    over_limit_status_code = RateLimiting.REST.over_limit_status_code()
 
     token
-    |> AvailabilityTracker.get()
+    |> tracker_impl.get()
     |> make_request(func)
     |> case do
-      # over request limit, back off and try again.
+      # over REST request limit, back off and try again.
       {:ok, %{status_code: ^over_limit_status_code} = response} ->
-        {available_count, remaining_modifier} = AvailabilityTracker.api_hit_limit(token, response)
+        {available_count, remaining_modifier} = tracker_impl.api_hit_limit(token, response)
         send_over_limit_telemetry(token, available_count, remaining_modifier, depth, response)
-        request(func, token, max_tries, depth + 1)
+        request(func, token, max_tries, depth + 1, tracker_impl)
 
       # successful request, update internal call limit
       {:ok, response} ->
         {available_count, remaining_modifier} =
-          AvailabilityTracker.update_api_call_limit(token, response)
+          tracker_impl.update_api_call_limit(token, response)
 
         send_within_limit_telemetry(token, available_count, remaining_modifier, depth, response)
         {:ok, response}

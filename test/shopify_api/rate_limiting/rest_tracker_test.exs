@@ -1,9 +1,9 @@
-defmodule ShopifyAPI.AvailabilityTrackerTest do
+defmodule ShopifyAPI.RateLimiting.RESTTrackerTest do
   use ExUnit.Case
 
   alias HTTPoison.Response
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.AvailabilityTracker
+  alias ShopifyAPI.RateLimiting.RESTTracker
 
   describe "api_hit_limit/2" do
     test "returns a 2000 ms delay" do
@@ -13,7 +13,7 @@ defmodule ShopifyAPI.AvailabilityTrackerTest do
       response = %Response{headers: [{"foo", "bar"}, call_limit_header, retry_after_header]}
       token = %AuthToken{app_name: "test", shop_name: "shop"}
 
-      assert {0, 2000} == AvailabilityTracker.api_hit_limit(token, response)
+      assert {0, 2000} == RESTTracker.api_hit_limit(token, response)
     end
   end
 
@@ -24,7 +24,7 @@ defmodule ShopifyAPI.AvailabilityTrackerTest do
       response = %Response{headers: [{"foo", "bar"}, call_limit_header]}
       token = %AuthToken{app_name: "test", shop_name: "shop"}
 
-      assert {0, 1000} == AvailabilityTracker.update_api_call_limit(token, response)
+      assert {0, 1000} == RESTTracker.update_api_call_limit(token, response)
     end
 
     test "does not back off if there is a limit left" do
@@ -33,7 +33,7 @@ defmodule ShopifyAPI.AvailabilityTrackerTest do
       response = %Response{headers: [{"foo", "bar"}, call_limit_header]}
       token = %AuthToken{app_name: "test", shop_name: "shop"}
 
-      assert {10, 0} == AvailabilityTracker.update_api_call_limit(token, response)
+      assert {10, 0} == RESTTracker.update_api_call_limit(token, response)
     end
   end
 
@@ -42,7 +42,7 @@ defmodule ShopifyAPI.AvailabilityTrackerTest do
       now = ~U[2020-01-01 12:00:00.000000Z]
       token = %AuthToken{app_name: "empty", shop_name: "empty"}
 
-      assert {40, 0} == AvailabilityTracker.get(token, now)
+      assert {40, 0} == RESTTracker.get(token, now)
     end
 
     test "returns with a sleep after hitting limit" do
@@ -53,17 +53,17 @@ defmodule ShopifyAPI.AvailabilityTrackerTest do
 
       hit_time = ~U[2020-01-01 12:00:00.000000Z]
 
-      assert {0, 2000} == AvailabilityTracker.api_hit_limit(token, response, hit_time)
+      assert {0, 2000} == RESTTracker.api_hit_limit(token, response, hit_time)
 
-      assert {0, 2000} == AvailabilityTracker.get(token, hit_time)
+      assert {0, 2000} == RESTTracker.get(token, hit_time)
 
       wait_a_second = ~U[2020-01-01 12:00:01.100000Z]
 
-      assert {0, 900} == AvailabilityTracker.get(token, wait_a_second)
+      assert {0, 900} == RESTTracker.get(token, wait_a_second)
 
       wait_two_seconds = ~U[2020-01-01 12:00:02.100000Z]
 
-      assert {0, 0} == AvailabilityTracker.get(token, wait_two_seconds)
+      assert {0, 0} == RESTTracker.get(token, wait_two_seconds)
     end
   end
 end

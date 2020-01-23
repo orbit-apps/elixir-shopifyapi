@@ -10,7 +10,7 @@ defmodule ShopifyAPI.REST.Request do
   require Logger
 
   alias HTTPoison.Error
-  alias ShopifyAPI.{AuthToken, CallLimit, JSONSerializer, Throttled}
+  alias ShopifyAPI.{AuthToken, JSONSerializer, RateLimiting, Throttled}
 
   @default_api_version "2020-01"
 
@@ -34,7 +34,8 @@ defmodule ShopifyAPI.REST.Request do
     transform_response(
       Throttled.request(
         fn -> logged_request(method, url, body, headers, token: token) end,
-        token
+        token,
+        RateLimiting.RESTTracker
       )
     )
   end
@@ -68,7 +69,11 @@ defmodule ShopifyAPI.REST.Request do
     next_fun = fn
       url when is_binary(url) ->
         shopify_response =
-          Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
+          Throttled.request(
+            fn -> logged_request(:get, url, "", headers, token: auth) end,
+            auth,
+            RateLimiting.RESTTracker
+          )
 
         case transform_response(shopify_response) do
           {:ok, resp} ->
@@ -186,8 +191,8 @@ defmodule ShopifyAPI.REST.Request do
 
   defp remaining_calls({:ok, response}) do
     response
-    |> CallLimit.limit_header_or_status_code()
-    |> CallLimit.get_api_remaining_calls()
+    |> RateLimiting.RESTCallLimits.limit_header_or_status_code()
+    |> RateLimiting.RESTCallLimits.get_api_remaining_calls()
   end
 
   defp remaining_calls(_), do: nil
