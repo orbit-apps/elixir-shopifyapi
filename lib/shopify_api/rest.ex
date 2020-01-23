@@ -73,9 +73,7 @@ defmodule ShopifyAPI.REST do
   end
 
   defp fetch_body(http_response) do
-    with {:ok, map_fetched} <- Map.fetch(http_response, :body),
-         {:ok, body} <- map_fetched,
-         do: body
+    Map.fetch(http_response, :body)
   end
 
   @spec pagination(keyword) :: atom | nil

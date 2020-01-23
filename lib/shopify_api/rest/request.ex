@@ -42,6 +42,7 @@ defmodule ShopifyAPI.REST.Request do
     )
   end
 
+  @spec transform_response(HTTPoison.Response.t()) :: {:error, any()} | {:ok, any()}
   def transform_response(response) do
     case response do
       {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
@@ -113,7 +114,10 @@ defmodule ShopifyAPI.REST.Request do
 
   @impl true
   def process_response_body(body) do
-    JSONSerializer.decode(body)
+    with {:ok, results_map} <- JSONSerializer.decode(body),
+         [{_key, results}] <- Map.to_list(results_map) do
+      results
+    end
   end
 
   ## Private Helpers
