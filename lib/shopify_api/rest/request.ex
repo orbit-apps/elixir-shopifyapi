@@ -42,10 +42,13 @@ defmodule ShopifyAPI.REST.Request do
     )
   end
 
+  defguard is_success_status(status) when status >= 200 and status < 300
+
   @spec transform_response(HTTPoison.Response.t()) :: {:error, any()} | {:ok, any()}
   def transform_response(response) do
     case response do
-      {:ok, %{status_code: status} = response} when status >= 200 and status < 300 ->
+      {:ok, %{status_code: status} = response}
+      when is_success_status(status) ->
         {:ok, response}
 
       {:ok, response} ->
@@ -63,26 +66,33 @@ defmodule ShopifyAPI.REST.Request do
   def stream(auth, path, params) do
     headers = headers(auth)
 
-    Stream.resource(
-      fn -> auth |> url(path) |> add_params_to_url(params) end,
-      fn url ->
+    start_fun = fn -> auth |> url(path) |> add_params_to_url(params) end
+
+    next_fun = fn
+      url when is_binary(url) ->
         shopify_response =
           Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
 
+        # TODO(BJ) - consider pipeline that takes shopify response
+        # and returns {values, next_url | nil}
         case transform_response(shopify_response) do
           {:ok, resp} ->
             results = extract_results!(resp)
 
-            # TODO(BJ) - Credo complaining about nesting depth
-            case extract_next_link(resp.headers) do
-              nil -> {:halt, results}
-              next_url -> {results, next_url}
-            end
+            next_url = extract_next_link(resp.headers)
+            {results, next_url}
 
           value ->
-            {:halt, value}
+            {[value], nil}
         end
-      end,
+
+      _ ->
+        {:halt, nil}
+    end
+
+    Stream.resource(
+      start_fun,
+      next_fun,
       fn _ -> :ok end
     )
   end
@@ -114,9 +124,15 @@ defmodule ShopifyAPI.REST.Request do
 
   @impl true
   def process_response_body(body) do
-    with {:ok, results_map} <- JSONSerializer.decode(body),
+    with {:ok, results_map} when is_map(results_map) <- JSONSerializer.decode(body),
          [{_key, results}] <- Map.to_list(results_map) do
       results
+    else
+      {:ok, results_list} when is_list(results_list) ->
+        results_list
+
+      other_val ->
+        other_val
     end
   end
 
@@ -238,9 +254,15 @@ defmodule ShopifyAPI.REST.Request do
 
   @spec extract_results!(HTTPoison.Response.t()) :: list() | no_return()
   defp extract_results!(%HTTPoison.Response{body: body}) do
-    with {:ok, results_map} <- body,
+    with {:ok, results_map} when is_map(results_map) <- body,
          [{_key, results}] <- Map.to_list(results_map) do
       results
+    else
+      {:ok, results_list} when is_list(results_list) ->
+        results_list
+
+      other_val ->
+        other_val
     end
   end
 

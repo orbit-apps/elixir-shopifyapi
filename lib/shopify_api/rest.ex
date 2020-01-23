@@ -39,7 +39,8 @@ defmodule ShopifyAPI.REST do
         Request.stream(auth, path, params)
 
       _auto_or_nil ->
-        Request.stream(auth, path, params)
+        auth
+        |> Request.stream(path, params)
         |> Enum.reduce_while({:ok, []}, collect_results)
         |> case do
           {:ok, results} -> {:ok, Enum.reverse(results)}
@@ -73,7 +74,7 @@ defmodule ShopifyAPI.REST do
   end
 
   defp fetch_body(http_response) do
-    Map.fetch(http_response, :body)
+    Map.fetch!(http_response, :body)
   end
 
   @spec pagination(keyword) :: atom | nil
