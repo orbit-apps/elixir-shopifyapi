@@ -1,4 +1,4 @@
-defmodule ShopifyAPI.CallLimit do
+defmodule ShopifyAPI.Availability.RESTCallLimits do
   @moduledoc """
   Responsible for handling ShopifyAPI call limits in a HTTPoison.Response
   """
@@ -27,9 +27,8 @@ defmodule ShopifyAPI.CallLimit do
     |> calculate_available
   end
 
-  def get_retry_after_header(%{headers: headers}) do
-    get_header(headers, @shopify_retry_after_header, "2.0")
-  end
+  def get_retry_after_header(%{headers: headers}),
+    do: get_header(headers, @shopify_retry_after_header, "2.0")
 
   def get_retry_after_milliseconds(header_value) do
     {seconds, remainder} = Integer.parse(header_value)

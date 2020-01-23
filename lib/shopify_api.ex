@@ -1,6 +1,4 @@
 defmodule ShopifyAPI do
-  alias ShopifyAPI.Throttled
-
   @plus_bucket 80
   @nonplus_bucket 40
   @plus_requests_per_second 4
@@ -8,7 +6,7 @@ defmodule ShopifyAPI do
 
   @over_limit_status_code 429
 
-  def request(token, func), do: Throttled.request(func, token)
+  # def request(token, func), do: Throttled.request(func, token)
 
   def over_limit_status_code, do: @over_limit_status_code
 

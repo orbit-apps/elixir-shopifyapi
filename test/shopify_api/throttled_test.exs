@@ -1,12 +1,12 @@
 defmodule Test.ShopifyAPI.ThrottledTest do
   use ExUnit.Case
 
-  alias ShopifyAPI.{AuthToken, AvailabilityTracker, Throttled}
+  alias ShopifyAPI.{AuthToken, Availability, Throttled}
 
   @token %AuthToken{app_name: "test", shop_name: "throttled", plus: false}
 
   setup do
-    AvailabilityTracker.set(@token, 10, 0)
+    Availability.RESTTracker.set(@token, 10, 0)
 
     :ok
   end
