@@ -73,14 +73,9 @@ defmodule ShopifyAPI.REST.Request do
         shopify_response =
           Throttled.request(fn -> logged_request(:get, url, "", headers, token: auth) end, auth)
 
-        # TODO(BJ) - consider pipeline that takes shopify response
-        # and returns {values, next_url | nil}
         case transform_response(shopify_response) do
           {:ok, resp} ->
-            results = extract_results!(resp)
-
-            next_url = extract_next_link(resp.headers)
-            {results, next_url}
+            extract_results_and_next_link(resp)
 
           value ->
             {[value], nil}
@@ -128,9 +123,6 @@ defmodule ShopifyAPI.REST.Request do
          [{_key, results}] <- Map.to_list(results_map) do
       results
     else
-      {:ok, results_list} when is_list(results_list) ->
-        results_list
-
       other_val ->
         other_val
     end
@@ -252,20 +244,6 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  @spec extract_results!(HTTPoison.Response.t()) :: list() | no_return()
-  defp extract_results!(%HTTPoison.Response{body: body}) do
-    with {:ok, results_map} when is_map(results_map) <- body,
-         [{_key, results}] <- Map.to_list(results_map) do
-      results
-    else
-      {:ok, results_list} when is_list(results_list) ->
-        results_list
-
-      other_val ->
-        other_val
-    end
-  end
-
   @link_regex ~r/<(?<link>.*)>;\s*rel=\"(?<rel>.*)\"/
 
   @spec extract_next_link(list) :: binary | nil
@@ -279,5 +257,19 @@ defmodule ShopifyAPI.REST.Request do
     end
     |> Enum.filter(&(not is_nil(&1)))
     |> List.first()
+  end
+
+  # TODO(BJ) - nail down the exact values if possible
+  @spec extract_body_results({:ok, map()} | any()) :: any()
+  def extract_body_results({:ok, body}), do: body
+
+  def extract_body_results(body), do: body
+
+  # TODO(BJ) - nail down the exact values if possible
+  @spec extract_results_and_next_link(HTTPoison.Response.t()) :: {any(), nil | binary}
+  def extract_results_and_next_link(%HTTPoison.Response{body: body, headers: headers}) do
+    next_link = extract_next_link(headers)
+    results = extract_body_results(body)
+    {results, next_link}
   end
 end
