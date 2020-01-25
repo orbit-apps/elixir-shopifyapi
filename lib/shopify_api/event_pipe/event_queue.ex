@@ -14,9 +14,6 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   def enqueue(%Event{destination: "application"} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.ApplicationWorker, event, opts)
 
-  def enqueue(%Event{destination: "shopify", object: %{fulfillment: %{}}} = event, opts),
-    do: enqueue_event(ShopifyAPI.EventPipe.FulfillmentWorker, event, opts)
-
   def enqueue(%Event{destination: "shopify", object: %{inventory_level: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.InventoryLevelWorker, event, opts)
 
