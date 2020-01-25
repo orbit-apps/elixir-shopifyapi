@@ -26,9 +26,6 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   def enqueue(%Event{destination: "shopify", object: %{transaction: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.TransactionWorker, event, opts)
 
-  def enqueue(%Event{destination: "shopify", object: %{variant: %{}}} = event, opts),
-    do: enqueue_event(ShopifyAPI.EventPipe.VariantWorker, event, opts)
-
   def enqueue(event, _opts) do
     Logger.warn(fn ->
       "#{__MODULE__} does not know what worker should handle #{inspect(event)}"
