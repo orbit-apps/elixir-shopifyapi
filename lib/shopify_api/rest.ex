@@ -45,13 +45,11 @@ defmodule ShopifyAPI.REST do
   @spec collect_results(Enumerable.t()) ::
           {:ok, list()} | {:error, HTTPoison.Response.t() | any()}
   defp collect_results(stream) do
-    result_reducer = fn
+    stream
+    |> Enum.reduce_while({:ok, []}, fn
       %{} = result, {:ok, acc} -> {:cont, {:ok, [result | acc]}}
       error, {:ok, _acc} -> {:halt, error}
-    end
-
-    stream
-    |> Enum.reduce_while({:ok, []}, result_reducer)
+    end)
     |> case do
       {:ok, results} -> {:ok, Enum.reverse(results)}
       error -> error
