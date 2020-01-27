@@ -17,9 +17,6 @@ defmodule ShopifyAPI.EventPipe.EventQueue do
   def enqueue(%Event{destination: "shopify", object: %{location: %{}}} = event, opts),
     do: enqueue_event(ShopifyAPI.EventPipe.LocationWorker, event, opts)
 
-  def enqueue(%Event{destination: "shopify", object: %{metafield: %{}}} = event, opts),
-    do: enqueue_event(ShopifyAPI.EventPipe.MetafieldWorker, event, opts)
-
   def enqueue(event, _opts) do
     Logger.warn(fn ->
       "#{__MODULE__} does not know what worker should handle #{inspect(event)}"
