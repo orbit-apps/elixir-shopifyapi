@@ -62,7 +62,7 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  @spec stream(AuthToken.t(), String.t(), keyword()) :: Enumerable.t() | no_return()
+  @spec stream(AuthToken.t(), String.t(), keyword()) :: Enumerable.t()
   def stream(auth, path, params) do
     headers = headers(auth)
 
