@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.7.3
+
+- Add ability to specificy pagination options for GET resources, defaults to blocking until all results returned.
+- Refactor return value from GET.
+  WARNING This is a breaking change, return values that were
+  `{:ok, %{"orders" => [%{}, ...]}}` are now `{:ok, [%{}, ...]}`
+
 ## 0.7.2
 
 - Fixes an incorrect arity bug in `GraphQL.Response.handle`
