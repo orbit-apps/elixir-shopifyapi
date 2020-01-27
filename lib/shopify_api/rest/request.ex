@@ -122,9 +122,6 @@ defmodule ShopifyAPI.REST.Request do
     with {:ok, results_map} when is_map(results_map) <- JSONSerializer.decode(body),
          [{_key, results}] <- Map.to_list(results_map) do
       results
-    else
-      other_val ->
-        other_val
     end
   end
 

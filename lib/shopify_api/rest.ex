@@ -14,12 +14,14 @@ defmodule ShopifyAPI.REST do
   @doc """
   Underlying utility retrieval function. The options passed affect both the
   return value and, ultimately, the number of requests made to Shopify.
-  Options:
-    * `:pagination` - Can be `:none`, `:stream`, or `:auto`. Defaults to :auto
-      `:none` will only return the first page. You won't have access to the headers to manually
+
+  ## Options
+
+    `:pagination` - Can be `:none`, `:stream`, or `:auto`. Defaults to :auto
+    `:none` will only return the first page. You won't have access to the headers to manually
       paginate.
-      `:auto` will block until all the pages have been retrieved and concatenated together.
-      `:stream` will return a `Stream`, prepopulated with the first page.
+    `:auto` will block until all the pages have been retrieved and concatenated together.
+    `:stream` will return a `Stream`, prepopulated with the first page.
   """
   @spec get(AuthToken.t(), path :: String.t(), keyword(), keyword()) ::
           {:ok, %{required(String.t()) => [map()]}} | Enumerable.t()
@@ -38,7 +40,7 @@ defmodule ShopifyAPI.REST do
       :stream ->
         Request.stream(auth, path, params)
 
-      _auto_or_nil ->
+      :auto ->
         auth
         |> Request.stream(path, params)
         |> Enum.reduce_while({:ok, []}, collect_results)
