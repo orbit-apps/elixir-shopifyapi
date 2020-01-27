@@ -18,19 +18,14 @@ defmodule ShopifyAPI.REST do
   ## Options
 
     `:pagination` - Can be `:none`, `:stream`, or `:auto`. Defaults to :auto
+    `:auto` will block until all the pages have been retrieved and concatenated together.
     `:none` will only return the first page. You won't have access to the headers to manually
       paginate.
-    `:auto` will block until all the pages have been retrieved and concatenated together.
     `:stream` will return a `Stream`, prepopulated with the first page.
   """
   @spec get(AuthToken.t(), path :: String.t(), keyword(), keyword()) ::
           {:ok, %{required(String.t()) => [map()]}} | Enumerable.t()
   def get(%AuthToken{} = auth, path, params \\ [], options \\ []) do
-    collect_results = fn
-      %{} = result, {:ok, acc} -> {:cont, {:ok, [result | acc]}}
-      error, {:ok, _acc} -> {:halt, error}
-    end
-
     case pagination(options) do
       :none ->
         with {:ok, response} <- Request.perform(auth, :get, path, "", params) do
@@ -43,11 +38,23 @@ defmodule ShopifyAPI.REST do
       :auto ->
         auth
         |> Request.stream(path, params)
-        |> Enum.reduce_while({:ok, []}, collect_results)
-        |> case do
-          {:ok, results} -> {:ok, Enum.reverse(results)}
-          error -> error
-        end
+        |> collect_results()
+    end
+  end
+
+  @spec collect_results(Enumerable.t()) ::
+          {:ok, list()} | {:error, HTTPoison.Response.t() | any()}
+  defp collect_results(stream) do
+    result_reducer = fn
+      %{} = result, {:ok, acc} -> {:cont, {:ok, [result | acc]}}
+      error, {:ok, _acc} -> {:halt, error}
+    end
+
+    stream
+    |> Enum.reduce_while({:ok, []}, result_reducer)
+    |> case do
+      {:ok, results} -> {:ok, Enum.reverse(results)}
+      error -> error
     end
   end
 

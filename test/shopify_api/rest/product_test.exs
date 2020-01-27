@@ -21,14 +21,9 @@ defmodule ShopifyAPI.REST.ProductTest do
   test "", %{bypass: bypass, shop: _shop, auth_token: token} do
     product = %{"product_id" => "_", "title" => "Testing Create Product"}
 
-    products = %{
-      "products" => [
-        product
-      ]
-    }
-
     Bypass.expect_once(bypass, "GET", "/admin/api/#{Request.version()}/products.json", fn conn ->
-      {:ok, body} = JSONSerializer.encode(products)
+      {:ok, body} = JSONSerializer.encode(%{products: [product]})
+
       Conn.resp(conn, 200, body)
     end)
 

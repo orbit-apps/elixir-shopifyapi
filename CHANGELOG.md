@@ -1,6 +1,6 @@
 ## Unreleased
 
-## 0.7.3
+## 0.8.0
 
 - Add ability to specify pagination options for GET resources, defaults to blocking until all results returned.
 - Removed top-level wrappers of Shopify REST response values.
