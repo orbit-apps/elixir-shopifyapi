@@ -256,17 +256,9 @@ defmodule ShopifyAPI.REST.Request do
     |> List.first()
   end
 
-  # TODO(BJ) - nail down the exact values if possible
-  @spec extract_body_results({:ok, map()} | any()) :: any()
-  def extract_body_results({:ok, body}), do: body
-
-  def extract_body_results(body), do: body
-
-  # TODO(BJ) - nail down the exact values if possible
   @spec extract_results_and_next_link(HTTPoison.Response.t()) :: {any(), nil | binary}
   def extract_results_and_next_link(%HTTPoison.Response{body: body, headers: headers}) do
     next_link = extract_next_link(headers)
-    results = extract_body_results(body)
-    {results, next_link}
+    {body, next_link}
   end
 end
