@@ -12,7 +12,8 @@ defmodule ShopifyAPI.REST.Shop do
   ## Example
 
       iex> ShopifyAPI.REST.Shop.get(auth)
-      {:ok, { "shop" => %{} }}
+      {:ok, %{} = shop}
   """
-  def get(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "shop.json", params)
+  def get(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "shop.json", params, Keyword.merge([pagination: :none], options))
 end

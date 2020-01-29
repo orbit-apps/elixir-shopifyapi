@@ -13,7 +13,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   ## Example
 
       iex> ShopifyAPI.REST.RecurringApplicationCharge.create(auth, map)
-      {:ok, { "recurring_application_charge" => #{} }}
+      {:ok, %{} = recurring_application_charge}
   """
   def create(
         %AuthToken{} = auth,
@@ -28,13 +28,14 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   ## Example
 
       iex> ShopifyAPI.REST.RecurringApplicationCharge.get(auth, integer)
-      {:ok, { "recurring_application_charge" => %{} }}
+      {:ok, %{} = recurring_application_charge}
   """
-  def get(%AuthToken{} = auth, recurring_application_charge_id, params \\ []) do
+  def get(%AuthToken{} = auth, recurring_application_charge_id, params \\ [], options \\ []) do
     REST.get(
       auth,
       "recurring_application_charges/#{recurring_application_charge_id}.json",
-      params
+      params,
+      Keyword.merge([pagination: :none], options)
     )
   end
 
@@ -44,10 +45,16 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   ## Example
 
       iex> ShopifyAPI.REST.RecurringApplicationCharge.all(auth)
-      {:ok, { "recurring_application_charges" => [] }}
+      {:ok, [] = recurring_application_charges}
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "recurring_application_charges.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "recurring_application_charges.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Activates a recurring application charge.
@@ -55,7 +62,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   ## Example
 
       iex> ShopifyAPI.REST.RecurringApplicationCharge.activate(auth, integer)
-      {:ok, { "recurring_application_charge" => %{} }}
+      {:ok, %{} = recurring_application_charge}
   """
   def activate(%AuthToken{} = auth, recurring_application_charge_id) do
     REST.post(

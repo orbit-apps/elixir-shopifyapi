@@ -21,12 +21,19 @@ defmodule ShopifyAPI.REST.Webhook do
   ## Example
 
   iex> ShopifyAPI.REST.Webhook.all(auth)
-  {:ok, %{"webhooks" => [%{"webhook_id" => "_", "address" => "https://example.com"}]}}
+  {:ok, [%{"webhook_id" => "_", "address" => "https://example.com"}] = webhooks}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "webhooks.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "webhooks.json", params, options)
 
-  def get(%AuthToken{} = auth, webhook_id, params \\ []),
-    do: REST.get(auth, "webhooks/#{webhook_id}.json", params)
+  def get(%AuthToken{} = auth, webhook_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "webhooks/#{webhook_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   def update(%AuthToken{} = auth, %{webhook: %{webhook_id: webhook_id}} = webhook),
     do: REST.put(auth, "webhooks/#{webhook_id}.json", webhook)
@@ -44,7 +51,7 @@ defmodule ShopifyAPI.REST.Webhook do
   ## Example
 
   iex> ShopifyAPI.REST.Webhook.create(auth, %{webhook: %{address: "https://example.com"}})
-  {:ok, %{"webhook" => %{"webhook_id" => "_", "address" => "https://example.com"}}}
+  {:ok, %{"webhook_id" => "_", "address" => "https://example.com"} = webhook}
   """
   def create(%AuthToken{} = auth, %{webhook: %{}} = webhook),
     do: REST.post(auth, "webhooks.json", webhook)

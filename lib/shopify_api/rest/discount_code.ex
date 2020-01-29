@@ -12,7 +12,7 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.create(auth, map)
-      {:ok, { "discount_code" => %{} }}
+      {:ok, %{} = discount_code}
   """
   def create(
         %AuthToken{} = auth,
@@ -27,7 +27,7 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.update(auth, integer, map)
-      {:ok, { "discount_code" => %{} }}
+      {:ok, %{} = discount_code}
   """
   def update(
         %AuthToken{} = auth,
@@ -47,10 +47,10 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.all(auth, integer)
-      {:ok, { "discount_codes" => [] }}
+      {:ok, [%{}, ...] = discount_codes}
   """
-  def all(%AuthToken{} = auth, price_rule_id, params \\ []) do
-    REST.get(auth, "price_rules/#{price_rule_id}/discount_codes.json", params)
+  def all(%AuthToken{} = auth, price_rule_id, params \\ [], options \\ []) do
+    REST.get(auth, "price_rules/#{price_rule_id}/discount_codes.json", params, options)
   end
 
   @doc """
@@ -59,14 +59,15 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.get(auth, integer, integer)
-      {:ok, { "discount_code" => %{} }}
+      {:ok, %{} = discount_code}
   """
-  def get(%AuthToken{} = auth, price_rule_id, discount_code_id, params \\ []),
+  def get(%AuthToken{} = auth, price_rule_id, discount_code_id, params \\ [], options \\ []),
     do:
       REST.get(
         auth,
         "price_rules/#{price_rule_id}/discount_codes/#{discount_code_id}.json",
-        params
+        params,
+        Keyword.merge([pagination: :none], options)
       )
 
   @doc """
@@ -75,13 +76,16 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.query(auth, string)
-      {:ok, { "location" => "" }}
+      {:ok, "" = location}
   """
-  # TODO (BJ) - This could be refactored to use the query params helpers
-  # iex> ShopifyAPI.REST.DiscountCode.query(auth, code: coupon_code)
-  # {:ok, { "location" => "" }}
-  def query(%AuthToken{} = auth, coupon_code),
-    do: REST.get(auth, "discount_codes/lookup.json?code=#{coupon_code}")
+  def query(%AuthToken{} = auth, coupon_code, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "discount_codes/lookup.json",
+        Keyword.merge([code: coupon_code], params),
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Delete a discount code.
@@ -100,7 +104,7 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.createBatch(auth, list)
-      {:ok, "discount_codes" => [] }}
+      {:ok, [%{}, ...] = discount_codes}
   """
   def create_batch(auth, price_rule_id, %{discount_codes: []} = discount_codes),
     do: REST.post(auth, "price_rules/#{price_rule_id}/batch.json", discount_codes)
@@ -111,10 +115,16 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.get_batch(auth, integer, integer)
-      {:ok, "discount_code_creation" => %{} }
+      {:ok, %{} = discount_code_creation}
   """
-  def get_batch(%AuthToken{} = auth, price_rule_id, batch_id, params \\ []),
-    do: REST.get(auth, "price_rules/#{price_rule_id}/batch/#{batch_id}.json", params)
+  def get_batch(%AuthToken{} = auth, price_rule_id, batch_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "price_rules/#{price_rule_id}/batch/#{batch_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a list of discount codes for a discount code creation job.
@@ -122,10 +132,15 @@ defmodule ShopifyAPI.REST.DiscountCode do
   ## Example
 
       iex> ShopifyAPI.REST.DiscountCode.all_batch(auth, integer, integer)
-      {:ok, "discount_codes" => [] }
+      {:ok, [] = discount_codes}
   """
-  def(all_batch(%AuthToken{} = auth, price_rule_id, batch_id, params \\ []),
+  def(all_batch(%AuthToken{} = auth, price_rule_id, batch_id, params \\ [], options \\ []),
     do:
-      REST.get(auth, "price_rules/#{price_rule_id}/batch/#{batch_id}/discount_code.json", params)
+      REST.get(
+        auth,
+        "price_rules/#{price_rule_id}/batch/#{batch_id}/discount_code.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
   )
 end

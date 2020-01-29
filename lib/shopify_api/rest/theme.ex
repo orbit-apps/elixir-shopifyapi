@@ -12,10 +12,16 @@ defmodule ShopifyAPI.REST.Theme do
   ## Example
 
       iex> ShopifyAPI.REST.Theme.get(auth, integer)
-      {:ok, { "theme" => %{} }}
+      {:ok, %{} = theme}
   """
-  def get(%AuthToken{} = auth, theme_id, params \\ []),
-    do: REST.get(auth, "themes/#{theme_id}.json", params)
+  def get(%AuthToken{} = auth, theme_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "themes/#{theme_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a list of all themes.
@@ -23,10 +29,10 @@ defmodule ShopifyAPI.REST.Theme do
   ## Example
 
       iex> ShopifyAPI.REST.Theme.all(auth)
-      {:ok, { "themes" => [] }}
+      {:ok, [] = themes}
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "themes.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "themes.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
   Update a theme.
@@ -34,7 +40,7 @@ defmodule ShopifyAPI.REST.Theme do
   ## Example
 
     iex> ShopifyAPI.REST.Theme.update(auth, map)
-    {:ok, %{ "theme" => %{} }}
+    {:ok, %{} = theme}
   """
   def update(%AuthToken{} = auth, %{"theme" => %{"id" => theme_id} = theme}),
     do: update(auth, %{theme: Map.put(theme, :id, theme_id)})
@@ -59,7 +65,7 @@ defmodule ShopifyAPI.REST.Theme do
   ## Example
 
       iex> ShopifyAPI.REST.Theme.create(auth, map)
-      {:ok, %{ "theme" => %{} }}
+      {:ok, %{} = theme}
   """
   def create(%AuthToken{} = auth, %{"theme" => %{} = theme}),
     do: create(auth, %{theme: theme})

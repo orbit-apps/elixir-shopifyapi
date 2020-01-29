@@ -12,10 +12,10 @@ defmodule ShopifyAPI.REST.Refund do
   ## Example
 
       iex> ShopifyAPI.REST.Refund.all(auth, string)
-      {:ok, { "refunds" => [] }}
+      {:ok, [] = refunds}
   """
-  def all(%AuthToken{} = auth, order_id, params \\ []),
-    do: REST.get(auth, "orders/#{order_id}/refunds.json", params)
+  def all(%AuthToken{} = auth, order_id, params \\ [], options \\ []),
+    do: REST.get(auth, "orders/#{order_id}/refunds.json", params, options)
 
   @doc """
   Get a specific refund.
@@ -23,10 +23,16 @@ defmodule ShopifyAPI.REST.Refund do
   ## Example
 
       iex> ShopifyAPI.REST.Refund.get(auth, string, string)
-      {:ok, { "refund" => %{} }}
+      {:ok, %{} = refund}
   """
-  def get(%AuthToken{} = auth, order_id, refund_id, params \\ []),
-    do: REST.get(auth, "orders/#{order_id}/refunds/#{refund_id}.json", params)
+  def get(%AuthToken{} = auth, order_id, refund_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "orders/#{order_id}/refunds/#{refund_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Calculate a refund.
@@ -34,7 +40,7 @@ defmodule ShopifyAPI.REST.Refund do
   ## Example
 
       iex> ShopifyAPI.REST.Refund.calculate(auth, integer, map)
-      {:ok, { "refund" => %{} }}
+      {:ok, %{} = refund}
   """
   def calculate(%AuthToken{} = auth, order_id, %{refund: %{}} = refund),
     do: REST.post(auth, "orders/#{order_id}/refunds/calculate.json", refund)
@@ -45,7 +51,7 @@ defmodule ShopifyAPI.REST.Refund do
   ## Example
 
       iex> ShopifyAPI.REST.Refund.create(auth, integer, map)
-      {:ok, { "refund" => %{} }}
+      {:ok, %{} = refund}
   """
   def create(%AuthToken{} = auth, order_id, %{refund: %{}} = refund),
     do: REST.post(auth, "orders/#{order_id}/refunds.json", refund)

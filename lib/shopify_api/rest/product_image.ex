@@ -12,10 +12,16 @@ defmodule ShopifyAPI.REST.ProductImage do
   ## Example
 
       iex> ShopifyApi.Rest.ProductImage.all(auth, integer)
-      {:ok, { "images" => [] }}
+      {:ok, [] = images}
   """
-  def all(%AuthToken{} = auth, product_id, params \\ []),
-    do: REST.get(auth, "products/#{product_id}/images.json", params)
+  def all(%AuthToken{} = auth, product_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "products/#{product_id}/images.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Get a count of all product images.
@@ -23,10 +29,16 @@ defmodule ShopifyAPI.REST.ProductImage do
   ## Example
 
       iex> ShopifyApi.Rest.ProductImage.count(auth)
-      {:ok, { "count" => integer }}
+      {:ok, integer = count}
   """
-  def count(%AuthToken{} = auth, product_id, params \\ []),
-    do: REST.get(auth, "products/#{product_id}/images/count.json", params)
+  def count(%AuthToken{} = auth, product_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "products/#{product_id}/images/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Get all images for a single product.
@@ -34,7 +46,7 @@ defmodule ShopifyAPI.REST.ProductImage do
   ## Example
 
       iex> ShopifyApi.Rest.ProductImage.get(auth, map)
-      {:ok, { "image" => %{} }}
+      {:ok, %{} = image}
   """
   @deprecated "Duplicate of all/2"
   def get(%AuthToken{} = auth, product_id),
@@ -46,10 +58,16 @@ defmodule ShopifyAPI.REST.ProductImage do
   ## Example
 
       iex> ShopifyApi.Rest.ProductImage.get(auth, map)
-      {:ok, { "image" => %{} }}
+      {:ok, %{} = image}
   """
-  def get(%AuthToken{} = auth, product_id, image_id, params \\ []),
-    do: REST.get(auth, "products/#{product_id}/images/#{image_id}.json", params)
+  def get(%AuthToken{} = auth, product_id, image_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "products/#{product_id}/images/#{image_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Create a new product image.
@@ -57,7 +75,7 @@ defmodule ShopifyAPI.REST.ProductImage do
   ## Example
 
       iex> ShopifyApi.Rest.ProductImage.create(auth, integer, map)
-      {:ok, { "image" => %{} }}
+      {:ok, %{} = image}
   """
   def create(%AuthToken{} = auth, product_id, %{image: %{}} = image),
     do: REST.post(auth, "products/#{product_id}/images.json", image)
@@ -68,7 +86,7 @@ defmodule ShopifyAPI.REST.ProductImage do
   ## Example
 
       iex> ShopifyApi.Rest.ProductImage.update(auth, integer, map)
-      {:ok, { "image" => %{} }}
+      {:ok, %{} = image}
   """
   def update(%AuthToken{} = auth, product_id, %{image: %{id: image_id}} = image),
     do: REST.put(auth, "products/#{product_id}/images/#{image_id}.json", image)

@@ -13,9 +13,10 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.all(auth)
-      {:ok, {"customers" => []}
+      {:ok, [%{}, ...] = customers}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "customers.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "customers.json", params, options)
 
   @doc """
   Return a single customer.
@@ -23,7 +24,7 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.get(auth, integer)
-      {:ok, {"customer" = > %{}}
+      {:ok, %{} = customer}
   """
   def get(%AuthToken{} = auth, customer_id, params \\ []),
     do: REST.get(auth, "customers/#{customer_id}.json", params)
@@ -49,7 +50,7 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.create(auth, map)
-      {:ok, {"customer" => %{}}
+      {:ok, %{} = customer}
   """
   def create(%AuthToken{} = auth, %{customer: %{}} = customer),
     do: REST.post(auth, "customers.json", customer)
@@ -60,7 +61,7 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.update(auth, map)
-      {:ok, {"customer" => %{}}
+      {:ok, %{} = customer}
   """
   def update(%AuthToken{} = auth, %{customer: %{id: customer_id}} = customer),
     do: REST.put(auth, "customers/#{customer_id}.json", customer)
@@ -71,7 +72,7 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.CreateActivationUrl(auth, integer)
-      {:ok, {"account_activation_url" => "" }
+      {:ok, "" = account_activation_url}
   """
   def create_activation_url(
         %AuthToken{} = auth,
@@ -85,7 +86,7 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.sendInvite(auth, integer)
-      {:ok, {"customer_invite" => %{}}
+      {:ok, %{} = customer_invite}
   """
   def send_invite(%AuthToken{} = auth, customer_id),
     do: REST.post(auth, "customers/#{customer_id}/send_invite.json")
@@ -107,9 +108,11 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.count(auth)
-      {:ok, {"count" => integer }}
+      {:ok, integer}
   """
-  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "customers/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(auth, "customers/count.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
   Return all orders from a customer.
@@ -117,10 +120,16 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.GetOrder(auth, integer)
-      {:ok, {"orders" => [] }}
+      {:ok, [%{}, ...] = orders}
   """
-  def get_orders(%AuthToken{} = auth, customer_id, params \\ []),
-    do: REST.get(auth, "customers/#{customer_id}/orders.json", params)
+  def get_orders(%AuthToken{} = auth, customer_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "customers/#{customer_id}/orders.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Search for customers that match a supplied query
@@ -128,7 +137,7 @@ defmodule ShopifyAPI.REST.Customer do
   ## Example
 
       iex> ShopifyAPI.REST.Customer.search(auth, params)
-      {:ok, {"customers" => [] }}
+      {:ok, [%{}, ...] = customers}
 
   The search params must be passed in as follows:
   %{"query" => "store::7020"} - returns all customers with a tag of store::7020
@@ -136,6 +145,6 @@ defmodule ShopifyAPI.REST.Customer do
   %{"query" => "Bob country:Canada"} - returns all customers with an address in Canada and the name "Bob"
   """
   # TODO (BJ) - Consider refactoring to use a KW List of options params
-  def search(%AuthToken{} = auth, params),
-    do: REST.get(auth, "customers/search.json", params)
+  def search(%AuthToken{} = auth, params, options \\ []),
+    do: REST.get(auth, "customers/search.json", params, options)
 end

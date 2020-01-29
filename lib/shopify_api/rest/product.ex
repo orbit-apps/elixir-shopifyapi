@@ -12,9 +12,10 @@ defmodule ShopifyAPI.REST.Product do
   ## Example
 
     iex> ShopifyAPI.REST.Product.all(auth)
-    {:ok, %{ "products" => [] }}
+    {:ok, [] = products}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "products.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "products.json", params, options)
 
   @doc """
   Return a single product.
@@ -22,10 +23,16 @@ defmodule ShopifyAPI.REST.Product do
   ## Example
 
     iex> ShopifyAPI.REST.Product.get(auth, integer)
-    {:ok, %{ "product" => %{} }}
+    {:ok, %{} = product}
   """
-  def get(%AuthToken{} = auth, product_id, params \\ []),
-    do: REST.get(auth, "products/#{product_id}.json", params)
+  def get(%AuthToken{} = auth, product_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "products/#{product_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a count of products.
@@ -33,9 +40,10 @@ defmodule ShopifyAPI.REST.Product do
   ## Example
 
     iex> ShopifyAPI.REST.Product.count(auth)
-    {:ok, %{ "count" => integer }}
+    {:ok, integer = count}
   """
-  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "products/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "products/count.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
   Update a product.
@@ -43,7 +51,7 @@ defmodule ShopifyAPI.REST.Product do
   ## Example
 
     iex> ShopifyAPI.REST.Product.update(auth, map)
-    {:ok, %{ "product" => %{} }}
+    {:ok, %{} = product}
   """
   def update(%AuthToken{} = auth, %{"product" => %{"id" => product_id} = product}),
     do: update(auth, %{product: Map.put(product, :id, product_id)})
@@ -68,7 +76,7 @@ defmodule ShopifyAPI.REST.Product do
   ## Example
 
       iex> ShopifyAPI.REST.Product.create(auth, map)
-      {:ok, %{ "product" => %{} }}
+      {:ok, %{} = product}
   """
   def create(%AuthToken{} = auth, %{"product" => %{} = product}),
     do: create(auth, %{product: product})

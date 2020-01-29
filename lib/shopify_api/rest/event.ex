@@ -14,9 +14,10 @@ defmodule ShopifyAPI.REST.Event do
   ## Example
 
       iex> ShopifyAPI.REST.Event.all(auth)
-      {:ok, { "events" => [] }}
+      {:ok, [%{}, ...] = events}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "events.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "events.json", params, options)
 
   @doc """
   Get a single event.
@@ -24,10 +25,16 @@ defmodule ShopifyAPI.REST.Event do
   ## Example
 
       iex> ShopifyAPI.REST.Event.get(auth, integer)
-      {:ok, { "event" => %{} }}
+      {:ok, %{} = event}
   """
-  def get(%AuthToken{} = auth, event_id, params \\ []),
-    do: REST.get(auth, "events/#{event_id}.json", params)
+  def get(%AuthToken{} = auth, event_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "events/#{event_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Get a count of all Events.
@@ -35,7 +42,8 @@ defmodule ShopifyAPI.REST.Event do
   ## Example
 
       iex> ShopifyAPI.REST.Event.count(auth)
-      {:ok, { "events" => integer }}
+      {:ok, integer = events}
   """
-  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "events/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "events/count.json", params, Keyword.merge([pagination: :none], options))
 end

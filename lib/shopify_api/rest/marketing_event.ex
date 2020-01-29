@@ -13,9 +13,10 @@ defmodule ShopifyAPI.REST.MarketingEvent do
   ## Example
 
       iex> ShopifyAPI.REST.MarketingEvent.all(auth)
-      {:ok, { "marketing_events" => [] }}
+      {:ok, [] = marketing_events}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "marketing_events.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "marketing_events.json", params, options)
 
   @doc """
   Get a count of all marketing events.
@@ -23,10 +24,16 @@ defmodule ShopifyAPI.REST.MarketingEvent do
   ## Example
 
       iex> ShopifyAPI.REST.MarketingEvent.count(auth)
-      {:ok, { "count" => integer }}
+      {:ok, integer = count}
   """
-  def count(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "marketing_events/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "marketing_events/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Get a single marketing event.
@@ -34,10 +41,16 @@ defmodule ShopifyAPI.REST.MarketingEvent do
   ## Example
 
       iex> ShopifyAPI.REST.MarketingEvent.get(auth, integer)
-      {:ok, { "marketing_event" => %{} }}
+      {:ok, %{} = marketing_event}
   """
-  def get(%AuthToken{} = auth, marketing_event_id, params \\ []),
-    do: REST.get(auth, "marketing_events/#{marketing_event_id}.json", params)
+  def get(%AuthToken{} = auth, marketing_event_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "marketing_events/#{marketing_event_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Create a marketing event.
@@ -45,7 +58,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
   ## Example
 
       iex> ShopifyAPI.REST.MarketingEvent.create(auth, map)
-      {:ok, { "marketing_event" => %{} }}
+      {:ok, %{} = marketing_event}
   """
   def create(
         %AuthToken{} = auth,
@@ -59,7 +72,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
   ## Example
 
       iex> ShopifyAPI.REST.MarketingEvent.update(auth, map)
-      {:ok, { "marketing_event" => %{} }}
+      {:ok, %{} = marketing_event}
   """
   def update(
         %AuthToken{} = auth,

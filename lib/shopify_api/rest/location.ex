@@ -12,9 +12,10 @@ defmodule ShopifyAPI.REST.Location do
   ## Example
 
       iex> ShopifyAPI.REST.Location.all(auth)
-      {:ok, { "locations" => [] }}
+      {:ok, [] = locations}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "locations.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "locations.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
   Return a single location.
@@ -22,10 +23,16 @@ defmodule ShopifyAPI.REST.Location do
   ## Example
 
     iex> ShopifyAPI.REST.Location.get(auth, integer)
-    {:ok, %{ "location" => %{} }}
+    {:ok, %{} = location}
   """
-  def get(%AuthToken{} = auth, location_id, params \\ []),
-    do: REST.get(auth, "locations/#{location_id}.json", params)
+  def get(%AuthToken{} = auth, location_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "locations/#{location_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a count of locations.
@@ -33,7 +40,7 @@ defmodule ShopifyAPI.REST.Location do
   ## Example
 
     iex> ShopifyAPI.REST.Location.count(auth)
-    {:ok, %{ "count" => integer }}
+    {:ok, integer = count}
   """
   def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "locations/count.json", params)
 
@@ -43,8 +50,8 @@ defmodule ShopifyAPI.REST.Location do
   ## Example
 
     iex> ShopifyAPI.REST.Location.inventory_levels(auth, integer)
-    {:ok, %{ "inventory_levels" => %{} }}
+    {:ok, %{} = inventory_levels}
   """
-  def inventory_levels(%AuthToken{} = auth, location_id, params \\ []),
-    do: REST.get(auth, "locations/#{location_id}/inventory_levels.json", params)
+  def inventory_levels(%AuthToken{} = auth, location_id, params \\ [], options \\ []),
+    do: REST.get(auth, "locations/#{location_id}/inventory_levels.json", params, options)
 end
