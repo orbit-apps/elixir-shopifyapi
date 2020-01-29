@@ -47,8 +47,8 @@ defmodule ShopifyAPI.REST do
   defp collect_results(stream) do
     stream
     |> Enum.reduce_while({:ok, []}, fn
-      %{} = result, {:ok, acc} -> {:cont, {:ok, [result | acc]}}
-      error, {:ok, _acc} -> {:halt, error}
+      {:error, _} = error, {:ok, _acc} -> {:halt, error}
+      result, {:ok, acc} -> {:cont, {:ok, [result | acc]}}
     end)
     |> case do
       {:ok, results} -> {:ok, Enum.reverse(results)}
