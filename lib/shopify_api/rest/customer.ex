@@ -26,8 +26,14 @@ defmodule ShopifyAPI.REST.Customer do
       iex> ShopifyAPI.REST.Customer.get(auth, integer)
       {:ok, %{} = customer}
   """
-  def get(%AuthToken{} = auth, customer_id, params \\ []),
-    do: REST.get(auth, "customers/#{customer_id}.json", params)
+  def get(%AuthToken{} = auth, customer_id, params \\ [], options \\ []) do
+    REST.get(
+      auth,
+      "customers/#{customer_id}.json",
+      params,
+      Keyword.merge([pagination: :none], options)
+    )
+  end
 
   @doc """
   Return a customers that match supplied query.
