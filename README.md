@@ -105,36 +105,6 @@ def start(_type, _args) do
 end
 ```
 
-### Background Runner
-
-By default [`InlineBackgroundJob`](lib/shopify_api/event_pipe/inline_background_job.ex) is used which will run the worker in the same process that [`EventQueue.enqueue/2`](lib/shopify_api/event_pipe/event_queue.ex) was called from. This option is ideal if you do not wish to configure Exq and Redis.
-```elixir
-config :shopify_api, :background_job_implementation,
-  ShopifyAPI.EventPipe.InlineBackgroundJob
-```
-
-For a more complicated setup, use [`ExqBackgroundJob`](lib/shopify_api/event_pipe/exq_background_job.ex). It uses [Exq](https://github.com/akira/exq) which must be [configured](https://github.com/akira/exq#configuration) for your redis instance.
-```elixir
-config :shopify_api, :background_job_implementation,
-  ShopifyAPI.EventPipe.ExqBackgroundJob
-
-config :exq,
-  name: Exq,
-  host: "127.0.0.1",
-  port: 6379,
-  password: "optional_redis_auth",
-  namespace: "exq",
-  concurrency: :infinite,
-  queues: ["default"],
-  poll_timeout: 50,
-  scheduler_poll_timeout: 200,
-  scheduler_enable: true,
-  max_retries: 25,
-  shutdown_timeout: 5000
-```
-
-A custom background task runner can be implemented through the [`BackgroundJobBehaviour`](lib/shopify_api/event_pipe/background_job_behaviour.ex) behaviour.
-
 ### Shops
 
 example fetch:
