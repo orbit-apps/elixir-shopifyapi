@@ -7,8 +7,14 @@ defmodule ShopifyAPI.REST.Variant do
   @doc """
     Return a single Product Variant
   """
-  def get(%AuthToken{} = auth, variant_id, params \\ []),
-    do: REST.get(auth, "variants/#{variant_id}.json", params)
+  def get(%AuthToken{} = auth, variant_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "variants/#{variant_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
     Return all of a Product's Variants.
@@ -16,18 +22,30 @@ defmodule ShopifyAPI.REST.Variant do
     iex> ShopifyAPI.REST.Variant.get(auth, product_id)
 
   """
-  def all(%AuthToken{} = auth, product_id, params \\ []),
-    do: REST.get(auth, "products/#{product_id}/variants.json", params)
+  def all(%AuthToken{} = auth, product_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "products/#{product_id}/variants.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
     Return a count of all Product Variants.
 
   iex> ShopifyAPI.REST.Variant.get(auth, product_id)
-  {:ok, %{"count" => integer}}
+  {:ok, integer = count}
   """
 
-  def count(%AuthToken{} = auth, product_id, params \\ []),
-    do: REST.get(auth, "products/#{product_id}/variants/count.json", params)
+  def count(%AuthToken{} = auth, product_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "products/#{product_id}/variants/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
     Delete a Product Variant.

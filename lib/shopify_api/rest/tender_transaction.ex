@@ -9,8 +9,8 @@ defmodule ShopifyAPI.REST.TenderTransaction do
   @doc """
     Return all the Tender Transactions.
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "tender_transactions.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "tender_transactions.json", params, options)
 
   def max_per_page, do: @shopify_per_page_max
 end

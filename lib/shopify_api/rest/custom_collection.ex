@@ -11,37 +11,49 @@ defmodule ShopifyAPI.REST.CustomCollection do
 
   ## Example
       iex> ShopifyAPI.REST.CustomCollection.all(token)
-      {:ok, %{ "custom_collections" => %{} }}
+      {:ok, [%{}, ...] = custom_collections}
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "admin/custom_collections.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "admin/custom_collections.json", params, options)
 
   @doc """
   Get a count of all custom collections.
 
   ## Example
       iex> ShopifyAPI.REST.CustomCollection.count(token)
-      {:ok, { "count": integer }}
+      {:ok, integer}
   """
-  def count(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "custom_collections/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "custom_collections/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a single custom collection.
 
   ## Example
       iex> ShopifyAPI.REST.CustomCollection.get(auth, string)
-      {:ok, %{ "custom_collections" => %{} }}
+      {:ok, %{} = custom_collections}
   """
-  def get(%AuthToken{} = auth, custom_collection_id, params \\ []),
-    do: REST.get(auth, "custom_collections/#{custom_collection_id}.json", params)
+  def get(%AuthToken{} = auth, custom_collection_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "custom_collections/#{custom_collection_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Create a custom collection.
 
   ## Example
       iex> ShopifyAPI.REST.CustomCollection.create(auth, map)
-      {:ok, %{ "custom_collection" => %{} }}
+      {:ok, %{} = custom_collection}
   """
   def create(%AuthToken{} = auth, %{custom_collection: %{}} = custom_collection),
     do: REST.post(auth, "custom_collections.json", custom_collection)
@@ -51,7 +63,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
 
   ## Example
       iex> ShopifyAPI.REST.CustomCollection.update(auth, string, map)
-      {:ok, %{ "custom_collection" => %{} }}
+      {:ok, %{} = custom_collection}
   """
   def update(
         %AuthToken{} = auth,

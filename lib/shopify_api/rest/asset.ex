@@ -12,10 +12,16 @@ defmodule ShopifyAPI.REST.Asset do
   ## Example
 
       iex> ShopifyAPI.REST.Asset.get(auth, integer, params)
-      {:ok, { "asset" => %{} }}
+      {:ok, %{} = asset}
   """
-  def get(%AuthToken{} = auth, theme_id, params \\ []),
-    do: REST.get(auth, "themes/#{theme_id}/assets.json", params)
+  def get(%AuthToken{} = auth, theme_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "themes/#{theme_id}/assets.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a list of all theme assets.
@@ -23,10 +29,16 @@ defmodule ShopifyAPI.REST.Asset do
   ## Example
 
       iex> ShopifyAPI.REST.Asset.all(auth, theme_id)
-      {:ok, { "assets" => [] }}
+      {:ok, [%{}, ...] = assets}
   """
-  def all(%AuthToken{} = auth, theme_id, params \\ []),
-    do: REST.get(auth, "themes/#{theme_id}/assets.json", params)
+  def all(%AuthToken{} = auth, theme_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "themes/#{theme_id}/assets.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Update a theme asset.

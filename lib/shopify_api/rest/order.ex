@@ -9,8 +9,14 @@ defmodule ShopifyAPI.REST.Order do
   @doc """
     Return a single Order.
   """
-  def get(%AuthToken{} = auth, order_id, params \\ []),
-    do: REST.get(auth, "orders/#{order_id}.json", params)
+  def get(%AuthToken{} = auth, order_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "orders/#{order_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
     Return all of a shops Orders filtered by query parameters.
@@ -18,8 +24,8 @@ defmodule ShopifyAPI.REST.Order do
   iex> ShopifyAPI.REST.Order.all(token)
   iex> ShopifyAPI.REST.Order.all(auth, [param1: "value", param2: "value2"])
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "orders.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "orders.json", params, options)
 
   @doc """
     Delete an Order.
@@ -48,9 +54,10 @@ defmodule ShopifyAPI.REST.Order do
     Return a count of all Orders.
 
   iex> ShopifyAPI.REST.Order.get(token)
-  {:ok, %{"count" => integer}}
+  {:ok, integer = count}
   """
-  def count(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "orders/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "orders/count.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
     Close an Order.

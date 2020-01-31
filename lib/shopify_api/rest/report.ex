@@ -12,9 +12,10 @@ defmodule ShopifyAPI.REST.Report do
   ## Example
 
       iex> ShopifyAPI.REST.Report.all(auth)
-      {:ok, { "reports" => [] }}
+      {:ok, [] = reports}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "reports.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "reports.json", params, options)
 
   @doc """
   Return a single report.
@@ -22,10 +23,16 @@ defmodule ShopifyAPI.REST.Report do
   ## Example
 
       iex> ShopifyAPI.REST.Report.get(auth, integer)
-      {:ok, { "report" => %{} }}
+      {:ok, %{} = report}
   """
-  def get(%AuthToken{} = auth, report_id, params \\ []),
-    do: REST.get(auth, "reports/#{report_id}.json", params)
+  def get(%AuthToken{} = auth, report_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "reports/#{report_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Create a new report.
@@ -33,7 +40,7 @@ defmodule ShopifyAPI.REST.Report do
   ## Example
 
       iex> ShopifyAPI.REST.Report.create(auth, map)
-      {:ok, { "report" => %{} }}
+      {:ok, %{} = report}
   """
   def create(%AuthToken{} = auth, %{report: %{}} = report),
     do: REST.post(auth, "reports.json", report)
@@ -44,7 +51,7 @@ defmodule ShopifyAPI.REST.Report do
   ## Example
 
       iex> ShopifyAPI.REST.Report.update(auth, map)
-      {:ok, { "report" => %{} }}
+      {:ok, %{} = report}
   """
   def update(%AuthToken{} = auth, %{report: %{id: report_id}} = report),
     do: REST.put(auth, "reports/#{report_id}.json", report)

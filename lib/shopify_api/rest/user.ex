@@ -12,10 +12,11 @@ defmodule ShopifyAPI.REST.User do
   ## Example
 
       iex> ShopifyAPI.REST.User.get(auth, integer)
-      {:ok, { "user" => %{} }}
+      {:ok, %{} = user}
   """
-  def get(%AuthToken{} = auth, user_id, params \\ []),
-    do: REST.get(auth, "users/#{user_id}.json", params)
+  def get(%AuthToken{} = auth, user_id, params \\ [], options \\ []),
+    do:
+      REST.get(auth, "users/#{user_id}.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
   Return a list of all users.
@@ -23,9 +24,10 @@ defmodule ShopifyAPI.REST.User do
   ## Example
 
       iex> ShopifyAPI.REST.User.all(auth)
-      {:ok, { "users" => [] }}
+      {:ok, [] = users}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "users.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "users.json", params, Keyword.merge([pagination: :none], options))
 
   @doc """
   Get the currently logged-in user.
@@ -33,7 +35,8 @@ defmodule ShopifyAPI.REST.User do
   ## Example
 
       iex> ShopifyAPI.REST.User.current(auth)
-      {:ok, { "user" => %{} }}
+      {:ok, %{} = user}
   """
-  def current(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "users/current.json", params)
+  def current(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "users/current.json", params, Keyword.merge([pagination: :none], options))
 end

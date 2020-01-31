@@ -27,10 +27,16 @@ defmodule ShopifyAPI.REST.InventoryItem do
   ## Example
 
       iex> ShopifyAPI.REST.InventoryItem.get(auth, integer)
-      {:ok, { "inventory_item" => %{} }}
+      {:ok, %{} = inventory_item}
   """
-  def get(%AuthToken{} = auth, inventory_item_id, params \\ []),
-    do: REST.get(auth, "inventory_items/#{inventory_item_id}.json", params)
+  def get(%AuthToken{} = auth, inventory_item_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "inventory_items/#{inventory_item_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Update an existing inventory item.
@@ -38,7 +44,7 @@ defmodule ShopifyAPI.REST.InventoryItem do
   ## Example
 
       iex> ShopifyAPI.REST.InventoryItem.update(auth, map)
-      {:ok, { "inventory_item" => %{} }}
+      {:ok, %{} = inventory_item}
   """
   def update(%AuthToken{} = auth, %{inventory_item: %{id: inventory_item_id}} = inventory_item),
     do: REST.put(auth, "inventory_items/#{inventory_item_id}.json", inventory_item)

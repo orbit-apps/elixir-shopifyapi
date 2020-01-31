@@ -23,10 +23,16 @@ defmodule ShopifyAPI.REST.ApplicationCredit do
   ## Example
 
       iex> ShopifyAPI.REST.ApplicationCredit.get(auth, integer)
-      {:ok, { "application_credit" => %{} }}
+      {:ok, %{} = application_credit}
   """
-  def get(%AuthToken{} = auth, application_credit_id, params \\ []),
-    do: REST.get(auth, "application_credits/#{application_credit_id}.json", params)
+  def get(%AuthToken{} = auth, application_credit_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "application_credits/#{application_credit_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Get a list of all application credits.
@@ -34,8 +40,14 @@ defmodule ShopifyAPI.REST.ApplicationCredit do
   ## Example
 
       iex> ShopifyAPI.REST.ApplicationCredit.all(auth)
-      {:ok, { "application_credits" => [] }}
+      {:ok, [%{}, ...] = application_credits}
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "application_credits.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "application_credits.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 end

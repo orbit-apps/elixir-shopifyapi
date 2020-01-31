@@ -18,11 +18,12 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.all(auth)
-    {:ok, %{ "metafields" => [] }}
+    {:ok, [] = metafields }}
 
     iex> ShopifyAPI.REST.Metafields.all(token, atom, integer)
-    {:ok, %{ "metafields" => [] }}
+    {:ok, [] = metafields }}
   """
+  # TODO(BJ) - add options without defaults conflicting
   def all(%AuthToken{} = auth, params \\ []),
     do: REST.get(auth, "metafields.json", params)
 
@@ -35,10 +36,11 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.count(token)
-    {:ok, %{ "count" => integer }}
+    {:ok, integer = count}
   """
+  # TODO(BJ) - add options without defaults conflicting
   def count(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "metafields/count.json", params)
+    do: REST.get(auth, "metafields/count.json", params, pagination: :none)
 
   @doc """
   Return a count that belong to a resource and its metafields.
@@ -46,10 +48,10 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.count(auth, atom, integer)
-    {:ok, %{ "count" => integer }}
+    {:ok, integer = count}
   """
   def count(%AuthToken{} = auth, type, resource_id, params \\ []),
-    do: REST.get(auth, resource_path(type, resource_id), params)
+    do: REST.get(auth, resource_path(type, resource_id), params, pagination: :none)
 
   @doc """
   Return a list of metafields for a resource by it's ID.
@@ -57,10 +59,16 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.get(auth, atom, integer)
-    {:ok, %{ "metafields" => [] }}
+    {:ok, [] = metafields}
   """
-  def get(%AuthToken{} = auth, type, resource_id, params \\ []),
-    do: REST.get(auth, resource_path(type, resource_id), params)
+  def get(%AuthToken{} = auth, type, resource_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        resource_path(type, resource_id),
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Creates a new metafield.
@@ -68,7 +76,7 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.create(auth, map)
-    {:ok, %{ "metafield" => %{} }}
+    {:ok, %{} = metafield}
   """
   def create(%AuthToken{} = auth, metafield), do: REST.post(auth, "metafields.json", metafield)
 
@@ -78,7 +86,7 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.create(auth, atom, integer, map)
-    {:ok, %{ "metafield" => %{} }}
+    {:ok, %{} = metafield}
   """
   def create(%AuthToken{} = auth, type, resource_id, metafield),
     do: REST.post(auth, resource_path(type, resource_id), metafield)
@@ -89,7 +97,7 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.update(auth, atom, integer, map)
-    {:ok, %{ "metafield" => %{} }}
+    {:ok, %{} = metafield}
   """
   def update(%AuthToken{} = auth, type, resource_id, %{metafield: %{id: id}} = metafield),
     do: REST.put(auth, resource_path(type, resource_id, id), metafield)
@@ -100,7 +108,7 @@ defmodule ShopifyAPI.REST.Metafield do
   ## Example
 
     iex> ShopifyAPI.REST.Metafields.update(auth, integer)
-    {:ok, %{ "metafield" => %{} }}
+    {:ok, %{} = metafield}
   """
   def delete(%AuthToken{} = auth, metafield_id),
     do: REST.delete(auth, resource_path(:metafield, metafield_id))

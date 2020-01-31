@@ -24,7 +24,7 @@ defmodule ShopifyAPI.REST.DraftOrder do
   ## Example
 
       iex> ShopifyAPI.REST.DraftOrder.update(auth_token, %{draft_order: %{}})
-      {:ok, %{"draft_order" => %{...}}}
+      {:ok, %{...} = draft_order}
 
       To add a note to a draft order:
       %{
@@ -43,9 +43,10 @@ defmodule ShopifyAPI.REST.DraftOrder do
   ## Example
 
       iex> ShopifyAPI.REST.DraftOrder.all(auth)
-      {:ok, %{"draft_orders" => []}}
+      {:ok, [%{}, ...] = draft_orders}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "draft_orders.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "draft_orders.json", params, options)
 
   @doc """
   Retrieve a specific draft order
@@ -53,10 +54,16 @@ defmodule ShopifyAPI.REST.DraftOrder do
   ## Example
 
       iex> ShopifyAPI.REST.DraftOrder.get(auth, integer)
-      {:ok, %{"draft_order" => %{...}}}
+      {:ok, %{...} = draft_order}
   """
-  def get(%AuthToken{} = auth, draft_order_id, params \\ []),
-    do: REST.get(auth, "draft_orders/#{draft_order_id}.json", params)
+  def get(%AuthToken{} = auth, draft_order_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "draft_orders/#{draft_order_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Retrieve a count of all draft orders
@@ -66,8 +73,14 @@ defmodule ShopifyAPI.REST.DraftOrder do
       iex> ShopifyAPI.REST.DraftOrder.count(auth)
       {:ok, %{count: integer}}
   """
-  def count(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "draft_orders/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "draft_orders/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Send an invoice for a draft order
@@ -75,7 +88,7 @@ defmodule ShopifyAPI.REST.DraftOrder do
   ## Example
 
       iex> ShopifyAPI.REST.DraftOrder.send_invoice(auth, %{draft_order_invoice: %{}})
-      {:ok, %{"draft_order_invoice" => %{...}}}
+      {:ok, %{...} = draft_order_invoice}
 
       To send the default invoice:
       %{
@@ -129,7 +142,7 @@ defmodule ShopifyAPI.REST.DraftOrder do
       To complete a draft order, marking it as pending:
       iex> ShopifyAPI.REST.DraftOrder.complete(auth, integer, %{"payment_pending" => true})
 
-      {:ok, %{"draft_order", %{...}}}
+      {:ok, %{...} = draft_order}
   """
   def complete(%AuthToken{} = auth, draft_order_id, params \\ %{}),
     do:

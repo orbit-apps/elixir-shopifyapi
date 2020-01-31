@@ -14,7 +14,7 @@ defmodule ShopifyAPI.RESTTest do
     def assert_auth_header_set(%{req_headers: req_headers} = conn) do
       headers = Enum.into(req_headers, %{})
       assert headers["x-shopify-access-token"] == "token"
-      resp(conn, 200, "")
+      resp(conn, 200, "{}")
     end
 
     def success(status \\ 200, body \\ "{}"),

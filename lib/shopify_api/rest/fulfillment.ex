@@ -12,10 +12,10 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.all(auth, string)
-      {:ok, { "fulfillments" => [] }}
+      {:ok, [%{}, ...] = fulfillments}
   """
-  def all(%AuthToken{} = auth, order_id, params \\ []),
-    do: REST.get(auth, "orders/#{order_id}/fulfillments.json", params)
+  def all(%AuthToken{} = auth, order_id, params \\ [], options \\ []),
+    do: REST.get(auth, "orders/#{order_id}/fulfillments.json", params, options)
 
   @doc """
   Return a count of all fulfillments.
@@ -23,10 +23,16 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.count(auth, string)
-      {:ok, { "count" => integer }}
+      {:ok, integer}
   """
-  def count(%AuthToken{} = auth, order_id, params \\ []),
-    do: REST.get(auth, "orders/#{order_id}/fulfillments/count.json", params)
+  def count(%AuthToken{} = auth, order_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "orders/#{order_id}/fulfillments/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Get a single fulfillment.
@@ -34,10 +40,16 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.get(auth, string, string)
-      {:ok, { "fulfillment" => %{} }}
+      {:ok, %{} = fulfillment}
   """
-  def get(%AuthToken{} = auth, order_id, fulfillment_id, params \\ []),
-    do: REST.get(auth, "orders/#{order_id}/fulfillments/#{fulfillment_id}.json", params)
+  def get(%AuthToken{} = auth, order_id, fulfillment_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "orders/#{order_id}/fulfillments/#{fulfillment_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Create a new fulfillment.
@@ -45,7 +57,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.create(auth, string, map)
-      {:ok, { "fulfillment" => %{} }}
+      {:ok, %{} = fulfillment}
   """
   def create(%AuthToken{} = auth, order_id, %{fulfillment: %{}} = fulfillment),
     do: REST.post(auth, "orders/#{order_id}/fulfillments.json", fulfillment)
@@ -56,7 +68,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.update(auth, string, map)
-      {:ok, { "fulfillment" => %{} }}
+      {:ok, %{} = fulfillment}
   """
   def update(
         %AuthToken{} = auth,
@@ -71,7 +83,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.complete(auth, string, map)
-      {:ok, { "fulfillment" => %{} }}
+      {:ok, %{} = fulfillment}
   """
   def complete(%AuthToken{} = auth, order_id, %{fulfillment: %{id: fulfillment_id}} = fulfillment) do
     REST.post(
@@ -87,7 +99,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.open(auth, string)
-      {:ok, { "fulfillment" => %{} }}
+      {:ok, %{} = fulfillment}
   """
   def open(%AuthToken{} = auth, order_id, %{fulfillment: %{id: fulfillment_id}} = fulfillment) do
     REST.post(
@@ -103,7 +115,7 @@ defmodule ShopifyAPI.REST.Fulfillment do
   ## Example
 
       iex> ShopifyAPI.REST.Fulfillment.cancel(auth, string)
-      {:ok, { "fulfillment" => %{} }}
+      {:ok, %{} = fulfillment}
   """
   def cancel(%AuthToken{} = auth, order_id, %{fulfillment: %{id: fulfillment_id}} = fulfillment) do
     REST.post(

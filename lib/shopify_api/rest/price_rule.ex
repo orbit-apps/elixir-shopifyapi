@@ -12,7 +12,7 @@ defmodule ShopifyAPI.REST.PriceRule do
   ## Example
 
       iex> ShopifyAPI.REST.PriceRule.create(auth, map)
-      {:ok, { "price_rule" => %{} }}
+      {:ok, %{} = price_rule}
   """
   def create(%AuthToken{} = auth, %{price_rule: %{}} = price_rule),
     do: REST.post(auth, "price_rules.json", price_rule)
@@ -23,7 +23,7 @@ defmodule ShopifyAPI.REST.PriceRule do
   ## Example
 
       iex> ShopifyAPI.REST.PriceRule.update(auth, map)
-      {:ok, { "price_rule" => %{} }}
+      {:ok, %{} = price_rule}
   """
   def update(%AuthToken{} = auth, %{price_rule: %{id: price_rule_id}} = price_rule),
     do: REST.put(auth, "price_rules/#{price_rule_id}.json", price_rule)
@@ -34,9 +34,10 @@ defmodule ShopifyAPI.REST.PriceRule do
   ## Example
 
       iex> ShopifyAPI.REST.PriceRule.all(auth)
-      {:ok, { "price_rules" => [] }}
+      {:ok, [] = price_rules}
   """
-  def all(%AuthToken{} = auth, params \\ []), do: REST.get(auth, "price_rules.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "price_rules.json", params, options)
 
   @doc """
   Get a single price rule.
@@ -44,10 +45,16 @@ defmodule ShopifyAPI.REST.PriceRule do
   ## Example
 
       iex> ShopifyAPI.REST.PriceRule.get(auth, integer)
-      {:ok, { "price_rule" => %{} }}
+      {:ok, %{} = price_rule}
   """
-  def get(%AuthToken{} = auth, price_rule_id, params \\ []),
-    do: REST.get(auth, "price_rules/#{price_rule_id}.json", params)
+  def get(%AuthToken{} = auth, price_rule_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "price_rules/#{price_rule_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Delete a price rule.

@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.8.0
+
+- Add ability to specify pagination options for GET resources, defaults to blocking until all results returned.
+- Removed top-level wrappers of Shopify REST response values.
+  WARNING This is a breaking change, return values that were
+  `{:ok, %{"orders" => [%{}, ...]}}` are now `{:ok, [%{}, ...]}`
+
 ## 0.7.2
 
 - Fixes an incorrect arity bug in `GraphQL.Response.handle`

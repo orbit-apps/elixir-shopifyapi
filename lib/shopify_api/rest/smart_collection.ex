@@ -11,37 +11,49 @@ defmodule ShopifyAPI.REST.SmartCollection do
 
   ## Example
       iex> ShopifyAPI.REST.SmartCollection.all(token)
-      {:ok, %{ "smart_collections" => [] }}
+      {:ok, [] = smart_collections}
   """
-  def all(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "admin/smart_collections.json", params)
+  def all(%AuthToken{} = auth, params \\ [], options \\ []),
+    do: REST.get(auth, "admin/smart_collections.json", params, options)
 
   @doc """
   Get a count of all SmartCollections.
 
   ## Example
       iex> ShopifyAPI.REST.SmartCollection.count(token)
-      {:ok, { "count": integer }}
+      {:ok,teger = count}
   """
-  def count(%AuthToken{} = auth, params \\ []),
-    do: REST.get(auth, "smart_collections/count.json", params)
+  def count(%AuthToken{} = auth, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "smart_collections/count.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Return a single SmartCollection.
 
   ## Example
       iex> ShopifyAPI.REST.SmartCollection.get(auth, string)
-      {:ok, %{ "smart_collection" => %{} }}
+      {:ok, %{} = smart_collection}
   """
-  def get(%AuthToken{} = auth, smart_collection_id, params \\ []),
-    do: REST.get(auth, "smart_collections/#{smart_collection_id}.json", params)
+  def get(%AuthToken{} = auth, smart_collection_id, params \\ [], options \\ []),
+    do:
+      REST.get(
+        auth,
+        "smart_collections/#{smart_collection_id}.json",
+        params,
+        Keyword.merge([pagination: :none], options)
+      )
 
   @doc """
   Create a SmartCollection.
 
   ## Example
       iex> ShopifyAPI.REST.SmartCollection.create(auth, map)
-      {:ok, %{ "smart_collection" => %{} }}
+      {:ok, %{} = smart_collection}
   """
   def create(%AuthToken{} = auth, %{smart_collection: %{}} = smart_collection),
     do: REST.post(auth, "smart_collections.json", smart_collection)
@@ -51,7 +63,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
 
   ## Example
       iex> ShopifyAPI.REST.SmartCollection.update(auth, map)
-      {:ok, %{ "smart_collection" => %{} }}
+      {:ok, %{} = smart_collection}
   """
   def update(
         %AuthToken{} = auth,
