@@ -45,7 +45,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       # Everything else
       {:absinthe, "~> 1.4.0"},
       {:absinthe_plug, "~> 1.4.0"},
-      {:gen_stage, "~> 0.12"},
+      {:gen_stage, "~> 1.0"},
       {:httpoison, "~> 1.0"},
       {:jason, "~> 1.0"},
       {:plug, "~> 1.0"},
