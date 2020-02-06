@@ -4,7 +4,7 @@ defmodule ShopifyAPI.Router do
 
   alias Plug.Conn
   alias ShopifyAPI.{App, AuthToken, AuthTokenServer, ConnHelpers}
-  alias ShopifyAPI.EventPipe.{Event, EventQueue}
+  alias ShopifyAPI.Shop
 
   plug(:match)
   plug(:dispatch)
@@ -38,7 +38,7 @@ defmodule ShopifyAPI.Router do
          true <- ConnHelpers.verify_nonce(app, conn.query_params),
          true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params),
          {:ok, auth_token} <- request_auth_token(conn, app) do
-      enqueue_post_install(auth_token)
+      Shop.post_install(auth_token)
       AuthTokenServer.set(auth_token)
 
       conn
@@ -52,14 +52,6 @@ defmodule ShopifyAPI.Router do
         |> Conn.resp(404, "Not Found.")
         |> Conn.halt()
     end
-  end
-
-  defp enqueue_post_install(token) do
-    EventQueue.enqueue(%Event{
-      destination: "application",
-      token: token,
-      action: "post_install"
-    })
   end
 
   defp request_auth_token(conn, app) do

@@ -28,7 +28,7 @@ defmodule Plug.ShopifyAPI.MixProject do
   def application do
     [
       mod: {ShopifyAPI.Application, []},
-      extra_applications: [:logger, :exq]
+      extra_applications: [:logger]
     ]
   end
 
@@ -45,8 +45,6 @@ defmodule Plug.ShopifyAPI.MixProject do
       # Everything else
       {:absinthe, "~> 1.4.0"},
       {:absinthe_plug, "~> 1.4.0"},
-      {:exq, "~> 0.13.0"},
-      {:exq_atomize_job_arguments, github: "pixelunion/exq-atomize-job-arguments", tag: "v0.1.2"},
       {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 1.0"},
       {:jason, "~> 1.0"},

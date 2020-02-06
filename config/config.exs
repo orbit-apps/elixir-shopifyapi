@@ -33,24 +33,6 @@ config :shopify_api, ShopifyAPI.Webhook, %{
 config :shopify_api,
   http_timeout: 5000
 
-config :exq,
-  json_library: Jason,
-  host: "127.0.0.1",
-  port: 6379,
-  namespace: "shopify",
-  concurrency: :infinite,
-  queues: [{"outbound", 10}, {"inbound", 10}],
-  poll_timeout: 50,
-  shutdown_timeout: 5000,
-  middleware: [
-    Exq.Middleware.Stats,
-    Exq.Middleware.Job,
-    Exq.Middleware.Manager,
-    Exq.Middleware.Logger,
-    Exq.Middleware.AtomizeJobArguments,
-    ShopifyAPI.Middleware.EventStructCoercer
-  ]
-
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

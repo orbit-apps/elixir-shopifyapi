@@ -1,4 +1,5 @@
 ## Unreleased
+- Removed `Exq` dependency, EventPipe.EventQueue & EventPipe.ModuleNameWorker & surrounding modules.
 
 ## 0.8.0
 
