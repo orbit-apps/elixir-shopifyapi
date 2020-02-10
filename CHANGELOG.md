@@ -1,6 +1,6 @@
 ## Unreleased
 
-## 0.8.0 [unreleased]
+## 0.8.0
 
 - BREAKING: Switch default version of REST API to 2020-01 (was 2019-04).
 - BREAKING: Add ability to specify pagination options for GET on collection resources, defaults to blocking until all results returned.
