@@ -86,9 +86,9 @@ defmodule ShopifyAPI.GraphQL do
   end
 
   defp logged_request(auth, url, body, headers, options) do
-    {time, response} = :timer.tc(HTTPoison, :post, [url, body, headers, options])
+    {time, raw_response} = :timer.tc(HTTPoison, :post, [url, body, headers, options])
 
-    response = Response.handle(response)
+    response = Response.handle(raw_response)
 
     log_request(auth, response, time)
 

@@ -28,9 +28,8 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       |> conn("/webhook/#{@app.name}", JSONSerializer.encode!(@req_body))
       |> Conn.put_req_header("x-shopify-hmac-sha256", "invalid")
       |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
-
-    # Invoke the plug
-    conn = Webhook.call(conn, mount: "/webhook")
+      # Invoke the plug
+      |> Webhook.call(mount: "/webhook")
 
     # Assert the response and status
     assert conn.state == :sent
@@ -49,9 +48,8 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
         "VsxCOHbZ+BlpaPvV4cpAiBk4v2Zc35BpRBP3bYiuiog="
       )
       |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
-
-    # Invoke the plug
-    conn = Webhook.call(conn, mount: "/webhook")
+      # Invoke the plug
+      |> Webhook.call(mount: "/webhook")
 
     # Assert the response and status
     assert conn.state == :sent
