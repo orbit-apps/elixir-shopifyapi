@@ -4,4 +4,6 @@ use Mix.Config
 config :logger, level: :warn
 config :bypass, adapter: Plug.Adapters.Cowboy2
 
-config :shopify_api, :customer_api_secret_keys, ["new_secret", "old_secret"]
+config :shopify_api,
+  customer_api_secret_keys: ["new_secret", "old_secret"],
+  transport: "http://"

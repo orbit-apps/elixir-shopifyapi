@@ -77,14 +77,7 @@ defmodule ShopifyAPI.AuthRequest do
   alias ShopifyAPI.JSONSerializer
   @headers [{"Content-Type", "application/json"}]
 
-  @transport "https://"
-  if Mix.env() == :test do
-    @transport "http://"
-  end
-
-  defp access_token_url(domain) do
-    "#{@transport}#{domain}/admin/oauth/access_token"
-  end
+  defp access_token_url(domain), do: "#{ShopifyAPI.transport()}#{domain}/admin/oauth/access_token"
 
   @spec post(ShopifyAPI.App.t(), String.t(), String.t()) :: {:ok, any()} | {:error, any()}
   def post(%ShopifyAPI.App{} = app, domain, auth_code) do
