@@ -66,6 +66,8 @@ end
 
 ## Installing this app in a Shop
 
+There is a boilerplate repo for quickly getting up and running at [ShopifyApp](https://github.com/pixelunion/elixir-shopify-app)
+
 1. Start something like ngrok
 2. Configure your app to allow your ngrok url as one of the redirect_urls
 3. Point your browser to `http://localhost:4000/shop/install?shop=your-shop.myshopify.com&app=yourapp` and it should prompt you to login and authorize it.
