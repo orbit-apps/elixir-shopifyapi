@@ -5,6 +5,7 @@
 - Change default Shopify API version to `2020-10`.
 - BREAKING: Remove GraphQL App/Shop/AuthToken servers.
   - If you want this/use this, grab it out of the git history and import in to your project.
+- Fix a pattern match bug in REST.RecurringApplicationCharge.create/2
 
 ## 0.9.4
 
