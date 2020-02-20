@@ -31,8 +31,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
         |> conn("/admin/#{@app.name}?" <> URI.encode_query(params))
         |> init_test_session(%{})
         |> Conn.fetch_query_params()
-
-      conn = AdminAuthenticator.call(conn, [])
+        |> AdminAuthenticator.call([])
 
       assert conn.state == :set
       assert conn.status == 401

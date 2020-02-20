@@ -9,9 +9,6 @@ defmodule ShopifyAPI.GraphQL do
   alias ShopifyAPI.GraphQL.{Response, Telemetry}
   alias ShopifyAPI.JSONSerializer
 
-  # Use HTTP in test for Bypass, HTTPS in all other environments
-  @transport if Mix.env() == :test, do: "http://", else: "https://"
-
   @default_graphql_version "2019-07"
 
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
@@ -86,9 +83,9 @@ defmodule ShopifyAPI.GraphQL do
   end
 
   defp logged_request(auth, url, body, headers, options) do
-    {time, response} = :timer.tc(HTTPoison, :post, [url, body, headers, options])
+    {time, raw_response} = :timer.tc(HTTPoison, :post, [url, body, headers, options])
 
-    response = Response.handle(response)
+    response = Response.handle(raw_response)
 
     log_request(auth, response, time)
 
@@ -123,7 +120,7 @@ defmodule ShopifyAPI.GraphQL do
 
   defp build_url(%{shop_name: domain}, opts) do
     version = Keyword.get(opts, :version, configured_version())
-    "#{@transport}#{domain}/admin/api/#{version}/graphql.json"
+    "#{ShopifyAPI.transport()}#{domain}/admin/api/#{version}/graphql.json"
   end
 
   defp build_headers(%{token: access_token}, opts) do

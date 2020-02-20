@@ -17,4 +17,10 @@ defmodule ShopifyAPI do
 
   def requests_per_second(%{plus: true}), do: @plus_requests_per_second
   def requests_per_second(%{plus: false}), do: @nonplus_requests_per_second
+
+  @doc false
+  # Accessor for API transport layer, defaults to `https://`.
+  # Override in configuration to `http://` for testing using Bypass.
+  @spec transport() :: String.t()
+  def transport, do: Application.get_env(:shopify_api, :transport, "https://")
 end

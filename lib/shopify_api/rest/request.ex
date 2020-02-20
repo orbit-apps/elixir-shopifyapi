@@ -14,9 +14,6 @@ defmodule ShopifyAPI.REST.Request do
 
   @default_api_version "2020-01"
 
-  # Use HTTP in test for Bypass, HTTPS in all other environments
-  @transport if Mix.env() == :test, do: "http://", else: "https://"
-
   @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
 
   @type http_method :: :get | :post | :put | :delete
@@ -196,7 +193,7 @@ defmodule ShopifyAPI.REST.Request do
   defp remaining_calls(_), do: nil
 
   defp url(%{shop_name: domain}, path),
-    do: "#{@transport}#{domain}/admin/api/#{version()}/#{path}"
+    do: "#{ShopifyAPI.transport()}#{domain}/admin/api/#{version()}/#{path}"
 
   defp headers(%{token: access_token}) do
     [
