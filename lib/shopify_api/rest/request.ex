@@ -205,12 +205,7 @@ defmodule ShopifyAPI.REST.Request do
     ]
   end
 
-  @spec add_params_to_url(binary, list | map) :: binary
-  defp add_params_to_url(url, params) when is_map(params) do
-    list_params = Enum.map(params, fn {key, value} -> {String.to_existing_atom(key), value} end)
-    add_params_to_url(url, list_params)
-  end
-
+  @spec add_params_to_url(url :: binary, params :: list | map) :: binary
   defp add_params_to_url(url, params) do
     url
     |> URI.parse()
@@ -218,9 +213,7 @@ defmodule ShopifyAPI.REST.Request do
     |> to_string()
   end
 
-  @spec merge_uri_params(URI.t(), list) :: URI.t()
-  defp merge_uri_params(uri, []), do: uri
-
+  @spec merge_uri_params(URI.t(), params :: list | map) :: URI.t()
   defp merge_uri_params(%URI{query: nil} = uri, params) when is_list(params) or is_map(params) do
     Map.put(uri, :query, URI.encode_query(params))
   end
@@ -235,8 +228,8 @@ defmodule ShopifyAPI.REST.Request do
   end
 
   @spec param_list_to_map_with_string_keys(list) :: map
-  defp param_list_to_map_with_string_keys(list) when is_list(list) or is_map(list) do
-    for {key, value} <- list, into: Map.new() do
+  defp param_list_to_map_with_string_keys(params) when is_list(params) or is_map(params) do
+    for {key, value} <- params, into: Map.new() do
       {"#{key}", value}
     end
   end
