@@ -21,12 +21,6 @@ jobs:
           path: priv/plts
           key: ${{runner.os}}-${{matrix.otp}}-${{matrix.elixir}}-plts
 
-      - name: Cache deps
-        uses: actions/cache@v1
-        with:
-          path: deps
-          key: ${{hashFiles('mix.lock')}}
-
       - uses: actions/setup-elixir@v1.0.0
         with:
           otp-version: ${{matrix.otp}}
