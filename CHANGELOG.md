@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.8.1
+
 - Fix: Remove call to `String.to_existing_atom` from param serialization. This could previously result in an unexpected error from the caller.
 
 ## 0.8.0
