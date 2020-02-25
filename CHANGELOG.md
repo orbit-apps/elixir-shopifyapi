@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: Remove call to `String.to_existing_atom` from param serialization. This could previously result in an unexpected error from the caller.
+
 ## 0.8.0
 
 - BREAKING: Switch default version of REST API to 2020-01 (was 2019-04).
