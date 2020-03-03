@@ -24,6 +24,14 @@ defmodule ShopifyAPI.Throttled do
 
   @request_max_tries 10
 
+  def graphql_request(func, token, estimated_cost, depth \\ 1, max_tries \\ @request_max_tries) do
+    max_query_cost = RateLimiting.GraphQL.max_query_cost()
+
+    case estimated_cost <= max_query_cost do
+      true -> request(func, token, max_tries, depth, estimated_cost, RateLimiting.GraphQLTracker)
+      false -> {:error, "Query costs cannot exceed #{max_query_cost} points"}
+    end
+  end
 
   def request(
         func,
