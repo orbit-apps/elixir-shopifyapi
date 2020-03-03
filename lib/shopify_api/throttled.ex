@@ -24,17 +24,26 @@ defmodule ShopifyAPI.Throttled do
 
   @request_max_tries 10
 
-  def request(func, token, max_tries \\ @request_max_tries, depth \\ 1, tracker_impl)
 
-  def request(func, _token, max_tries, depth, _tracker_impl)
+  def request(
+        func,
+        token,
+        max_tries \\ @request_max_tries,
+        depth \\ 1,
+        estimated_cost \\ 1,
+        tracker_impl
+      )
+
+  def request(func, _token, max_tries, depth, _estimated_cost, _tracker_impl)
       when is_function(func) and max_tries == depth,
       do: func.()
 
-  def request(func, token, max_tries, depth, tracker_impl) when is_function(func) do
+  def request(func, token, max_tries, depth, estimated_cost, tracker_impl)
+      when is_function(func) do
     over_limit_status_code = RateLimiting.REST.over_limit_status_code()
 
     token
-    |> tracker_impl.get()
+    |> tracker_impl.get(estimated_cost)
     |> make_request(func)
     |> case do
       # over REST request limit, back off and try again.
