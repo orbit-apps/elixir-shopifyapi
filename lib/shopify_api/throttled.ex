@@ -61,6 +61,21 @@ defmodule ShopifyAPI.Throttled do
 
         request(func, token, max_tries, depth + 1, tracker_impl)
 
+      # throttled GraphQL request, try again
+      {:error, %{body: %{"errors" => [%{"message" => "Throttled"}]}} = response} ->
+        {available_count, remaining_modifier} = tracker_impl.api_hit_limit(token, response)
+
+        send_over_limit_telemetry(
+          token,
+          available_count,
+          remaining_modifier,
+          depth,
+          response,
+          tracker_impl
+        )
+
+        request(func, token, max_tries, depth + 1, estimated_cost, tracker_impl)
+
       # successful request, update internal call limit
       {:ok, response} ->
         {available_count, remaining_modifier} =
