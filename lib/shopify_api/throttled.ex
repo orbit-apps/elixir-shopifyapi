@@ -49,7 +49,16 @@ defmodule ShopifyAPI.Throttled do
       # over REST request limit, back off and try again.
       {:ok, %{status_code: ^over_limit_status_code} = response} ->
         {available_count, remaining_modifier} = tracker_impl.api_hit_limit(token, response)
-        send_over_limit_telemetry(token, available_count, remaining_modifier, depth, response)
+
+        send_over_limit_telemetry(
+          token,
+          available_count,
+          remaining_modifier,
+          depth,
+          response,
+          tracker_impl
+        )
+
         request(func, token, max_tries, depth + 1, tracker_impl)
 
       # successful request, update internal call limit
@@ -57,7 +66,15 @@ defmodule ShopifyAPI.Throttled do
         {available_count, remaining_modifier} =
           tracker_impl.update_api_call_limit(token, response)
 
-        send_within_limit_telemetry(token, available_count, remaining_modifier, depth, response)
+        send_within_limit_telemetry(
+          token,
+          available_count,
+          remaining_modifier,
+          depth,
+          response,
+          tracker_impl
+        )
+
         {:ok, response}
 
       error ->
@@ -81,7 +98,8 @@ defmodule ShopifyAPI.Throttled do
          available_count,
          wait_in_milliseconds,
          retry_depth,
-         response
+         response,
+         tracker_impl
        ) do
     send_telemetry(
       token,
@@ -89,7 +107,8 @@ defmodule ShopifyAPI.Throttled do
       wait_in_milliseconds,
       retry_depth,
       response,
-      :over_limit
+      :over_limit,
+      tracker_impl
     )
   end
 
@@ -98,7 +117,8 @@ defmodule ShopifyAPI.Throttled do
          available_count,
          wait_in_milliseconds,
          retry_depth,
-         response
+         response,
+         tracker_impl
        ) do
     send_telemetry(
       token,
@@ -106,7 +126,8 @@ defmodule ShopifyAPI.Throttled do
       wait_in_milliseconds,
       retry_depth,
       response,
-      :within_limit
+      :within_limit,
+      tracker_impl
     )
   end
 
@@ -116,7 +137,8 @@ defmodule ShopifyAPI.Throttled do
          wait_in_milliseconds,
          retry_depth,
          %{status_code: status} = _response,
-         type
+         type,
+         tracker_impl
        ) do
     :telemetry.execute(
       [:shopify_api, :throttling, type],
@@ -125,7 +147,11 @@ defmodule ShopifyAPI.Throttled do
         wait_in_milliseconds: wait_in_milliseconds,
         retry_depth: retry_depth
       },
-      %{app: app, shop: shop, status_code: status}
+      %{app: app, request_type: get_request_type(tracker_impl), shop: shop, status_code: status}
     )
   end
+
+  defp get_request_type(RateLimiting.GraphQLTracker), do: :graphql
+  defp get_request_type(RateLimiting.RESTTracker), do: :rest
+  defp get_request_type(_), do: :unknown
 end
