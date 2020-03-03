@@ -7,16 +7,18 @@ defmodule ShopifyAPI.Throttled do
 
   Request "buckets" are identified based on the provided `AuthToken`. An ets
   table is checked before making a request, seeing if additional requests are
-  allowed. If not, the client will sleep before attempting the request.
+  allowed. If not, the client will sleep before attempting the request. GraphQL
+  requests pass an estimated query cost, and this estimated cost is used to
+  calculate precise sleep times.
 
-  Upon receiving a HTTP response, the number of allowed requests is
-  extracted from response headers and inserted into the ets table.
+  Upon receiving a HTTP response, the number of allowed requests is extracted
+  (from response headers for REST/response body for GraphQL), and inserted into
+  the ets table.
 
-  If Shopify returns the `429 Too Many Requests` status code for a request, it
-  will be retried after a delay and re-check of the ets table, to a maximum of
-  10 total attempts (this is configurable).
-
-  See docs: https://help.shopify.com/en/api/reference/rest-admin-api-rate-limits
+  If Shopify throttles the request (returns the `429 Too Many Requests` status
+  code for a REST request, or a "Throttled" error for a GraphQL request), the
+  request will be retried after a delay and re-check of the ets table, to a
+  maximum of 10 total attempts (this is configurable).
   """
   require Logger
 
