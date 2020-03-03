@@ -6,12 +6,16 @@ defmodule ShopifyAPI.GraphQL do
   require Logger
 
   alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.GraphQL.{Response, Telemetry}
+  alias ShopifyAPI.GraphQL.{JSONParseError, Response, Telemetry}
   alias ShopifyAPI.JSONSerializer
 
   @default_graphql_version "2019-07"
 
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
+
+  @type query_response ::
+          {:ok, Response.t()}
+          | {:error, JSONParseError.t() | HTTPoison.Response.t() | HTTPoison.Error.t()}
 
   @doc """
     Makes requests against Shopify GraphQL and returns a tuple containing
@@ -24,6 +28,7 @@ defmodule ShopifyAPI.GraphQL do
       iex> ShopifyAPI.GraphQL.query(auth, query, variables)
       {:ok, %Response{...}}
   """
+  @spec query(AuthToken.t(), String.t(), map(), list()) :: query_response()
   def query(%AuthToken{} = auth, query_string, variables \\ %{}, opts \\ []) do
     url = build_url(auth, opts)
     headers = build_headers(auth, opts)
