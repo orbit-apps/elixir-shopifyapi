@@ -2,6 +2,8 @@ defmodule ShopifyAPI.RateLimiting.GraphQLCallLimits do
   alias ShopifyAPI.GraphQL
   alias ShopifyAPI.RateLimiting
 
+  # Our internal point availability tracking sometimes differs from Shopify's
+  # Adding this padding prevents requests being throttled unecessarily
   @estimate_padding 20
 
   @spec calculate_wait(
