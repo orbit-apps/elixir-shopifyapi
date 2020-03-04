@@ -1,12 +1,12 @@
 defmodule ShopifyAPI.Application do
   use Application
 
-  alias ShopifyAPI.AvailabilityTracker
+  alias ShopifyAPI.RateLimiting
 
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
-    AvailabilityTracker.init()
+    RateLimiting.RESTTracker.init()
 
     # Define workers and child supervisors to be supervised
     children = []
