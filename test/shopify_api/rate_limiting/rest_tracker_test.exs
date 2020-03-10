@@ -42,7 +42,7 @@ defmodule ShopifyAPI.RateLimiting.RESTTrackerTest do
       now = ~U[2020-01-01 12:00:00.000000Z]
       token = %AuthToken{app_name: "empty", shop_name: "empty"}
 
-      assert {40, 0} == RESTTracker.get(token, now)
+      assert {40, 0} == RESTTracker.get(token, now, 1)
     end
 
     test "returns with a sleep after hitting limit" do
@@ -55,15 +55,15 @@ defmodule ShopifyAPI.RateLimiting.RESTTrackerTest do
 
       assert {0, 2000} == RESTTracker.api_hit_limit(token, response, hit_time)
 
-      assert {0, 2000} == RESTTracker.get(token, hit_time)
+      assert {0, 2000} == RESTTracker.get(token, hit_time, 1)
 
       wait_a_second = ~U[2020-01-01 12:00:01.100000Z]
 
-      assert {0, 900} == RESTTracker.get(token, wait_a_second)
+      assert {0, 900} == RESTTracker.get(token, wait_a_second, 1)
 
       wait_two_seconds = ~U[2020-01-01 12:00:02.100000Z]
 
-      assert {0, 0} == RESTTracker.get(token, wait_two_seconds)
+      assert {0, 0} == RESTTracker.get(token, wait_two_seconds, 1)
     end
   end
 end

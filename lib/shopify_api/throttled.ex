@@ -7,16 +7,18 @@ defmodule ShopifyAPI.Throttled do
 
   Request "buckets" are identified based on the provided `AuthToken`. An ets
   table is checked before making a request, seeing if additional requests are
-  allowed. If not, the client will sleep before attempting the request.
+  allowed. If not, the client will sleep before attempting the request. GraphQL
+  requests pass an estimated query cost, and this estimated cost is used to
+  calculate precise sleep times.
 
-  Upon receiving a HTTP response, the number of allowed requests is
-  extracted from response headers and inserted into the ets table.
+  Upon receiving a HTTP response, the number of allowed requests is extracted
+  (from response headers for REST/response body for GraphQL), and inserted into
+  the ets table.
 
-  If Shopify returns the `429 Too Many Requests` status code for a request, it
-  will be retried after a delay and re-check of the ets table, to a maximum of
-  10 total attempts (this is configurable).
-
-  See docs: https://help.shopify.com/en/api/reference/rest-admin-api-rate-limits
+  If Shopify throttles the request (returns the `429 Too Many Requests` status
+  code for a REST request, or a "Throttled" error for a GraphQL request), the
+  request will be retried after a delay and re-check of the ets table, to a
+  maximum of 10 total attempts (this is configurable).
   """
   require Logger
 
@@ -24,31 +26,80 @@ defmodule ShopifyAPI.Throttled do
 
   @request_max_tries 10
 
-  def request(func, token, max_tries \\ @request_max_tries, depth \\ 1, tracker_impl)
+  def graphql_request(func, token, estimated_cost, depth \\ 1, max_tries \\ @request_max_tries) do
+    max_query_cost = RateLimiting.GraphQL.max_query_cost()
 
-  def request(func, _token, max_tries, depth, _tracker_impl)
+    case estimated_cost <= max_query_cost do
+      true -> request(func, token, max_tries, depth, estimated_cost, RateLimiting.GraphQLTracker)
+      false -> {:error, "Query costs cannot exceed #{max_query_cost} points"}
+    end
+  end
+
+  def request(
+        func,
+        token,
+        max_tries \\ @request_max_tries,
+        depth \\ 1,
+        estimated_cost \\ 1,
+        tracker_impl
+      )
+
+  def request(func, _token, max_tries, depth, _estimated_cost, _tracker_impl)
       when is_function(func) and max_tries == depth,
       do: func.()
 
-  def request(func, token, max_tries, depth, tracker_impl) when is_function(func) do
+  def request(func, token, max_tries, depth, estimated_cost, tracker_impl)
+      when is_function(func) do
     over_limit_status_code = RateLimiting.REST.over_limit_status_code()
 
     token
-    |> tracker_impl.get()
+    |> tracker_impl.get(estimated_cost)
     |> make_request(func)
     |> case do
       # over REST request limit, back off and try again.
       {:ok, %{status_code: ^over_limit_status_code} = response} ->
         {available_count, remaining_modifier} = tracker_impl.api_hit_limit(token, response)
-        send_over_limit_telemetry(token, available_count, remaining_modifier, depth, response)
+
+        send_over_limit_telemetry(
+          token,
+          available_count,
+          remaining_modifier,
+          depth,
+          response,
+          tracker_impl
+        )
+
         request(func, token, max_tries, depth + 1, tracker_impl)
+
+      # throttled GraphQL request, try again
+      {:error, %{body: %{"errors" => [%{"message" => "Throttled"}]}} = response} ->
+        {available_count, remaining_modifier} = tracker_impl.api_hit_limit(token, response)
+
+        send_over_limit_telemetry(
+          token,
+          available_count,
+          remaining_modifier,
+          depth,
+          response,
+          tracker_impl
+        )
+
+        request(func, token, max_tries, depth + 1, estimated_cost, tracker_impl)
 
       # successful request, update internal call limit
       {:ok, response} ->
         {available_count, remaining_modifier} =
           tracker_impl.update_api_call_limit(token, response)
 
-        send_within_limit_telemetry(token, available_count, remaining_modifier, depth, response)
+        send_within_limit_telemetry(
+          token,
+          available_count,
+          remaining_modifier,
+          depth,
+          response,
+          tracker_impl
+        )
+
         {:ok, response}
 
       error ->
@@ -72,7 +123,8 @@ defmodule ShopifyAPI.Throttled do
          available_count,
          wait_in_milliseconds,
          retry_depth,
-         response
+         response,
+         tracker_impl
        ) do
     send_telemetry(
       token,
@@ -80,7 +132,8 @@ defmodule ShopifyAPI.Throttled do
       wait_in_milliseconds,
       retry_depth,
       response,
-      :over_limit
+      :over_limit,
+      tracker_impl
     )
   end
 
@@ -89,7 +142,8 @@ defmodule ShopifyAPI.Throttled do
          available_count,
          wait_in_milliseconds,
          retry_depth,
-         response
+         response,
+         tracker_impl
        ) do
     send_telemetry(
       token,
@@ -97,7 +151,8 @@ defmodule ShopifyAPI.Throttled do
       wait_in_milliseconds,
       retry_depth,
       response,
-      :within_limit
+      :within_limit,
+      tracker_impl
     )
   end
 
@@ -107,7 +162,8 @@ defmodule ShopifyAPI.Throttled do
          wait_in_milliseconds,
          retry_depth,
          %{status_code: status} = _response,
-         type
+         type,
+         tracker_impl
        ) do
     :telemetry.execute(
       [:shopify_api, :throttling, type],
@@ -116,7 +172,11 @@ defmodule ShopifyAPI.Throttled do
         wait_in_milliseconds: wait_in_milliseconds,
         retry_depth: retry_depth
       },
-      %{app: app, shop: shop, status_code: status}
+      %{app: app, request_type: get_request_type(tracker_impl), shop: shop, status_code: status}
     )
   end
+
+  defp get_request_type(RateLimiting.GraphQLTracker), do: :graphql
+  defp get_request_type(RateLimiting.RESTTracker), do: :rest
+  defp get_request_type(_), do: :unknown
 end

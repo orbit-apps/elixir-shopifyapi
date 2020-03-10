@@ -37,12 +37,12 @@ defmodule ShopifyAPI.RateLimiting.RESTTracker do
   end
 
   @impl RateLimiting.Tracker
-  def get(%ShopifyAPI.AuthToken{} = token, now \\ DateTime.utc_now()) do
+  def get(%ShopifyAPI.AuthToken{} = token, now \\ DateTime.utc_now(), _estimated_cost) do
     case :ets.lookup(@name, ShopifyAPI.AuthToken.create_key(token)) do
       [] ->
         {RateLimiting.REST.request_bucket(token), 0}
 
-      [{_token, count, time} | _] ->
+      [{_key, count, time} | _] ->
         diff = time |> DateTime.diff(now, :millisecond) |> max(0)
 
         {count, diff}
