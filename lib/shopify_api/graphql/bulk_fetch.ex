@@ -86,8 +86,8 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
         }
       \"""
       iex> {:ok, token} = YourShopifyApp.ShopifyAPI.Shop.get_auth_token_from_slug("slug")
-      iex> func = fn {:ok, json} -> IO.puts(json) end # Warning we are not handling error conditions here.
-      iex> ShopifyAPI.GraphQL.BulkFetch.process_stream(token, query, func)
+      iex> ShopifyAPI.GraphQL.BulkFetch.process_stream(token, query)
+           |> Enum.map(fn {:ok, json} -> IO.puts(json) end)
   """
   @spec process_stream(AuthToken.t(), String.t(), integer()) :: Enumerable.t()
   def process_stream(%AuthToken{} = token, query, polling_rate \\ 100) do
