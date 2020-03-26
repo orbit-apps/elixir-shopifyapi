@@ -129,11 +129,19 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
          :ok <- handle_errors(resp),
          bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]),
          {:ok, url} <- poll_till_completed(token, bulk_query_id, polling_rate),
-         {:ok, %{body: jsonl}} <- HTTPoison.get(url) do
+         jsonl <- fetch_jsonl(url) do
       {:ok, jsonl}
     else
-      error -> error
+      error ->
+        error
     end
+  end
+
+  defp fetch_jsonl(nil), do: []
+
+  defp fetch_jsonl(url) do
+    {:ok, %{body: jsonl}} = HTTPoison.get(url)
+    jsonl
   end
 
   defp handle_errors(resp) do
@@ -192,6 +200,8 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
         poll_till_completed(token, bulk_query_id, polling_rate, depth + 1)
     end
   end
+
+  defp parse_bulk_response!(""), do: []
 
   defp parse_bulk_response!(jsonl) do
     jsonl
