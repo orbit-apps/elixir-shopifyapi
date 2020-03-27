@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.8.2
+
 - Add throttling for GraphQL.
 - Add GraphQL bulk fetch query method.
 - Switch default version of GraphQL API to 2019-10 (was 2019-07).
