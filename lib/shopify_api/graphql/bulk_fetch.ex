@@ -46,16 +46,12 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
       \"""
       iex> {:ok, token} = YourShopifyApp.ShopifyAPI.Shop.get_auth_token_from_slug("slug")
       iex> ShopifyAPI.GraphQL.BulkFetch.process!(token, query)
-      {:ok,
-        [%{"collection_id" => "gid://shopify/Collection/xxx", ...}],
-      }
+      [%{"collection_id" => "gid://shopify/Collection/xxx", ...}]
   """
-  @spec process!(AuthToken.t(), String.t(), integer()) :: {:ok, list()} | {:error, any()}
+  @spec process!(AuthToken.t(), String.t(), integer()) :: list()
   def process!(%AuthToken{} = token, query, polling_rate \\ 100) do
-    case fetch_jsonl(token, query, polling_rate) do
-      {:ok, jsonl} -> {:ok, parse_bulk_response!(jsonl)}
-      {:error, _} = error -> error
-    end
+    {:ok, jsonl} = fetch_jsonl(token, query, polling_rate)
+    parse_bulk_response!(jsonl)
   end
 
   @doc """
