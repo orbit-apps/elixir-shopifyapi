@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Add throttling for GraphQL.
+- Add GraphQL bulk fetch query method.
+- Switch default version of GraphQL API to 2019-10 (was 2019-07).
+
 ## 0.8.1
 
 - Fix: Remove call to `String.to_existing_atom` from param serialization. This could previously result in an unexpected error from the caller.
