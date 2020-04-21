@@ -6,7 +6,7 @@ defmodule ShopifyAPI.Bulk.Query do
   @type status_response :: map()
 
   @polling_timeout_message "BulkFetch timed out before completion"
-  @auto_cancel_sleep_duration 200
+  @auto_cancel_sleep_duration 1_000
   @polling_query """
   {
     currentBulkOperation {
@@ -185,7 +185,7 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  defp poll_till_cancel(resp, token, max_poll \\ 300, depth \\ 0)
+  defp poll_till_cancel(resp, token, max_poll \\ 500, depth \\ 0)
 
   # response from cancel/1
   defp poll_till_cancel({:ok, %{"bulkOperation" => %{"status" => "CANCELED"}}}, _token, _, _),
