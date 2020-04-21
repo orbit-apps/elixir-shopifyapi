@@ -160,7 +160,7 @@ defmodule ShopifyAPI.Bulk.Query do
 
   defp poll(token, bulk_query_id, polling_rate, max_poll, depth \\ 0)
 
-  defp poll(token, bulk_query_id, _, max_poll, depth) when max_poll == depth,
+  defp poll(_token, bulk_query_id, _, max_poll, depth) when max_poll == depth,
     do: {:error, :timeout, bulk_query_id}
 
   defp poll(token, bulk_query_id, polling_rate, max_poll, depth) do
@@ -173,7 +173,7 @@ defmodule ShopifyAPI.Bulk.Query do
   end
 
   defp maybe_cancel(false, _, _), do: nil
-  defp maybe_cancel(true, token, bid), do: token |> cancel(bid) |> poll_till_cancel(token, bid)
+  defp maybe_cancel(true, token, bid), do: token |> cancel(bid) |> poll_till_cancel(token)
 
   defp poll_till_cancel(resp, token, max_poll \\ 300, depth \\ 0)
 
@@ -182,7 +182,7 @@ defmodule ShopifyAPI.Bulk.Query do
 
   defp poll_till_cancel({:ok, %{"status" => "CANCELED"}}, _token, _, _), do: true
 
-  defp poll_till_cancel(_, token, max_poll, depth) when max_poll == depth,
+  defp poll_till_cancel(_, _token, max_poll, depth) when max_poll == depth,
     do: {:error, :cancelation_timedout}
 
   defp poll_till_cancel(_, token, max_poll, depth) do
