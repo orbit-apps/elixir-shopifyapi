@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Added max poll count configuration option to GraphQL Bulk Query.
+
 ## 0.8.2
 
 - Add throttling for GraphQL.

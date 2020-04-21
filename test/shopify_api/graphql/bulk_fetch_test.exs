@@ -46,7 +46,7 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
       Plug.Conn.resp(conn, 200, "#{Jason.encode!(@valid_jsonl_response)}\n")
     end)
 
-    assert {:ok, _} = BulkFetch.fetch_jsonl(token, "fake_query", 100)
+    assert {:ok, _} = BulkFetch.fetch_jsonl(token, "fake_query", 100, 2)
   end
 
   test "polling timeout", %{bypass: bypass, shop: _shop, auth_token: token} do
@@ -62,7 +62,7 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    resp = BulkFetch.fetch_jsonl(token, "fake_query", 1)
+    resp = BulkFetch.fetch_jsonl(token, "fake_query", 1, 100)
     assert resp == {:error, "BulkFetch timed out before completion"}
   end
 
@@ -81,7 +81,7 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    resp = BulkFetch.fetch_jsonl(token, "fake_query", 100)
+    resp = BulkFetch.fetch_jsonl(token, "fake_query", 100, 2)
     assert resp == {:error, "Bulk query is not valid GraphQL"}
   end
 end

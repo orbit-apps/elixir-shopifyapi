@@ -1,7 +1,7 @@
 defmodule ShopifyAPI.GraphQL.BulkFetch do
   alias ShopifyAPI.AuthToken
 
-  @max_poll_count 100
+  @defaults [polling_rate: 100, max_poll_count: 100]
   @polling_timeout_message "BulkFetch timed out before completion"
   @polling_query """
   {
@@ -48,9 +48,15 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
       iex> ShopifyAPI.GraphQL.BulkFetch.process!(token, query)
       [%{"collection_id" => "gid://shopify/Collection/xxx", ...}]
   """
-  @spec process!(AuthToken.t(), String.t(), integer()) :: list()
-  def process!(%AuthToken{} = token, query, polling_rate \\ 100) do
-    {:ok, jsonl} = fetch_jsonl(token, query, polling_rate)
+  @spec process!(AuthToken.t(), String.t(), list() | integer()) :: list()
+  def process!(token, query, polling_rate \\ 100)
+
+  def process!(%AuthToken{} = token, query, polling_rate) when is_integer(polling_rate),
+    do: process!(token, query, polling_rate: polling_rate)
+
+  def process!(%AuthToken{} = token, query, opts) do
+    opts = resolve_options(opts)
+    {:ok, jsonl} = fetch_jsonl(token, query, opts[:polling_rate], opts[:max_poll_count])
     parse_bulk_response!(jsonl)
   end
 
@@ -85,9 +91,17 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
       iex> ShopifyAPI.GraphQL.BulkFetch.process_stream(token, query)
            |> Enum.map(fn {:ok, json} -> IO.puts(json) end)
   """
-  @spec process_stream(AuthToken.t(), String.t(), integer()) :: Enumerable.t()
-  def process_stream(%AuthToken{} = token, query, polling_rate \\ 100) do
-    case fetch_jsonl(token, query, polling_rate) do
+  @spec process_stream(AuthToken.t(), String.t(), list() | integer()) :: Enumerable.t()
+  def process_stream(token, query, polling_rate \\ 100)
+
+  def process_stream(%AuthToken{} = token, query, polling_rate)
+      when is_integer(polling_rate),
+      do: process_stream(token, query, polling_rate: polling_rate)
+
+  def process_stream(%AuthToken{} = token, query, opts) do
+    opts = resolve_options(opts)
+
+    case fetch_jsonl(token, query, opts[:polling_rate], opts[:max_poll_count]) do
       {:ok, jsonl} ->
         jsonl
         |> String.splitter("\n", trim: true)
@@ -118,13 +132,14 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
   end
 
   @doc false
-  @spec fetch_jsonl(AuthToken.t(), String.t(), integer()) :: {:ok, String.t()} | {:error, any()}
-  def fetch_jsonl(%AuthToken{} = token, query, polling_rate) do
+  @spec fetch_jsonl(AuthToken.t(), String.t(), integer(), integer()) ::
+          {:ok, String.t()} | {:error, any()}
+  def fetch_jsonl(%AuthToken{} = token, query, polling_rate, max_poll_count) do
     with bulk_query <- bulk_query_string(query),
          {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
          :ok <- handle_errors(resp),
          bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]),
-         {:ok, url} <- poll_till_completed(token, bulk_query_id, polling_rate),
+         {:ok, url} <- poll_till_completed(token, bulk_query_id, polling_rate, max_poll_count),
          {:ok, jsonl} <- fetch_jsonl(url) do
       {:ok, jsonl}
     else
@@ -143,6 +158,8 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
       error -> error
     end
   end
+
+  defp resolve_options(opts), do: Keyword.merge(@defaults, opts, fn _k, _dv, nv -> nv end)
 
   defp handle_errors(resp) do
     errors = get_in(resp.response, ["bulkOperationRunQuery", "userErrors"])
@@ -180,14 +197,15 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
     |> Map.get("message")
   end
 
-  defp poll_till_completed(token, bulk_query_id, polling_rate, depth \\ 0)
+  defp poll_till_completed(token, bulk_query_id, polling_rate, max_poll_count, depth \\ 0)
 
-  defp poll_till_completed(token, bulk_query_id, _, @max_poll_count) do
+  defp poll_till_completed(token, bulk_query_id, _, max_poll_count, depth)
+       when max_poll_count == depth do
     cancel(token, bulk_query_id)
     {:error, @polling_timeout_message}
   end
 
-  defp poll_till_completed(token, bulk_query_id, polling_rate, depth) do
+  defp poll_till_completed(token, bulk_query_id, polling_rate, max_poll_count, depth) do
     Process.sleep(polling_rate)
 
     token
@@ -197,7 +215,7 @@ defmodule ShopifyAPI.GraphQL.BulkFetch do
         {:ok, Map.get(response, "url")}
 
       _ ->
-        poll_till_completed(token, bulk_query_id, polling_rate, depth + 1)
+        poll_till_completed(token, bulk_query_id, polling_rate, max_poll_count, depth + 1)
     end
   end
 
