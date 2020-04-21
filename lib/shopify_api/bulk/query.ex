@@ -1,12 +1,9 @@
 defmodule ShopifyAPI.Bulk.Query do
-  require Logger
-
   alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.Bulk.Cancel
 
   @type status_response :: map()
 
-  @polling_timeout_message "BulkFetch timed out before completion"
-  @auto_cancel_sleep_duration 1_000
   @polling_query """
   {
     currentBulkOperation {
@@ -77,7 +74,7 @@ defmodule ShopifyAPI.Bulk.Query do
       {:ok, url}
     else
       {:error, :timeout, bulk_id} ->
-        maybe_cancel(opts[:auto_cancel], token, bulk_id)
+        Cancel.pretty_please(opts[:auto_cancel], token, bulk_id)
 
       error ->
         error
@@ -171,43 +168,5 @@ defmodule ShopifyAPI.Bulk.Query do
       {:ok, %{"status" => "COMPLETED", "url" => url} = _response} -> {:ok, url}
       _ -> poll(token, bulk_query_id, polling_rate, max_poll, depth + 1)
     end
-  end
-
-  defp maybe_cancel(false, _, _), do: {:error, @polling_timeout_message}
-
-  defp maybe_cancel(true, token, bid) do
-    token
-    |> cancel(bid)
-    |> poll_till_cancel(token)
-    |> case do
-      {:ok, _} = value -> value
-      _ -> {:error, @polling_timeout_message}
-    end
-  end
-
-  defp poll_till_cancel(resp, token, max_poll \\ 500, depth \\ 0)
-
-  # response from cancel/1
-  defp poll_till_cancel({:ok, %{"bulkOperation" => %{"status" => "CANCELED"}}}, _token, _, _),
-    do: true
-
-  # response from status/1
-  defp poll_till_cancel({:ok, %{"status" => "CANCELED"}}, _token, _, _), do: true
-
-  # Sometimes operations complete before they are able to cancelled
-  defp poll_till_cancel({:ok, %{"status" => "COMPLETED", "url" => url}}, _token, _, _),
-    do: {:ok, url}
-
-  defp poll_till_cancel(_, token, max_poll, depth) when max_poll == depth do
-    Logger.warn("#{__MODULE__} Cancel polling timed out for #{token.shop_name}")
-    {:error, :cancelation_timedout}
-  end
-
-  defp poll_till_cancel(_, token, max_poll, depth) do
-    Process.sleep(@auto_cancel_sleep_duration)
-
-    token
-    |> status()
-    |> poll_till_cancel(token, max_poll, depth + 1)
   end
 end
