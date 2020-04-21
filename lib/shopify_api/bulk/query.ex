@@ -174,6 +174,7 @@ defmodule ShopifyAPI.Bulk.Query do
   end
 
   defp maybe_cancel(false, _, _), do: {:error, @polling_timeout_message}
+
   defp maybe_cancel(true, token, bid) do
     token
     |> cancel(bid)
@@ -194,7 +195,8 @@ defmodule ShopifyAPI.Bulk.Query do
   defp poll_till_cancel({:ok, %{"status" => "CANCELED"}}, _token, _, _), do: true
 
   # Sometimes operations complete before they are able to cancelled
-  defp poll_till_cancel({:ok, %{"status" => "COMPLETED", "url" => url}}, _token, _, _), do: {:ok, url}
+  defp poll_till_cancel({:ok, %{"status" => "COMPLETED", "url" => url}}, _token, _, _),
+    do: {:ok, url}
 
   defp poll_till_cancel(_, token, max_poll, depth) when max_poll == depth do
     Logger.warn("#{__MODULE__} Cancel polling timed out for #{token.shop_name}")
