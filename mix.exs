@@ -41,7 +41,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:dialyxir, "~> 1.0.0-rc.6", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.21.1", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
-      {:stream_data, "~> 0.4.2", only: :test},
+      {:stream_data, "~> 0.5.0", only: :test},
       # Everything else
       {:absinthe, "~> 1.4.0"},
       {:absinthe_plug, "~> 1.4.0"},
