@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.SmartCollection do
       {:ok, [] = smart_collections}
   """
   def all(%AuthToken{} = auth, params \\ [], options \\ []),
-    do: REST.get(auth, "admin/smart_collections.json", params, options)
+    do: REST.get(auth, "smart_collections.json", params, options)
 
   @doc """
   Get a count of all SmartCollections.

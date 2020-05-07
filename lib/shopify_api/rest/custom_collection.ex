@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.CustomCollection do
       {:ok, [%{}, ...] = custom_collections}
   """
   def all(%AuthToken{} = auth, params \\ [], options \\ []),
-    do: REST.get(auth, "admin/custom_collections.json", params, options)
+    do: REST.get(auth, "custom_collections.json", params, options)
 
   @doc """
   Get a count of all custom collections.
