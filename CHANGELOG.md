@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Added max poll count configuration option to GraphQL Bulk Query.
+- Fix: `all/3` for smart_collection and custom_collection works.
 
 ## 0.8.2
 
