@@ -74,7 +74,7 @@ defmodule ShopifyAPI.Bulk.Query do
       {:ok, url}
     else
       {:error, :timeout, bulk_id} ->
-        Cancel.pretty_please(opts[:auto_cancel], token, bulk_id)
+        Cancel.perform(opts[:auto_cancel], token, bulk_id)
 
       error ->
         error

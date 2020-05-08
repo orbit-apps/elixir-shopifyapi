@@ -7,11 +7,10 @@ defmodule ShopifyAPI.Bulk.Cancel do
   @polling_timeout_message "BulkFetch timed out before completion"
   @auto_cancel_sleep_duration 1_000
 
-  @spec pretty_please(boolean(), AuthToken.t(), String.t()) :: {:ok | :error, any()}
-  # For historical reasons this joke function name must stay.
-  def pretty_please(false, _, _), do: {:error, @polling_timeout_message}
+  @spec perform(boolean(), AuthToken.t(), String.t()) :: {:ok | :error, any()}
+  def perform(false, _, _), do: {:error, @polling_timeout_message}
 
-  def pretty_please(true, token, bid) do
+  def perform(true, token, bid) do
     token
     |> Query.cancel(bid)
     |> poll(token, bid)
