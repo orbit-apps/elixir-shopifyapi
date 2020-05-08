@@ -2,6 +2,7 @@
 
 - Added max poll count configuration option to GraphQL Bulk Query.
 - Fix: `all/3` for smart_collection and custom_collection works.
+- BREAKING: moved the bulk query functionality namespaces from `ShopifyAPI.GraphQL.BulkFetch` to `ShopifyAPI.Bulk`
 
 ## 0.8.2
 
@@ -18,7 +19,7 @@
 - BREAKING: Switch default version of REST API to 2020-01 (was 2019-04).
 - BREAKING: Add ability to specify pagination options for GET on collection resources, defaults to blocking until all results returned.
 - BREAKING: Removed top-level wrappers of Shopify REST response values.
-  + Return values that were `{:ok, %{"orders" => [%{}, ...]}}` are now `{:ok, [%{}, ...]}`
+  - Return values that were `{:ok, %{"orders" => [%{}, ...]}}` are now `{:ok, [%{}, ...]}`
 - BREAKING: Removed `Exq` dependency, EventPipe.EventQueue & EventPipe.ModuleNameWorker & surrounding modules.
 
 ## 0.7.2

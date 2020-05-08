@@ -1,7 +1,7 @@
-defmodule ShopifyAPI.GraphQL.BulkFetchTest do
+defmodule ShopifyAPI.Bulk.QueryTest do
   use ExUnit.Case
 
-  alias ShopifyAPI.GraphQL.BulkFetch
+  alias ShopifyAPI.Bulk.Query
 
   @valid_graphql_response %{
     "data" => %{
@@ -26,10 +26,12 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
 
     shop = %ShopifyAPI.Shop{domain: "localhost:#{bypass.port}"}
 
-    {:ok, %{shop: shop, auth_token: token, bypass: bypass}}
+    opts = [polling_rate: 1, max_poll_count: 1, auto_cancel: false]
+
+    {:ok, %{shop: shop, auth_token: token, bypass: bypass, options: opts}}
   end
 
-  test "happy path", %{bypass: bypass, shop: _shop, auth_token: token} do
+  test "happy path", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
       body =
         @valid_graphql_response
@@ -46,10 +48,11 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
       Plug.Conn.resp(conn, 200, "#{Jason.encode!(@valid_jsonl_response)}\n")
     end)
 
-    assert {:ok, _} = BulkFetch.fetch_jsonl(token, "fake_query", 100, 2)
+    assert {:ok, url} = Query.exec(token, "fake_query", options)
+    assert {:ok, _} = Query.fetch(url)
   end
 
-  test "polling timeout", %{bypass: bypass, shop: _shop, auth_token: token} do
+  test "polling timeout", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
       body =
         @valid_graphql_response
@@ -62,11 +65,11 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    resp = BulkFetch.fetch_jsonl(token, "fake_query", 1, 100)
+    resp = Query.exec(token, "fake_query", options)
     assert resp == {:error, "BulkFetch timed out before completion"}
   end
 
-  test "invalid graphql", %{bypass: bypass, shop: _shop, auth_token: token} do
+  test "invalid graphql", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
       body =
         @valid_graphql_response
@@ -81,7 +84,7 @@ defmodule ShopifyAPI.GraphQL.BulkFetchTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    resp = BulkFetch.fetch_jsonl(token, "fake_query", 100, 2)
+    resp = Query.exec(token, "fake_query", options)
     assert resp == {:error, "Bulk query is not valid GraphQL"}
   end
 end
