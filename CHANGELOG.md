@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.8.3
+
 - Added max poll count configuration option to GraphQL Bulk Query.
 - Fix: `all/3` for smart_collection and custom_collection works.
 - BREAKING: moved the bulk query functionality namespaces from `ShopifyAPI.GraphQL.BulkFetch` to `ShopifyAPI.Bulk`
