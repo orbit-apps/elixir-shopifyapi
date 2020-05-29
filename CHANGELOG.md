@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.8.4
+
+- Fix: `Bulk.Cancel.poll/5` uses the correct arguments while recursing.
+
 ## 0.8.3
 
 - Added max poll count configuration option to GraphQL Bulk Query.
