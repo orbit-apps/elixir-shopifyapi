@@ -45,6 +45,6 @@ defmodule ShopifyAPI.Bulk.Cancel do
 
     token
     |> Query.cancel(bid)
-    |> poll(token, max_poll, depth + 1)
+    |> poll(token, bid, max_poll, depth + 1)
   end
 end
