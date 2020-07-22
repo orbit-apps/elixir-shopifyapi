@@ -102,56 +102,15 @@ defmodule ShopifyAPI.Bulk.Query do
   def stream_fetch({:ok, url}), do: stream_fetch(url)
   def stream_fetch({:error, _} = error), do: error
 
-  def stream_fetch(url) do
-    url
-    |> httpoison_streamed_get()
-    # Our http chunks are not guaranteed to be on the line break, this splits up our
-    # returned chunks by line break.
-    |> Stream.chunk_while(
-      [],
-      fn element, acc ->
-        element = "#{List.first(acc)}" <> element
-
-        cond do
-          # A nicely formatted jsonl line(s)
-          # {\"test\":\"bar\"}\n{\"test\":\"baz\"}\n"
-          String.ends_with?(element, "\n") ->
-            {:cont, String.split(element, "\n", trim: true), []}
-
-          # Contains a jsonl line and then some
-          # {\"test\":\"bar\"}\n{\"test\"
-          String.contains?(element, "\n") ->
-            {rem, e} =
-              element
-              |> String.split("\n", trim: true)
-              |> List.pop_at(-1)
-
-            {:cont, e, [rem]}
-
-          # No complete jsonl document yet
-          true ->
-            {:cont, [element]}
-        end
-      end,
-      fn
-        [] -> {:cont, []}
-        acc -> {:cont, acc, []}
-      end
-    )
-    # We will have a "list" of "lists of strings" here, we'll flatten it down to a single list
-    # [["some json", "more jsonl"], ["jsonl"]] => ["some json", "more jsonl", "jsonl"]
-    |> Stream.flat_map(& &1)
-  end
+  def stream_fetch(url),
+    do: url |> httpoison_streamed_get() |> Stream.transform("", &transform_chunks_to_jsonl/2)
 
   def parse_response!(""), do: []
   def parse_response!({:ok, jsonl}), do: parse_response!(jsonl)
   def parse_response!({:error, msg}), do: raise(ShopifyAPI.Bulk.QueryError, msg)
 
-  def parse_response!(jsonl) when is_binary(jsonl) do
-    jsonl
-    |> String.split("\n", trim: true)
-    |> Enum.map(&ShopifyAPI.JSONSerializer.decode!/1)
-  end
+  def parse_response!(jsonl) when is_binary(jsonl),
+    do: jsonl |> String.split("\n", trim: true) |> Enum.map(&ShopifyAPI.JSONSerializer.decode!/1)
 
   @spec status(AuthToken.t()) :: {:ok, status_response()} | {:error, any()}
   def status(%AuthToken{} = token) do
@@ -243,5 +202,32 @@ defmodule ShopifyAPI.Bulk.Query do
       end,
       fn _resp -> :ok end
     )
+  end
+
+  defp transform_chunks_to_jsonl(element, acc) do
+    # Our http chunks are not guaranteed to be on the line break, this splits up our
+    # returned chunks by line break.
+    element = acc <> element
+
+    cond do
+      # A nicely formatted jsonl line(s)
+      # {\"test\":\"bar\"}\n{\"test\":\"baz\"}\n"
+      String.ends_with?(element, "\n") ->
+        {String.split(element, "\n", trim: true), ""}
+
+      # Contains a jsonl line and then some
+      # {\"test\":\"bar\"}\n{\"test\"
+      String.contains?(element, "\n") ->
+        {rem, e} =
+          element
+          |> String.split("\n", trim: true)
+          |> List.pop_at(-1)
+
+        {e, rem}
+
+      # No complete jsonl document yet
+      true ->
+        {[], element}
+    end
   end
 end
