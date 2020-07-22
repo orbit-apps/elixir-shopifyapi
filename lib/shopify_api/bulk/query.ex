@@ -98,7 +98,13 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec stream_fetch(String.t() | {}) :: Enumerable.t()
+  @doc """
+  Streams the HTTP GET of the passed in URL for JSONL decoding.
+
+  Warning: Since HTTPoison spawns a seperate process which uses send/receive
+  to stream HTTP fetches be careful where you use this.
+  """
+  @spec stream_fetch(String.t() | {:ok, String.t()} | {:error, any()}) :: Enumerable.t()
   def stream_fetch({:ok, url}), do: stream_fetch(url)
   def stream_fetch({:error, _} = error), do: error
 
