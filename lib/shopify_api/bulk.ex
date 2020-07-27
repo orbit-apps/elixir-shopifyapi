@@ -96,7 +96,7 @@ defmodule ShopifyAPI.Bulk do
   def process_stream!(%AuthToken{} = token, query, opts) do
     token
     |> Query.exec(query, resolve_options(opts))
-    |> Query.stream_fetch()
+    |> Query.stream_fetch!()
     |> decode_json!()
   end
 

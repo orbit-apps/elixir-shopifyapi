@@ -28,7 +28,14 @@ defmodule ShopifyAPI.Bulk.QueryTest do
 
     opts = [polling_rate: 1, max_poll_count: 1, auto_cancel: false]
 
-    {:ok, %{shop: shop, auth_token: token, bypass: bypass, options: opts}}
+    {:ok,
+     %{
+       shop: shop,
+       auth_token: token,
+       bypass: bypass,
+       options: opts,
+       url: "localhost:#{bypass.port}/"
+     }}
   end
 
   test "happy path", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
@@ -92,9 +99,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   @json2 %{"test" => "bar fuzz"}
   @json3 %{"test" => "baz\nbuzz"}
 
-  test "stream_fetch/1", %{bypass: bypass} do
-    url = "localhost:#{bypass.port}/"
-
+  test "stream_fetch!/1", %{bypass: bypass, url: url} do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -107,12 +112,10 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       conn
     end)
 
-    assert url |> Query.stream_fetch() |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
+    assert url |> Query.stream_fetch!() |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
   end
 
-  test "stream_fetch/1 with jsonl across chunks", %{bypass: bypass} do
-    url = "localhost:#{bypass.port}/"
-
+  test "stream_fetch!/1 with jsonl across chunks", %{bypass: bypass, url: url} do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -126,6 +129,23 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       conn
     end)
 
-    assert url |> Query.stream_fetch() |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
+    assert url |> Query.stream_fetch!() |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
+  end
+
+  test "stream_fetch!/1 with non-200 response codes", %{bypass: bypass, url: url} do
+    Bypass.expect(bypass, "GET", "/", fn conn ->
+      conn =
+        conn
+        |> Plug.Conn.put_resp_content_type("text/event-stream")
+        |> Plug.Conn.send_chunked(500)
+
+      # send chunk data
+      Plug.Conn.chunk(conn, "#{Jason.encode!(@json1)}\n")
+      conn
+    end)
+
+    assert_raise(RuntimeError, fn ->
+      url |> Query.stream_fetch!() |> Enum.to_list()
+    end)
   end
 end

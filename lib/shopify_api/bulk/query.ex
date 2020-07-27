@@ -101,15 +101,17 @@ defmodule ShopifyAPI.Bulk.Query do
   @doc """
   Streams the HTTP GET of the passed in URL for JSONL decoding.
 
+  Will raise a RuntimeError if HTTP response code is anything other then 200.
+
   Warning: Since HTTPoison spawns a seperate process which uses send/receive
   to stream HTTP fetches be careful where you use this.
   """
-  @spec stream_fetch(String.t() | {:ok, String.t()} | {:error, any()}) :: Enumerable.t()
-  def stream_fetch({:ok, url}), do: stream_fetch(url)
-  def stream_fetch({:error, _} = error), do: error
+  @spec stream_fetch!(String.t() | {:ok, String.t()} | {:error, any()}) :: Enumerable.t()
+  def stream_fetch!({:ok, url}), do: stream_fetch!(url)
+  def stream_fetch!({:error, _} = error), do: error
 
-  def stream_fetch(url),
-    do: url |> httpoison_streamed_get() |> Stream.transform("", &transform_chunks_to_jsonl/2)
+  def stream_fetch!(url),
+    do: url |> httpoison_streamed_get!() |> Stream.transform("", &transform_chunks_to_jsonl/2)
 
   def parse_response!(""), do: []
   def parse_response!({:ok, jsonl}), do: parse_response!(jsonl)
@@ -181,16 +183,19 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  defp httpoison_streamed_get(url) do
+  defp httpoison_streamed_get!(url) do
     Stream.resource(
       fn ->
         HTTPoison.get!(url, %{}, stream_to: self(), async: :once)
       end,
       fn %HTTPoison.AsyncResponse{id: id} = resp ->
         receive do
-          %HTTPoison.AsyncStatus{id: ^id, code: _code} ->
+          %HTTPoison.AsyncStatus{id: ^id, code: 200} ->
             HTTPoison.stream_next(resp)
             {[], resp}
+
+          %HTTPoison.AsyncStatus{id: ^id, code: code} ->
+            raise("ShopifyAPI.Bulk stream fetch got non 200 code of: #{code}")
 
           %HTTPoison.AsyncHeaders{id: ^id, headers: _headers} ->
             HTTPoison.stream_next(resp)
