@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.9.0
+
 - Add HTTP fetch streaming in Bulk.Query with stream_fetch/1
 - BREAKING: Bulk.process_stream/2 is now Bulk.process_stream!/2 and no longer returns errors in a list.
   - Now streams HTTP body.
