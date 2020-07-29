@@ -1,4 +1,5 @@
 defmodule ShopifyAPI.Bulk.Query do
+  require Logger
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.Bulk.Cancel
 
@@ -110,8 +111,10 @@ defmodule ShopifyAPI.Bulk.Query do
   def stream_fetch!({:ok, url}), do: stream_fetch!(url)
   def stream_fetch!({:error, _} = error), do: error
 
-  def stream_fetch!(url),
-    do: url |> httpoison_streamed_get!() |> Stream.transform("", &transform_chunks_to_jsonl/2)
+  def stream_fetch!(url) when is_binary(url) do
+    Logger.warn("HACKNEY_DEBUG: fetching #{inspect(url)}")
+    url |> httpoison_streamed_get!() |> Stream.transform("", &transform_chunks_to_jsonl/2)
+  end
 
   def parse_response!(""), do: []
   def parse_response!({:ok, jsonl}), do: parse_response!(jsonl)
