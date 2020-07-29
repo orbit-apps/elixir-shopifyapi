@@ -3,6 +3,7 @@ defmodule ShopifyAPI.Bulk.Query do
   alias ShopifyAPI.Bulk.Cancel
 
   @type status_response :: map()
+  @type bulk_query_response :: :no_objects | {:ok, String.t()} | {:error, any()}
   @stream_http_timeout 5_000
 
   @polling_query """
@@ -65,7 +66,7 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec exec(AuthToken.t(), String.t(), list()) :: {:ok, String.t()} | {:error, any()}
+  @spec exec(AuthToken.t(), String.t(), list()) :: bulk_query_response()
   def exec(%AuthToken{} = token, query, opts) do
     with bulk_query <- bulk_query_string(query),
          {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
@@ -74,6 +75,9 @@ defmodule ShopifyAPI.Bulk.Query do
          {:ok, url} <- poll(token, bulk_query_id, opts[:polling_rate], opts[:max_poll_count]) do
       {:ok, url}
     else
+      :no_objects ->
+        :no_objects
+
       {:error, :timeout, bulk_id} ->
         Cancel.perform(opts[:auto_cancel], token, bulk_id)
 
@@ -82,12 +86,11 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  # Shopify returns a single newline which gets stripped and we are left with garbage,
-  # handle it nicely here.
-  def fetch(nil), do: {:ok, ""}
-
+  @spec fetch(String.t() | bulk_query_response()) :: {:ok, String.t()} | {:error, any()}
+  # handle no object bulk responses
+  def fetch(:no_objects), do: {:ok, ""}
   def fetch({:error, _} = error), do: error
-  def fetch({:ok, url}), do: fetch(url)
+  def fetch({:ok, url}) when is_binary(url), do: fetch(url)
 
   def fetch(url) when is_binary(url) do
     url
@@ -106,11 +109,13 @@ defmodule ShopifyAPI.Bulk.Query do
   Warning: Since HTTPoison spawns a seperate process which uses send/receive
   to stream HTTP fetches be careful where you use this.
   """
-  @spec stream_fetch!(String.t() | {:ok, String.t()} | {:error, any()}) :: Enumerable.t()
-  def stream_fetch!({:ok, url}), do: stream_fetch!(url)
+  @spec stream_fetch!(String.t() | bulk_query_response()) :: Enumerable.t()
+  # handle no object bulk responses
+  def stream_fetch!(:no_objects), do: []
+  def stream_fetch!({:ok, url}) when is_binary(url), do: stream_fetch!(url)
   def stream_fetch!({:error, _} = error), do: error
 
-  def stream_fetch!(url),
+  def stream_fetch!(url) when is_binary(url),
     do: url |> httpoison_streamed_get!() |> Stream.transform("", &transform_chunks_to_jsonl/2)
 
   def parse_response!(""), do: []
@@ -178,6 +183,7 @@ defmodule ShopifyAPI.Bulk.Query do
     Process.sleep(polling_rate)
 
     case status(token) do
+      {:ok, %{"status" => "COMPLETED", "url" => nil, "objectCount" => "0"}} -> :no_objects
       {:ok, %{"status" => "COMPLETED", "url" => url} = _response} -> {:ok, url}
       _ -> poll(token, bulk_query_id, polling_rate, max_poll, depth + 1)
     end
