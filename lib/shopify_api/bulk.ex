@@ -102,6 +102,6 @@ defmodule ShopifyAPI.Bulk do
 
   defp resolve_options(opts), do: Keyword.merge(@defaults, opts, fn _k, _dv, nv -> nv end)
 
-  defp decode_json!({:error, msg}), do: raise(msg)
+  defp decode_json!({:error, msg}), do: raise(inspect(msg))
   defp decode_json!(stream), do: Stream.map(stream, &ShopifyAPI.JSONSerializer.decode!/1)
 end
