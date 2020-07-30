@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.9.1
+
+- Fix: Bulk.process_stream!/2 now correctly handles bulk operations returning 0 objects
+
 ## 0.9.0
 
 - Add HTTP fetch streaming in Bulk.Query with stream_fetch/1
