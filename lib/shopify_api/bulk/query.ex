@@ -3,7 +3,7 @@ defmodule ShopifyAPI.Bulk.Query do
   alias ShopifyAPI.Bulk.Cancel
 
   @type status_response :: map()
-  @type bulk_query_response :: :no_objects | {:ok, String.t()} | {:error, any()}
+  @type bulk_query_response :: :no_objects | String.t()
   @stream_http_timeout 5_000
 
   @polling_query """
@@ -66,31 +66,39 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec exec(AuthToken.t(), String.t(), list()) :: bulk_query_response()
-  def exec(%AuthToken{} = token, query, opts) do
+  @spec exec!(AuthToken.t(), String.t(), list()) :: bulk_query_response()
+  def exec!(%AuthToken{} = token, query, opts) do
     with bulk_query <- bulk_query_string(query),
          {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
          :ok <- handle_errors(resp),
          bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]),
          {:ok, url} <- poll(token, bulk_query_id, opts[:polling_rate], opts[:max_poll_count]) do
-      {:ok, url}
+      url
     else
-      :no_objects ->
-        :no_objects
+      {:error, msg} ->
+        raise_error!(msg, token)
 
       {:error, :timeout, bulk_id} ->
         Cancel.perform(opts[:auto_cancel], token, bulk_id)
+        raise(ShopifyAPI.Bulk.TimeoutError, "Shop: #{token.shop_name}, bulk id: #{bulk_id}")
 
-      error ->
-        error
+      :no_objects ->
+        :no_objects
     end
   end
 
-  @spec fetch(String.t() | bulk_query_response()) :: {:ok, String.t()} | {:error, any()}
+  defp raise_error!(
+         "A bulk operation for this app and shop is already in progress: " <> bulk_id,
+         token
+       ) do
+    raise(ShopifyAPI.Bulk.InProgressError, "Shop: #{token.shop_name}, bulk id: #{bulk_id}")
+  end
+
+  defp raise_error!(msg, _), do: raise(ShopifyAPI.Bulk.QueryError, inspect(msg))
+
+  @spec fetch(bulk_query_response()) :: {:ok, String.t()} | {:error, any()}
   # handle no object bulk responses
   def fetch(:no_objects), do: {:ok, ""}
-  def fetch({:error, _} = error), do: error
-  def fetch({:ok, url}) when is_binary(url), do: fetch(url)
 
   def fetch(url) when is_binary(url) do
     url
@@ -109,11 +117,9 @@ defmodule ShopifyAPI.Bulk.Query do
   Warning: Since HTTPoison spawns a seperate process which uses send/receive
   to stream HTTP fetches be careful where you use this.
   """
-  @spec stream_fetch!(String.t() | bulk_query_response()) :: Enumerable.t()
+  @spec stream_fetch!(bulk_query_response()) :: Enumerable.t()
   # handle no object bulk responses
   def stream_fetch!(:no_objects), do: []
-  def stream_fetch!({:ok, url}) when is_binary(url), do: stream_fetch!(url)
-  def stream_fetch!({:error, _} = error), do: error
 
   def stream_fetch!(url) when is_binary(url),
     do: url |> httpoison_streamed_get!() |> Stream.transform("", &transform_chunks_to_jsonl/2)
