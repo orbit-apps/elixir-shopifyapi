@@ -36,7 +36,7 @@ end
 
 If you want to be able to handle webhooks you need to add this to your endpoint before the parsers section
 ```elixir
-plug(ShopifyAPI.Plugs.Webhook, mount: "/shop/webhooks")
+plug(ShopifyAPI.Plugs.Webhook, mount: "/shop/webhook")
 ```
 
 If you want persisted Apps, Shops, and Tokens add configuration to your functions.
