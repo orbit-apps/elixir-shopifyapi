@@ -55,7 +55,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       Plug.Conn.resp(conn, 200, "#{Jason.encode!(@valid_jsonl_response)}\n")
     end)
 
-    assert {:ok, url} = Query.exec(token, "fake_query", options)
+    assert url = Query.exec!(token, "fake_query", options)
     assert {:ok, _} = Query.fetch(url)
   end
 
@@ -72,8 +72,9 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    resp = Query.exec(token, "fake_query", options)
-    assert resp == {:error, "BulkFetch timed out before completion"}
+    assert_raise ShopifyAPI.Bulk.TimeoutError, fn ->
+      Query.exec!(token, "fake_query", options)
+    end
   end
 
   test "invalid graphql", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
@@ -91,8 +92,38 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       Plug.Conn.resp(conn, 200, body)
     end)
 
-    resp = Query.exec(token, "fake_query", options)
-    assert resp == {:error, "Bulk query is not valid GraphQL"}
+    assert_raise ShopifyAPI.Bulk.QueryError, fn ->
+      Query.exec!(token, "fake_query", options)
+    end
+  end
+
+  test "bulk op already in progress", %{
+    bypass: bypass,
+    shop: _shop,
+    auth_token: token,
+    options: options
+  } do
+    Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
+      body =
+        @valid_graphql_response
+        |> put_in(
+          ["data", "bulkOperationRunQuery", "userErrors"],
+          [
+            %{
+              "field" => nil,
+              "message" =>
+                "A bulk operation for this app and shop is already in progress: gid://fake-bulk-op-id"
+            }
+          ]
+        )
+        |> Jason.encode!()
+
+      Plug.Conn.resp(conn, 200, body)
+    end)
+
+    assert_raise ShopifyAPI.Bulk.InProgressError, fn ->
+      Query.exec!(token, "fake_query", options)
+    end
   end
 
   @json1 %{"test" => "foo"}

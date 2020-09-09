@@ -6,6 +6,14 @@ defmodule ShopifyAPI.Bulk do
     defexception message: "Error in Bulk query"
   end
 
+  defmodule TimeoutError do
+    defexception message: "Bulk operation timed out"
+  end
+
+  defmodule InProgressError do
+    defexception message: "Bulk operation already in progress"
+  end
+
   @defaults [polling_rate: 100, max_poll_count: 100, auto_cancel: true]
 
   @doc """
@@ -51,7 +59,7 @@ defmodule ShopifyAPI.Bulk do
 
   def process!(%AuthToken{} = token, query, opts) do
     token
-    |> Query.exec(query, resolve_options(opts))
+    |> Query.exec!(query, resolve_options(opts))
     |> Query.fetch()
     |> Query.parse_response!()
   end
@@ -95,13 +103,12 @@ defmodule ShopifyAPI.Bulk do
 
   def process_stream!(%AuthToken{} = token, query, opts) do
     token
-    |> Query.exec(query, resolve_options(opts))
+    |> Query.exec!(query, resolve_options(opts))
     |> Query.stream_fetch!()
     |> decode_json!()
   end
 
   defp resolve_options(opts), do: Keyword.merge(@defaults, opts, fn _k, _dv, nv -> nv end)
 
-  defp decode_json!({:error, msg}), do: raise(inspect(msg))
   defp decode_json!(stream), do: Stream.map(stream, &ShopifyAPI.JSONSerializer.decode!/1)
 end
