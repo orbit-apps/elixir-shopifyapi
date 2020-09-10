@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.9.2
+
+- Add new ShopifyAPI.Bulk error types
+- Add ShopifyAPI.Bulk :telemetry events
+
 ## 0.9.1
 
 - Fix: Bulk.process_stream!/2 now correctly handles bulk operations returning 0 objects
