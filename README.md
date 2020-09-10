@@ -240,6 +240,8 @@ The following telemetry events are generated:
 - `[:shopify_api, :throttling, :within_limit]`
 - `[:shopify_api, :graphql_request, :success]`
 - `[:shopify_api, :graphql_request, :failure]`
+- `[:shopify_api, :bulk_operation, :success]`
+- `[:shopify_api, :bulk_operation, :failure]`
 
 As an example, you could use an external module to instrument API requests made by `shopify_api`:
 
