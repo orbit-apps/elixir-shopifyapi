@@ -56,7 +56,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
     end)
 
     assert url = Query.exec!(token, "fake_query", options)
-    assert {:ok, _} = Query.fetch(url)
+    assert {:ok, _} = Query.fetch(url, token)
   end
 
   test "polling timeout", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
@@ -130,7 +130,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   @json2 %{"test" => "bar fuzz"}
   @json3 %{"test" => "baz\nbuzz"}
 
-  test "stream_fetch!/1", %{bypass: bypass, url: url} do
+  test "stream_fetch!/2", %{bypass: bypass, url: url, auth_token: token} do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -143,10 +143,12 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       conn
     end)
 
-    assert url |> Query.stream_fetch!() |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
+    assert url
+           |> Query.stream_fetch!(token)
+           |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
   end
 
-  test "stream_fetch!/1 with jsonl across chunks", %{bypass: bypass, url: url} do
+  test "stream_fetch!/2 with jsonl across chunks", %{bypass: bypass, url: url, auth_token: token} do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -160,10 +162,16 @@ defmodule ShopifyAPI.Bulk.QueryTest do
       conn
     end)
 
-    assert url |> Query.stream_fetch!() |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
+    assert url
+           |> Query.stream_fetch!(token)
+           |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
   end
 
-  test "stream_fetch!/1 with non-200 response codes", %{bypass: bypass, url: url} do
+  test "stream_fetch!/2 with non-200 response codes", %{
+    bypass: bypass,
+    url: url,
+    auth_token: token
+  } do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -176,7 +184,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
     end)
 
     assert_raise(RuntimeError, fn ->
-      url |> Query.stream_fetch!() |> Enum.to_list()
+      url |> Query.stream_fetch!(token) |> Enum.to_list()
     end)
   end
 end

@@ -60,7 +60,7 @@ defmodule ShopifyAPI.Bulk do
   def process!(%AuthToken{} = token, query, opts) do
     token
     |> Query.exec!(query, resolve_options(opts))
-    |> Query.fetch()
+    |> Query.fetch(token)
     |> Query.parse_response!()
   end
 
@@ -104,7 +104,7 @@ defmodule ShopifyAPI.Bulk do
   def process_stream!(%AuthToken{} = token, query, opts) do
     token
     |> Query.exec!(query, resolve_options(opts))
-    |> Query.stream_fetch!()
+    |> Query.stream_fetch!(token)
     |> decode_json!()
   end
 
