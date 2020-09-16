@@ -41,7 +41,7 @@ defmodule ShopifyAPI.Bulk.Telemetry do
 
   defp telemetry_execute(event_status, metadata) do
     :telemetry.execute(
-      [:shopify_api, :graphql_request, event_status],
+      [:shopify_api, :bulk_operation, event_status],
       %{count: 1},
       metadata
     )
