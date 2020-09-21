@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.9.3
+
+- Fix: Bulk Telemetry event name is now correct.
+
 ## 0.9.2
 
 - Add new ShopifyAPI.Bulk error types
