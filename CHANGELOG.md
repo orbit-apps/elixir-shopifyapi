@@ -3,6 +3,8 @@
 - BREAKING: Rename `ShopifyAPI.CacheSupervisor` to `ShopifyAPI.Supervisor`.
 - Upgrade `AppServer`, `ShopServer`, and `AuthTokenServer` to use ets-backed caching.
 - Change default Shopify API version to `2020-10`.
+- BREAKING: Remove GraphQL App/Shop/AuthToken servers.
+  - If you want this/use this, grab it out of the git history and import in to your project.
 
 ## 0.9.4
 
