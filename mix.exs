@@ -43,8 +43,8 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
       {:stream_data, "~> 0.5.0", only: :test},
       # Everything else
-      {:absinthe, "~> 1.4.0"},
-      {:absinthe_plug, "~> 1.4.0"},
+      {:absinthe, "~> 1.5.0"},
+      {:absinthe_plug, "~> 1.5.0"},
       {:gen_stage, "~> 1.0"},
       {:httpoison, "~> 1.0"},
       {:jason, "~> 1.0"},
