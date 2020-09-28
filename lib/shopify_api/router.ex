@@ -9,25 +9,12 @@ defmodule ShopifyAPI.Router do
   plug(:match)
   plug(:dispatch)
 
+  get "/install/:app" do
+    install_app(conn)
+  end
+
   get "/install" do
-    conn
-    |> ConnHelpers.fetch_shopify_app()
-    |> case do
-      {:ok, app} ->
-        install_url = App.install_url(app, ConnHelpers.shop_domain(conn))
-
-        conn
-        |> Conn.put_resp_header("location", install_url)
-        |> Conn.resp(unquote(302), "You are being redirected.")
-        |> Conn.halt()
-
-      res ->
-        Logger.info("#{__MODULE__} failed install with: #{res}")
-
-        conn
-        |> Conn.resp(404, "Not Found.")
-        |> Conn.halt()
-    end
+    install_app(conn)
   end
 
   # Shopify Callback on App authorization
@@ -71,5 +58,26 @@ defmodule ShopifyAPI.Router do
       _msg ->
         {:error, "unable to fetch token"}
     end
+  end
+
+  defp install_app(conn) do
+    conn
+    |> ConnHelpers.fetch_shopify_app()
+    |> case do
+         {:ok, app} ->
+           install_url = App.install_url(app, ConnHelpers.shop_domain(conn))
+
+           conn
+           |> Conn.put_resp_header("location", install_url)
+           |> Conn.resp(unquote(302), "You are being redirected.")
+           |> Conn.halt()
+
+         res ->
+           Logger.info("#{__MODULE__} failed install with: #{res}")
+
+           conn
+           |> Conn.resp(404, "Not Found.")
+           |> Conn.halt()
+       end
   end
 end
