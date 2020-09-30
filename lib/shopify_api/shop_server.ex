@@ -1,78 +1,75 @@
 defmodule ShopifyAPI.ShopServer do
+  @moduledoc "Write-through cache for Shop structs."
+
   use GenServer
 
-  require Logger
-
+  alias ShopifyAPI.Config
   alias ShopifyAPI.Shop
 
-  @name :shopify_api_shop_server
+  @table __MODULE__
+
+  def all do
+    @table
+    |> :ets.tab2list()
+    |> Map.new()
+  end
+
+  def count do
+    :ets.info(@table, :size)
+  end
+
+  def set(%Shop{domain: domain} = shop) do
+    :ets.insert(@table, {domain, shop})
+    do_persist(shop)
+    :ok
+  end
+
+  def get(domain) do
+    case :ets.lookup(@table, domain) do
+      [{^domain, shop}] -> {:ok, shop}
+      [] -> :error
+    end
+  end
+
+  ## GenServer Callbacks
 
   def start_link(_opts) do
-    Logger.info(fn -> "Starting #{__MODULE__}..." end)
-
-    GenServer.start_link(__MODULE__, %{}, name: @name)
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  @spec all :: map()
-  def all, do: GenServer.call(@name, :all)
-
-  @spec get(String.t()) :: {:ok, Shop.t()} | :error
-  def get(domain), do: GenServer.call(@name, {:get, domain})
-
-  @spec count :: integer()
-  def count, do: GenServer.call(@name, :count)
-
-  @spec set(%{:domain => any, any => any}) :: atom
-  def set(%{domain: domain} = new_values), do: GenServer.cast(@name, {:set, domain, new_values})
-
-  #
-  # Callbacks
-  #
-
-  @impl true
-  def init(state), do: {:ok, state, {:continue, :initialize}}
-
-  @impl true
-  @callback handle_continue(atom, map) :: tuple
-  def handle_continue(:initialize, state) do
-    new_state =
-      :initializer
-      |> shop_server_config()
-      |> call_initializer()
-      |> Enum.reduce(state, &Map.put(&2, &1.domain, &1))
-
-    {:noreply, new_state}
+  @impl GenServer
+  def init(:ok) do
+    create_table!()
+    for %Shop{} = shop <- do_initialize(), do: set(shop)
+    {:ok, :no_state}
   end
 
-  @impl true
-  @callback handle_cast(map, map) :: tuple
-  def handle_cast({:set, domain, new_values}, %{} = state) do
-    new_state = Map.update(state, domain, %Shop{domain: domain}, &Map.merge(&1, new_values))
+  ## Private Helpers
 
-    # TODO should this be in a seperate process? It could tie up the GenServer
-    persist(shop_server_config(:persistance), domain, Map.get(new_state, domain))
-
-    {:noreply, new_state}
+  defp create_table! do
+    :ets.new(@table, [
+      :set,
+      :public,
+      :named_table,
+      read_concurrency: true
+    ])
   end
 
-  @impl true
-  def handle_call(:all, _caller, state), do: {:reply, state, state}
+  # Calls a configured initializer to obtain a list of Shops.
+  defp do_initialize do
+    case Config.lookup(__MODULE__, :initializer) do
+      {module, function, args} -> apply(module, function, args)
+      {module, function} -> apply(module, function, [])
+      _ -> []
+    end
+  end
 
-  @impl true
-  def handle_call({:get, domain}, _caller, state), do: {:reply, Map.fetch(state, domain), state}
-
-  @impl true
-  def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
-
-  defp shop_server_config(key), do: Application.get_env(:shopify_api, ShopifyAPI.ShopServer)[key]
-
-  defp call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
-    do: apply(module, function, [])
-
-  defp call_initializer(_), do: []
-
-  defp persist({module, function, _}, key, value) when is_atom(module) and is_atom(function),
-    do: apply(module, function, [key, value])
-
-  defp persist(_, _, _), do: nil
+  # Attempts to persist a Shop if a persistence callback is configured
+  defp do_persist(%Shop{domain: domain} = shop) do
+    case Config.lookup(__MODULE__, :persistence) do
+      {module, function, args} -> apply(module, function, [domain, shop | args])
+      {module, function} -> apply(module, function, [domain, shop])
+      _ -> nil
+    end
+  end
 end
