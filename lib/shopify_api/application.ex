@@ -14,7 +14,7 @@ defmodule ShopifyAPI.Application do
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: ShopifyAPI.Supervisor]
+    opts = [strategy: :one_for_one, name: :shopify_api_supervisor]
     Supervisor.start_link(children, opts)
   end
 end
