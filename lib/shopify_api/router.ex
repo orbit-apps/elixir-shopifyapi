@@ -64,20 +64,20 @@ defmodule ShopifyAPI.Router do
     conn
     |> ConnHelpers.fetch_shopify_app()
     |> case do
-         {:ok, app} ->
-           install_url = App.install_url(app, ConnHelpers.shop_domain(conn))
+      {:ok, app} ->
+        install_url = App.install_url(app, ConnHelpers.shop_domain(conn))
 
-           conn
-           |> Conn.put_resp_header("location", install_url)
-           |> Conn.resp(unquote(302), "You are being redirected.")
-           |> Conn.halt()
+        conn
+        |> Conn.put_resp_header("location", install_url)
+        |> Conn.resp(unquote(302), "You are being redirected.")
+        |> Conn.halt()
 
-         res ->
-           Logger.info("#{__MODULE__} failed install with: #{res}")
+      res ->
+        Logger.info("#{__MODULE__} failed install with: #{res}")
 
-           conn
-           |> Conn.resp(404, "Not Found.")
-           |> Conn.halt()
-       end
+        conn
+        |> Conn.resp(404, "Not Found.")
+        |> Conn.halt()
+    end
   end
 end
