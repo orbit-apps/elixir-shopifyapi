@@ -38,10 +38,10 @@ defmodule ShopifyAPI.ShopInstaller do
   @spec complete_installation(Plug.Conn.t()) :: {:ok, any()} | {:error, any()}
   def complete_installation(conn) do
     case authorize_shop(conn) do
-      {:ok, resp} ->
+      {:ok, _resp} ->
         render_authenticated_response(conn)
 
-      {:error, msg} ->
+      {:error, _msg} ->
         halt_install(conn)
     end
   end
