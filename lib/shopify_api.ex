@@ -28,4 +28,7 @@ defmodule ShopifyAPI do
   # Override in configuration to `http://` for testing using Bypass.
   @spec transport() :: String.t()
   def transport, do: Application.get_env(:shopify_api, :transport, "https://")
+
+  @spec bypass_host() :: String.t() | nil
+  def bypass_host, do: Application.get_env(:shopify_api, :bypass_host)
 end

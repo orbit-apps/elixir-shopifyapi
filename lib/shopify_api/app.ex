@@ -24,33 +24,33 @@ defmodule ShopifyAPI.App do
         }
 
   require Logger
-  alias ShopifyAPI.AuthRequest
-  alias ShopifyAPI.JSONSerializer
+  alias ShopifyAPI.{Config, JSONSerializer, ShopifyAuthRequest}
 
-  @doc """
-    Generates the install URL for an App and a Shop.
-  """
-  @spec install_url(__MODULE__.t(), String.t()) :: String.t()
-  def install_url(%__MODULE__{} = app, domain) when is_binary(domain) do
-    query_params = [
-      client_id: app.client_id,
-      scope: app.scope,
-      redirect_uri: app.auth_redirect_uri,
-      state: app.nonce
-    ]
+  def auth_install_uri(app) do
+    case Config.lookup(__MODULE__, :install_uri) do
+      {module, function, args} -> apply(module, function, args ++ [app: app])
+      {module, function} -> apply(module, function, app: app)
+      nil -> {:error, "no ShopifyAPI.App install_uri configured"}
+    end
+  end
 
-    "https://#{domain}/admin/oauth/authorize?#{URI.encode_query(query_params)}"
+  def auth_redirect_uri(app) do
+    case Config.lookup(__MODULE__, :run_url) do
+      {module, function, args} -> apply(module, function, args ++ [app: app])
+      {module, function} -> apply(module, function, app: app)
+      nil -> {:error, "no ShopifyAPI.App run_url configured"}
+    end
   end
 
   @doc """
     After an App is installed and the Shop owner ends up back on ourside of the fence we
-    need to request an AuthToken. This function uses ShopifyAPI.AuthRequest.post/3 to
+    need to request an AuthToken. This function uses ShopifyAPI.ShopifyAuthRequest.post/3 to
     fetch and parse the AuthToken.
   """
   @spec fetch_token(__MODULE__.t(), String.t(), String.t()) ::
           {:ok, String.t()} | {:error, String.t()}
   def fetch_token(%__MODULE__{} = app, domain, auth_code) do
-    case AuthRequest.post(app, domain, auth_code) do
+    case ShopifyAuthRequest.post(app, domain, auth_code) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Logger.info(fn -> "#{__MODULE__} [#{domain}] fetched token" end)
         # TODO probably don't use the ! ver of decode
@@ -64,31 +64,5 @@ defmodule ShopifyAPI.App do
         Logger.warn(fn -> "#{__MODULE__} error fetching token: #{inspect(reason)}" end)
         {:error, reason}
     end
-  end
-end
-
-defmodule ShopifyAPI.AuthRequest do
-  @moduledoc """
-    AuthRequest.post/3 contains logic to request AuthTokens from Shopify given an App,
-    Shop domain, and the auth code from the App install.
-  """
-  require Logger
-
-  alias ShopifyAPI.JSONSerializer
-  @headers [{"Content-Type", "application/json"}]
-
-  defp access_token_url(domain), do: "#{ShopifyAPI.transport()}#{domain}/admin/oauth/access_token"
-
-  @spec post(ShopifyAPI.App.t(), String.t(), String.t()) :: {:ok, any()} | {:error, any()}
-  def post(%ShopifyAPI.App{} = app, domain, auth_code) do
-    http_body = %{
-      client_id: app.client_id,
-      client_secret: app.client_secret,
-      code: auth_code
-    }
-
-    Logger.debug(fn -> "#{__MODULE__} requesting token from #{access_token_url(domain)}" end)
-    encoded_body = JSONSerializer.encode!(http_body)
-    HTTPoison.post(access_token_url(domain), encoded_body, @headers)
   end
 end

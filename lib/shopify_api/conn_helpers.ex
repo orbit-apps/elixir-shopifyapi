@@ -99,12 +99,22 @@ defmodule ShopifyAPI.ConnHelpers do
   @doc false
   @spec verify_params_with_hmac(App.t(), map()) :: boolean()
   def verify_params_with_hmac(%App{client_secret: secret}, params) do
-    params["hmac"] ==
-      params
-      |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
-      |> Enum.sort_by(&elem(&1, 0))
-      |> Enum.map(fn {key, value} -> key <> "=" <> value end)
-      |> Enum.join("&")
-      |> Security.base16_sha256_hmac(secret)
+    hmac = build_hmac_from_params(params, secret)
+    params["hmac"] == hmac
+  end
+
+  def build_hmac_from_params(params, secret) do
+    params
+    |> Enum.reject(fn {key, _} -> "#{key}" == "hmac" or "#{key}" == "signature" end)
+    |> Enum.sort_by(&elem(&1, 0))
+    |> Enum.map(fn {key, value} -> "#{key}" <> "=" <> "#{value}" end)
+    |> Enum.join("&")
+    |> Security.base16_sha256_hmac(secret)
+  end
+
+  @doc false
+
+  def verify_shop_name(name) do
+    String.match?("#{name}", ~r/^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com[\/]?/)
   end
 end

@@ -3,8 +3,8 @@ defmodule Test.ShopifyAPI.RouterTest do
   use Plug.Test
 
   alias ShopifyAPI.{App, Shop}
-  alias ShopifyAPI.{AppServer, AuthTokenServer, ShopServer}
-  alias ShopifyAPI.{JSONSerializer, Router, Security}
+  alias ShopifyAPI.{AppServer, AuthTokenServer, ConnHelpers, ShopServer}
+  alias ShopifyAPI.{JSONSerializer, Router}
 
   alias Plug.{Conn, Parsers}
 
@@ -15,11 +15,13 @@ defmodule Test.ShopifyAPI.RouterTest do
     Parsers.call(conn, Parsers.init(opts))
   end
 
+  @code "testing"
   @app_name "test"
-  @client_secret "test"
   @nonce "testing"
   @redirect_uri "example.com"
-  @shop_domain "shop.example.com"
+  @shop_domain "shop.myshopify.com"
+  @timestamp "1234"
+  @client_secret "5fd0b04756f115ecb0820cabc1779a2286e32b66501936c9d7103907bcba9ef1"
 
   setup_all do
     AppServer.set(@app_name, %App{
@@ -31,14 +33,21 @@ defmodule Test.ShopifyAPI.RouterTest do
     })
 
     ShopServer.set(%Shop{domain: @shop_domain})
+
+    Application.put_env(:shopify_api, ShopifyAPI.Authorizer,
+      uri: "https://example.com/app",
+      post_install: {PostAuthModule, :post_install},
+      run_app: {PostAuthModule, :run_app}
+    )
+
     :ok
   end
 
-  describe "/install" do
+  describe "/start/:app" do
     test "with a valid app it redirects" do
       conn =
         :get
-        |> conn("/install?app=#{@app_name}&shop=#{@shop_domain}")
+        |> conn("/start/#{@app_name}?#{add_hmac_to_params()}")
         |> parse()
         |> Router.call(%{})
 
@@ -53,7 +62,7 @@ defmodule Test.ShopifyAPI.RouterTest do
     test "without a valid app it errors" do
       conn =
         :get
-        |> conn("/install?app=not-an-app&shop=#{@shop_domain}")
+        |> conn("/start/not-an-app?#{add_hmac_to_params(%{app_name: "not-an-app"})}")
         |> parse()
         |> Router.call(%{})
 
@@ -61,23 +70,25 @@ defmodule Test.ShopifyAPI.RouterTest do
     end
   end
 
-  describe "/authorized" do
+  describe "/install/:app" do
     @code "testing"
     @token %{access_token: "test-token"}
 
     setup _contxt do
-      bypass = Bypass.open()
-      shop_domain = "localhost:#{bypass.port}"
-      ShopServer.set(%Shop{domain: shop_domain})
+      bypass = Bypass.open(port: Application.get_env(:shopify_api, :bypass_port))
+      auth_server = "#{Application.get_env(:shopify_api, :bypass_host)}:#{bypass.port}"
+      ShopServer.set(%Shop{domain: @shop_domain})
 
-      {:ok, %{bypass: bypass, shop_domain: shop_domain}}
+      {:ok, %{bypass: bypass, shop_domain: @shop_domain, auth_server: auth_server}}
     end
 
     test "fails with invalid hmac", %{bypass: _bypass, shop_domain: shop_domain} do
       conn =
         :get
         |> conn(
-          "/authorized/#{@app_name}?shop=#{shop_domain}&code=#{@code}&timestamp=1234&hmac=invalid"
+          "/install/#{@app_name}?#{
+            add_hmac_to_params(%{shop_domain: shop_domain, hmac: "invalid"})
+          }"
         )
         |> parse()
         |> Router.call(%{})
@@ -86,7 +97,7 @@ defmodule Test.ShopifyAPI.RouterTest do
     end
 
     test "fetches the token", %{bypass: bypass, shop_domain: shop_domain} do
-      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+      Bypass.expect(bypass, fn conn ->
         {:ok, body} = JSONSerializer.encode(@token)
         Conn.resp(conn, 200, body)
       end)
@@ -94,8 +105,8 @@ defmodule Test.ShopifyAPI.RouterTest do
       conn =
         :get
         |> conn(
-          "/authorized/#{@app_name}?" <>
-            add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=#{@nonce}&timestamp=1234")
+          "/install/#{@app_name}?" <>
+            add_hmac_to_params(%{shop_domain: shop_domain})
         )
         |> parse()
         |> Router.call(%{})
@@ -109,8 +120,8 @@ defmodule Test.ShopifyAPI.RouterTest do
       conn =
         :get
         |> conn(
-          "/authorized/invalid-app?" <>
-            add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=invalid&timestamp=1234")
+          "/install/#{@app_name}?" <>
+            add_hmac_to_params(%{shop_domain: shop_domain, nonce: "invalid"})
         )
         |> parse()
         |> Router.call(%{})
@@ -122,8 +133,8 @@ defmodule Test.ShopifyAPI.RouterTest do
       conn =
         :get
         |> conn(
-          "/authorized/invalid-app?" <>
-            add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=#{@nonce}&timestamp=1234")
+          "/install/invalid-app?" <>
+            add_hmac_to_params(%{shop_domain: shop_domain})
         )
         |> parse()
         |> Router.call(%{})
@@ -135,8 +146,32 @@ defmodule Test.ShopifyAPI.RouterTest do
       conn =
         :get
         |> conn(
-          "/authorized/#{@app_name}?" <>
-            add_hmac_to_params("code=#{@code}&shop=invalid-shop&state=#{@nonce}&timestamp=1234")
+          "/install/#{@app_name}?" <>
+            add_hmac_to_params(%{shop_domain: "invalid-shop"})
+        )
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+  end
+
+  describe "/run/:app" do
+    @code "testing"
+
+    setup _contxt do
+      bypass = Bypass.open(port: Application.get_env(:shopify_api, :bypass_port))
+      auth_server = "#{Application.get_env(:shopify_api, :bypass_host)}:#{bypass.port}"
+      ShopServer.set(%Shop{domain: @shop_domain})
+
+      {:ok, %{bypass: bypass, shop_domain: @shop_domain, auth_server: auth_server}}
+    end
+
+    test "fails with invalid hmac", %{bypass: _bypass, shop_domain: shop_domain} do
+      conn =
+        :get
+        |> conn(
+          "/run/#{@app_name}?#{add_hmac_to_params(%{shop_domain: shop_domain, hmac: "invalid"})}"
         )
         |> parse()
         |> Router.call(%{})
@@ -144,8 +179,81 @@ defmodule Test.ShopifyAPI.RouterTest do
       assert conn.status == 404
     end
 
-    def add_hmac_to_params(params) do
-      params <> "&hmac=" <> Security.base16_sha256_hmac(params, @client_secret)
+    test "fails without a valid nonce", %{bypass: _bypass, shop_domain: shop_domain} do
+      conn =
+        :get
+        |> conn(
+          "/run/#{@app_name}?" <>
+            add_hmac_to_params(%{shop_domain: shop_domain, nonce: "invalid"})
+        )
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
     end
+
+    test "fails without a valid app", %{bypass: _bypass, shop_domain: shop_domain} do
+      conn =
+        :get
+        |> conn(
+          "/run/invalid-app?" <>
+            add_hmac_to_params(%{shop_domain: shop_domain})
+        )
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "fails without a valid shop", %{bypass: _bypass} do
+      conn =
+        :get
+        |> conn(
+          "/run/#{@app_name}?" <>
+            add_hmac_to_params(%{shop_domain: "invalid-shop"})
+        )
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+  end
+
+  def add_hmac_to_params(params \\ %{}) do
+    t = params[:timestamp] || @timestamp
+    a = params[:app_name] || @app_name
+    d = params[:shop_domain] || @shop_domain
+    n = params[:nonce] || @nonce
+    c = params[:code] || @code
+    s = params[:secret] || @client_secret
+
+    h =
+      params[:hmac] ||
+        ConnHelpers.build_hmac_from_params(
+          %{
+            "timestamp" => t,
+            "app" => a,
+            "shop" => d,
+            "state" => n,
+            "code" => c
+          },
+          s
+        )
+
+    "timestamp=#{t}&app=#{a}&shop=#{d}&state=#{n}&code=#{c}&hmac=#{h}"
+  end
+end
+
+defmodule PostAuthModule do
+  def run_app(conn) do
+    conn
+    |> Plug.Conn.resp(200, "Authenticated.")
+    |> Plug.Conn.halt()
+  end
+
+  def post_install(conn) do
+    conn
+    |> Plug.Conn.resp(200, "Authenticated.")
+    |> Plug.Conn.halt()
   end
 end

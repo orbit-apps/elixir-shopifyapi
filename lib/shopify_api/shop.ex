@@ -25,4 +25,8 @@ defmodule ShopifyAPI.Shop do
 
   defp call_post_install({module, function, _}, token), do: apply(module, function, [token])
   defp call_post_install(nil, _token), do: nil
+
+  def shopify_url_for(shop_name: shop_name) do
+    "#{ShopifyAPI.transport()}#{shop_name}"
+  end
 end

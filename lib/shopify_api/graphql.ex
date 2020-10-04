@@ -60,17 +60,26 @@ defmodule ShopifyAPI.GraphQL do
     actual_cost =
       metadata
       |> get_in(["cost", "actualQueryCost"])
-      |> Kernel.trunc()
+      |> case do
+        nil -> nil
+        val -> Kernel.trunc(val)
+      end
 
     currently_available =
       metadata
       |> get_in(["cost", "throttleStatus", "currentlyAvailable"])
-      |> Kernel.trunc()
+      |> case do
+        nil -> nil
+        val -> Kernel.trunc(val)
+      end
 
     maximum_available =
       metadata
       |> get_in(["cost", "throttleStatus", "maximumAvailable"])
-      |> Kernel.trunc()
+      |> case do
+        nil -> nil
+        val -> Kernel.trunc(val)
+      end
 
     rate_limit(actual_cost, currently_available, maximum_available)
   end
