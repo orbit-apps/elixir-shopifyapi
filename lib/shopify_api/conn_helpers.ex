@@ -107,4 +107,11 @@ defmodule ShopifyAPI.ConnHelpers do
       |> Enum.join("&")
       |> Security.base16_sha256_hmac(secret)
   end
+
+  @doc false
+
+  def verify_shop_name(name) do
+    name
+    |> String.match?(~r/^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com[\/]?/)
+  end
 end
