@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.9.4
+
+- "/install" route now handles app name in path - thanks @tres
+- Throw ShopNotFoundError and ShopUnavailableError in Bulk.Query.exec/3
+
 ## 0.9.3
 
 - Fix: Bulk Telemetry event name is now correct.
