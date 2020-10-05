@@ -14,14 +14,6 @@ defmodule ShopifyAPI.Bulk do
     defexception message: "Bulk operation already in progress"
   end
 
-  defmodule ShopUnavailableError do
-    defexception message: "Unavailable Shop"
-  end
-
-  defmodule ShopNotFoundError do
-    defexception message: "Shop Not Found"
-  end
-
   @defaults [polling_rate: 100, max_poll_count: 100, auto_cancel: true]
 
   @doc """

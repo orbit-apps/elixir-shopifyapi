@@ -101,12 +101,12 @@ defmodule ShopifyAPI.Bulk.Query do
 
   defp raise_error!(%HTTPoison.Response{body: %{"errors" => "Unavailable Shop"}} = msg, token) do
     Telemetry.send(@log_module, token, {:error, :shop_unavailable, msg})
-    raise(ShopifyAPI.Bulk.ShopUnavailableError, "Shop: #{token.shop_name}")
+    raise(ShopifyAPI.ShopUnavailableError, "Shop: #{token.shop_name}")
   end
 
   defp raise_error!(%HTTPoison.Response{body: %{"errors" => "Not Found"}} = msg, token) do
     Telemetry.send(@log_module, token, {:error, :shop_not_found, msg})
-    raise(ShopifyAPI.Bulk.ShopNotFoundError, "Shop: #{token.shop_name}")
+    raise(ShopifyAPI.ShopNotFoundError, "Shop: #{token.shop_name}")
   end
 
   defp raise_error!(msg, token) do
