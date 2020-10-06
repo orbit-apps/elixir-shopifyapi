@@ -1,16 +1,10 @@
 defmodule ShopifyAPI.REST.Redirect do
-  @moduledoc false
   @moduledoc """
   Shopify REST API Redirect resources
   """
 
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
-  alias ShopifyAPI.REST.Redirect
-
-  defstruct id: nil,
-            path: nil,
-            target: nil
 
   @doc """
   Get a list of all the redirects.
