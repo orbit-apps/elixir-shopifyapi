@@ -17,7 +17,7 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   """
   def create(
         %AuthToken{} = auth,
-        %{recurring_application_charge: {}} = recurring_application_charge
+        %{recurring_application_charge: %{}} = recurring_application_charge
       ) do
     REST.post(auth, "recurring_application_charges.json", recurring_application_charge)
   end
