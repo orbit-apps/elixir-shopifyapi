@@ -9,7 +9,7 @@ defmodule ShopifyAPI.GraphQL do
   alias ShopifyAPI.GraphQL.{JSONParseError, Response, Telemetry}
   alias ShopifyAPI.JSONSerializer
 
-  @default_graphql_version "2019-10"
+  @default_graphql_version "2020-10"
 
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
 

@@ -12,7 +12,7 @@ defmodule ShopifyAPI.REST.Request do
   alias HTTPoison.Error
   alias ShopifyAPI.{AuthToken, JSONSerializer, RateLimiting, Throttled}
 
-  @default_api_version "2020-01"
+  @default_api_version "2020-10"
 
   @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
 
