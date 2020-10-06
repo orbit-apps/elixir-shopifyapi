@@ -1,87 +1,79 @@
 defmodule ShopifyAPI.AppServer do
+  @moduledoc "Write-through cache for App structs."
+
   use GenServer
 
-  require Logger
-
   alias ShopifyAPI.App
+  alias ShopifyAPI.Config
 
-  @name :shopify_api_app_server
+  @table __MODULE__
+
+  def all do
+    @table
+    |> :ets.tab2list()
+    |> Map.new()
+  end
+
+  def count do
+    :ets.info(@table, :size)
+  end
+
+  def set(%App{name: name} = app) do
+    set(name, app)
+  end
+
+  def set(name, %App{} = app) do
+    :ets.insert(@table, {name, app})
+    do_persist(app)
+    :ok
+  end
+
+  def get(name) do
+    case :ets.lookup(@table, name) do
+      [{^name, app}] -> {:ok, app}
+      [] -> :error
+    end
+  end
+
+  ## GenServer Callbacks
 
   def start_link(_opts) do
-    Logger.info(fn -> "Starting #{__MODULE__}..." end)
-
-    GenServer.start_link(__MODULE__, %{}, name: @name)
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  @spec all :: map()
-  def all, do: GenServer.call(@name, :all)
-
-  @spec get(String.t()) :: {:ok, App.t()} | :error
-  def get(name), do: GenServer.call(@name, {:get, name})
-
-  @spec count :: integer
-  def count, do: GenServer.call(@name, :count)
-
-  @spec set(%{:name => any(), any() => any()}) :: atom()
-  def set(%{name: name} = new_values), do: set(name, new_values)
-
-  @spec set(String.t(), %{:name => any, any => any}) :: atom
-  def set(name, new_values), do: GenServer.cast(@name, {:set, name, new_values})
-
-  #
-  # Callbacks
-  #
-
-  @impl true
-  def init(state), do: {:ok, state, {:continue, :initialize}}
-
-  @impl true
-  @callback handle_continue(atom, map) :: tuple
-  def handle_continue(:initialize, state) do
-    new_state =
-      :initializer
-      |> app_server_config()
-      |> call_initializer()
-      |> Enum.reduce(state, &Map.put(&2, &1.name, &1))
-
-    {:noreply, new_state}
+  @impl GenServer
+  def init(:ok) do
+    create_table!()
+    for %App{} = app <- do_initialize(), do: set(app)
+    {:ok, :no_state}
   end
 
-  @impl true
-  @callback handle_cast(map, map) :: tuple
-  def handle_cast({:set, name, new_values}, %{} = state) do
-    new_state =
-      update_in(state, [name], fn t ->
-        case t do
-          nil -> Map.merge(%ShopifyAPI.App{}, new_values)
-          _ -> Map.merge(t, new_values)
-        end
-      end)
+  ## Private Helpers
 
-    # TODO should this be in a seperate process? It could tie up the GenServer
-    persist(app_server_config(:persistance), name, Map.get(new_state, name))
-
-    {:noreply, new_state}
+  defp create_table! do
+    :ets.new(@table, [
+      :set,
+      :public,
+      :named_table,
+      read_concurrency: true
+    ])
   end
 
-  @impl true
-  def handle_call(:all, _caller, state), do: {:reply, state, state}
+  # Calls a configured initializer to obtain a list of Apps.
+  defp do_initialize do
+    case Config.lookup(__MODULE__, :initializer) do
+      {module, function, args} -> apply(module, function, args)
+      {module, function} -> apply(module, function, [])
+      _ -> []
+    end
+  end
 
-  @impl true
-  def handle_call({:get, name}, _caller, state), do: {:reply, Map.fetch(state, name), state}
-
-  @impl true
-  def handle_call(:count, _caller, state), do: {:reply, Enum.count(state), state}
-
-  defp app_server_config(key), do: Application.get_env(:shopify_api, ShopifyAPI.AppServer)[key]
-
-  defp call_initializer({module, function, _}) when is_atom(module) and is_atom(function),
-    do: apply(module, function, [])
-
-  defp call_initializer(_), do: []
-
-  defp persist({module, function, _}, key, value) when is_atom(module) and is_atom(function),
-    do: apply(module, function, [key, value])
-
-  defp persist(_, _, _), do: nil
+  # Attempts to persist a App if a persistence callback is configured
+  defp do_persist(%App{name: name} = app) do
+    case Config.lookup(__MODULE__, :persistence) do
+      {module, function, args} -> apply(module, function, [name, app | args])
+      {module, function} -> apply(module, function, [name, app])
+      _ -> nil
+    end
+  end
 end

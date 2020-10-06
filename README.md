@@ -5,7 +5,7 @@
   - [Installing this app in a Shop](#Installing-this-app-in-a-Shop)
   - [Configuration](#Configuration)
     - [API Version](#API-Version)
-    - [CacheSupervisor](#cachesupervisor)
+    - [Supervisor](#supervisor)
     - [Background Runner](#Background-Runner)
     - [Shops](#Shops)
     - [Apps](#Apps)
@@ -87,20 +87,23 @@ Configure the version to use in your config.exs, it will default to a stable ver
 config :shopify_api, ShopifyAPI.REST, api_version: "2019-04"
 ```
 
-### Cache Supervisor
+### Supervisor
 
-The ShopifyAPI has three cache servers, App, Shop, and Auth Token. These speed up access to data structures used for interacting with Shopify. A supervisor, ShopifyAPI.CacheSupervisor, is there to help manage start up and maintain all three. Add the CacheSupervisor to your application start up and define [some hooks for preloading data](#Installation).
+The ShopifyAPI has three servers for caching commonly-used structs - `AppServer`, `ShopServer`, and `AuthTokenServer`.
+These act as a write-through caching layer for their corresponding data structure.
 
-NOTE: Make sure you start the services or supervisor after services that are using in preloading the data. (ie Ecto)
+A supervisor `ShopifyAPI.Supervisor` is provided to start up and supervise all three servers.
+Add it to your application's supervision tree, and define [hooks for preloading data](#Installation).
+
+NOTE: Make sure you place the supervisor after any dependencies used in preloading the data. (ie Ecto)
 
 Add the following to your application:
 
 ```elixir
 def start(_type, _args) do
-  # Define workers and child supervisors to be supervised
   children = [
     MyApp.Repo,
-    ShopifyAPI.CacheSupervisor
+    ShopifyAPI.Supervisor
   ]
 
   Supervisor.start_link(children, strategy: :one_for_one)

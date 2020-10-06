@@ -1,5 +1,8 @@
 ## Unreleased
 
+- BREAKING: Rename `ShopifyAPI.CacheSupervisor` to `ShopifyAPI.Supervisor`.
+- Upgrade `AppServer`, `ShopServer`, and `AuthTokenServer` to use ets-backed caching.
+
 ## 0.9.4
 
 - "/install" route now handles app name in path - thanks @tres
