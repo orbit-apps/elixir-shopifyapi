@@ -52,18 +52,6 @@ config :shopify_api, ShopifyAPI.ShopServer,
   persistance: {MyApp.Shop, :save, []}
 ```
 
-Optional, add graphiql to your phoenix routes
-```elixir
-if Mix.env == :dev do
-  forward(
-    "/graphiql",
-    to: Absinthe.Plug.GraphiQL,
-    schema: GraphQL.Config.Schema,
-    interface: :playground
-  )
-end
-```
-
 ## Installing this app in a Shop
 
 There is a boilerplate repo for quickly getting up and running at [ShopifyApp](https://github.com/pixelunion/elixir-shopify-app)
@@ -74,8 +62,6 @@ There is a boilerplate repo for quickly getting up and running at [ShopifyApp](h
 
 
 ## Configuration
-
-There is a GraphQL interface to get and update configuration, this is the recommended way of pushing configuration in to your server.
 
 ### API Version
 
@@ -108,66 +94,6 @@ def start(_type, _args) do
 
   Supervisor.start_link(children, strategy: :one_for_one)
 end
-```
-
-### Shops
-
-example fetch:
-```bash
-curl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  --data '{"query": "{ allShops { domain } }"}' \
-http://localhost:4000/shop/graphql/config
-```
-
-example set:
-```bash
-curl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  --data '{"query": "mutation M { updateShop(domain: \"<STORE-DOMAIN>\",) { domain } }" }' \
-http://localhost:4000/shop/graphql/config
-```
-
-### Apps
-
-example fetch:
-```bash
-curl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  --data '{"query": "{ allApps { authRedirectUri, clientId, clientSecret, name, nonce, scope } }"}' \
-http://localhost:4000/shop/graphql/config
-```
-
-example set:
-```bash
-curl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  --data '{"query": "mutation M { updateApp(authRedirectUri: \"<REDIRECT-URI>\", clientId: <ID>, clientSecret: \"<SECRET>\", name: \"<APP-NAME>\", nonce: \"<NONCE>\", scope: \"<APP-SCOPE>\") { name } }" }' \
-http://localhost:4000/shop/graphql/config
-```
-
-### AuthTokens
-
-example fetch:
-```bash
-curl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  --data '{"query": "{ allAuthTokens { appName, shopName, token, timestamp, code } }"}' \
-http://localhost:4000/shop/graphql/config
-```
-
-example set:
-```bash
-curl \
-  -X POST \
-  -H "Content-Type: application/json" \
-  --data '{"query": "mutation M { updateAuthToken(token: \"<TOKEN>\", timestamp: <TIMESTAMP>, shopName: \"<SHOPIFY-STORE-DOMAIN>\", code: \"<RESPONSE-CODE>\", appName: \"<APP-NAME>\") { appName } }" }' \
-http://localhost:4000/shop/graphql/config
 ```
 
 ## Webhooks
