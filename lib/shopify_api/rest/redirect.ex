@@ -54,14 +54,8 @@ defmodule ShopifyAPI.REST.Redirect do
     iex> ShopifyAPI.REST.Redirect.update(auth, map)
     {:ok, %{} = redirect}
   """
-  def update(%AuthToken{} = auth, %{"redirect" => %{} = redirect}) do
-    atomized_map =
-      for {key, val} <- redirect,
-          into: %{},
-          do: {if(is_binary(key), do: String.to_atom(key), else: key), val}
-
-    update(auth, %{redirect: atomized_map})
-  end
+  def update(%AuthToken{} = auth, %{"redirect" => %{"id" => redirect_id} = redirect}),
+    do: update(auth, %{redirect: Map.put(redirect, :id, redirect_id)})
 
   def update(%AuthToken{} = auth, %{redirect: %{id: redirect_id}} = redirect),
     do: REST.put(auth, "redirects/#{redirect_id}.json", redirect)

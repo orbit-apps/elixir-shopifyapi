@@ -63,7 +63,7 @@ defmodule ShopifyAPI.REST.RedirectTest do
     bypass: bypass,
     shop: _shop,
     auth_token: token,
-    redirect: redirect
+    redirect: _redirect
   } do
     count = 1234
 
