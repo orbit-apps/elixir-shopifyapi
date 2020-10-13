@@ -49,6 +49,21 @@ defmodule ShopifyAPI.REST.Redirect do
   @doc """
   Update a redirect.
 
+  ## Expected Shape
+
+  ### Request Redirect Map Shape Example
+    %{
+      id: 668809255,
+      path: "/tiger"
+    }
+
+  ### Response Map Shape Example
+    %{
+      "id": 668809255,
+      "path": "/tiger",
+      "target": "/pages/macosx"
+    }
+
   ## Example
 
     iex> ShopifyAPI.REST.Redirect.update(auth, map)
@@ -74,13 +89,15 @@ defmodule ShopifyAPI.REST.Redirect do
   @doc """
   Create a new redirect.
 
+  ## Expected Shape
 
+  ###Request Redirect Map Shape Example
     %{
       path: "/ipod",
       target: "/pages/itunes"
     }
 
-
+  ### Response Map Shape Example
     %{
         "id": 979034144,
         "path": "/ipod",
@@ -92,14 +109,8 @@ defmodule ShopifyAPI.REST.Redirect do
       iex> ShopifyAPI.REST.Redirect.create(auth, map)
       {:ok, %{} = redirect}
   """
-  def create(%AuthToken{} = auth, %{"redirect" => %{} = redirect}) do
-    atomized_map =
-      for {key, val} <- redirect,
-          into: %{},
-          do: {if(is_binary(key), do: String.to_atom(key), else: key), val}
-
-    create(auth, %{redirect: atomized_map})
-  end
+  def create(%AuthToken{} = auth, %{"redirect" => %{} = redirect}),
+    do: create(auth, %{redirect: redirect})
 
   def create(%AuthToken{} = auth, %{redirect: %{}} = redirect),
     do: REST.post(auth, "redirects.json", redirect)
