@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add: REST.Redirect - thanks @tres
+
 ## 0.10.0
 
 - BREAKING: Rename `ShopifyAPI.CacheSupervisor` to `ShopifyAPI.Supervisor`.
