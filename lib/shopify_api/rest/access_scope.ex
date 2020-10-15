@@ -18,7 +18,7 @@ defmodule ShopifyAPI.REST.AccessScope do
     do:
       REST.get(
         auth,
-        "oauth/access_scopes.json",
+        "/admin/oauth/access_scopes.json",
         params,
         Keyword.merge([pagination: :none], options)
       )

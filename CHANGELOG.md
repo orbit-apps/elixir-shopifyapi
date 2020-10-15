@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Add: REST.Redirect - thanks @tres
+- Fix: Broken path for REST.AccessScopes.get/1
 
 ## 0.10.0
 
