@@ -21,6 +21,7 @@ defmodule ShopifyAPI.AuthTokenServer do
   def set(%AuthToken{} = token, persist? \\ true) do
     :ets.insert(@table, {{token.shop_name, token.app_name}, token})
     if persist?, do: do_persist(token)
+    :ok
   end
 
   def get(shop, app) when is_binary(shop) and is_binary(app) do
