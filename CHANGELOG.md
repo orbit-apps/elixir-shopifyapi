@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.10.2
+
+- Fix: return on success for AuthTokenServer.set/1
+- Add specs to AuthTokenServer, AppServer, and ShopServer public functions
+
 ## 0.10.1
 
 - Add: REST.Redirect - thanks @tres
