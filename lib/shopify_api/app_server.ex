@@ -14,20 +14,20 @@ defmodule ShopifyAPI.AppServer do
     |> Map.new()
   end
 
-  def count do
-    :ets.info(@table, :size)
-  end
+  @spec count() :: integer()
+  def count, do: :ets.info(@table, :size)
 
-  def set(%App{name: name} = app) do
-    set(name, app)
-  end
+  @spec set(App.t()) :: :ok
+  def set(%App{name: name} = app), do: set(name, app)
 
+  @spec set(String.t(), App.t()) :: :ok
   def set(name, %App{} = app) do
     :ets.insert(@table, {name, app})
     do_persist(app)
     :ok
   end
 
+  @spec get(String.t()) :: {:ok, App.t()} | :error
   def get(name) do
     case :ets.lookup(@table, name) do
       [{^name, app}] -> {:ok, app}

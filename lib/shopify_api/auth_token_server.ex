@@ -14,16 +14,17 @@ defmodule ShopifyAPI.AuthTokenServer do
     |> Map.new()
   end
 
-  def count do
-    :ets.info(@table, :size)
-  end
+  @spec count() :: integer()
+  def count, do: :ets.info(@table, :size)
 
+  @spec set(AuthToken.t()) :: :ok
   def set(%AuthToken{} = token, persist? \\ true) do
     :ets.insert(@table, {{token.shop_name, token.app_name}, token})
     if persist?, do: do_persist(token)
     :ok
   end
 
+  @spec get(String.t(), String.t()) :: {:ok, AuthToken.t()} | {:error, String.t()}
   def get(shop, app) when is_binary(shop) and is_binary(app) do
     case :ets.lookup(@table, {shop, app}) do
       [{_key, token}] -> {:ok, token}

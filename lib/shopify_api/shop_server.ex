@@ -14,16 +14,17 @@ defmodule ShopifyAPI.ShopServer do
     |> Map.new()
   end
 
-  def count do
-    :ets.info(@table, :size)
-  end
+  @spec count() :: integer()
+  def count, do: :ets.info(@table, :size)
 
+  @spec set(Shop.t()) :: :ok
   def set(%Shop{domain: domain} = shop) do
     :ets.insert(@table, {domain, shop})
     do_persist(shop)
     :ok
   end
 
+  @spec get(String.t()) :: {:ok, Shop.t()} | :error
   def get(domain) do
     case :ets.lookup(@table, domain) do
       [{^domain, shop}] -> {:ok, shop}
