@@ -13,15 +13,15 @@ jobs:
         elixir: [1.9.4, 1.10.0, 1.11.0]
 
     steps:
-      - uses: actions/checkout@v1.0.0
+      - uses: actions/checkout@v2
 
       - name: Cache dialyzer plts
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: priv/plts
           key: ${{runner.os}}-${{matrix.otp}}-${{matrix.elixir}}-plts
 
-      - uses: actions/setup-elixir@v1.0.0
+      - uses: actions/setup-elixir@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
