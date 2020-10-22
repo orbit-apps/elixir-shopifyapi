@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add a REST checkout endpoint
+
 ## 0.10.2
 
 - Fix: return on success for AuthTokenServer.set/1
