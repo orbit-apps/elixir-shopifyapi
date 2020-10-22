@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.10.3
+
 - Add a REST checkout endpoint
 
 ## 0.10.2
