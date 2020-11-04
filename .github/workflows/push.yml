@@ -9,19 +9,19 @@ jobs:
 
     strategy:
       matrix:
-        otp: [21.3, 22.2]
-        elixir: [1.9.4, 1.10.0]
+        otp: [22.2, 23.1.1]
+        elixir: [1.10.4, 1.11.2]
 
     steps:
-      - uses: actions/checkout@v1.0.0
+      - uses: actions/checkout@v2
 
       - name: Cache dialyzer plts
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: priv/plts
           key: ${{runner.os}}-${{matrix.otp}}-${{matrix.elixir}}-plts
 
-      - uses: actions/setup-elixir@v1.0.0
+      - uses: actions/setup-elixir@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}

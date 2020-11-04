@@ -1,5 +1,7 @@
 ## Unreleased
 
+- BREAKING: removed Elixir 1.9 and OTP 21 support
+
 ## 0.10.3
 
 - Add a REST checkout endpoint
