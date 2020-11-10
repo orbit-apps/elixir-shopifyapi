@@ -150,13 +150,4 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
 
   defp handle_error(conn, {:error, _}),
     do: send_unauthorized_response(conn, "Could not parse auth_payload")
-
-  defp handle_error(conn, {:error, _, _}),
-    do: send_unauthorized_response(conn, "Could not parse auth_payload")
-
-  defp handle_error(conn, _error) do
-    conn
-    |> resp(500, "Unhandled Error")
-    |> halt()
-  end
 end

@@ -1,7 +1,7 @@
 defmodule ShopifyAPI.JSONSerializer do
   @moduledoc """
   Abstraction point allowing for use of a custom JSON serializer, if your app requires it.
-  By default `shopify_api` uses the popular Jason, but you can override in your app config:
+  By default `shopify_api` uses the popular `jason`, you can override this in your config:
 
       # use Poison to encode/decode JSON
       config :shopify_api, :json_library, Poison
