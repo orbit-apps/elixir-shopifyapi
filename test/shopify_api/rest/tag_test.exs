@@ -12,14 +12,14 @@ defmodule ShopifyAPI.REST.TagTest do
               tag_value <- string(:alphanumeric),
               tag_value != ""
             ) do
-        assert [{tag_name, tag_value}] =
+        assert [{tag_name, tag_value}] ==
                  [{tag_name, tag_value}] |> Tag.encode("::") |> Tag.decode("::")
       end
     end
 
     property "tags collection" do
       check all(tags <- list_of({string(:alphanumeric), string(:alphanumeric)})) do
-        assert tags = tags |> Tag.encode("::") |> Tag.decode("::")
+        assert tags == tags |> Tag.encode("::") |> Tag.decode("::")
       end
     end
 
@@ -35,8 +35,8 @@ defmodule ShopifyAPI.REST.TagTest do
     end
 
     property "simple tags" do
-      check all(tags <- list_of(string(:alphanumeric))) do
-        assert tags = tags |> Tag.encode() |> Tag.decode()
+      check all(tags <- list_of(string(:alphanumeric), min_length: 1)) do
+        assert tags == tags |> Tag.encode() |> Tag.decode()
       end
     end
   end

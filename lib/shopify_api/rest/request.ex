@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.Request do
 
   @default_api_version "2020-10"
 
-  @http_receive_timeout Application.get_env(:shopify_api, :http_timeout)
+  @http_receive_timeout Application.compile_env(:shopify_api, :http_timeout)
 
   @type http_method :: :get | :post | :put | :delete
 
