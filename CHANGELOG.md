@@ -1,6 +1,7 @@
 ## Unreleased
 
 - BREAKING: removed Elixir 1.9 and OTP 21 support
+- Switch `ShopifyAPI.JSONSerializer` to be configured at compile-time, not runtime.
 
 ## 0.10.3
 

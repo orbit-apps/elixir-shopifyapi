@@ -1,17 +1,21 @@
 defmodule ShopifyAPI.JSONSerializer do
   @moduledoc """
-  JSONSerializer provides a wrapper for JSON serialization which is configurable via the :shopify_api application configuration. It defaults to Poison for legacy support.
+  Abstraction point allowing for use of a custom JSON serializer, if your app requires it.
+  By default `shopify_api` uses the popular `jason`, you can override this in your config:
 
+      # use Poison to encode/decode JSON
+      config :shopify_api, :json_library, Poison
 
-  Add the following to your configuration to override:
-  ```
-  config :shopify_api, json_library: Jason
-  ```
+  After doing so, you must make sure to re-compile the `shopify_api` dependency:
+
+      $ mix deps.compile --force shopify_api
   """
 
-  def decode(json), do: json_library().decode(json)
-  def encode(e), do: json_library().encode(e)
-  def decode!(json), do: json_library().decode!(json)
-  def encode!(e), do: json_library().encode!(e)
-  defp json_library, do: Application.get_env(:shopify_api, :json_library, Jason)
+  @codec Application.compile_env(:shopify_api, :json_library, Jason)
+
+  defdelegate encode(json_str), to: @codec
+  defdelegate decode(json_str), to: @codec
+
+  defdelegate encode!(json_str), to: @codec
+  defdelegate decode!(json_str), to: @codec
 end
