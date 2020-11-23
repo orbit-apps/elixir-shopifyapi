@@ -57,24 +57,24 @@ defmodule ShopifyAPI.REST do
   end
 
   @doc false
-  def post(%AuthToken{} = auth, path, object \\ %{}) do
+  def post(%AuthToken{} = auth, path, object \\ %{}, options \\ []) do
     with {:ok, body} <- JSONSerializer.encode(object) do
-      perform_request(auth, :post, path, body)
+      perform_request(auth, :post, path, body, options)
     end
   end
 
   @doc false
-  def put(%AuthToken{} = auth, path, object) do
+  def put(%AuthToken{} = auth, path, object, options \\ []) do
     with {:ok, body} <- JSONSerializer.encode(object) do
-      perform_request(auth, :put, path, body)
+      perform_request(auth, :put, path, body, options)
     end
   end
 
   @doc false
   def delete(%AuthToken{} = auth, path), do: perform_request(auth, :delete, path)
 
-  defp perform_request(auth, method, path, body \\ "") do
-    with {:ok, response} <- Request.perform(auth, method, path, body),
+  defp perform_request(auth, method, path, body \\ "", options \\ []) do
+    with {:ok, response} <- Request.perform(auth, method, path, body, [], options),
          response_body <- fetch_body(response) do
       {:ok, response_body}
     end

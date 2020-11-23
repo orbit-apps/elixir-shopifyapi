@@ -59,8 +59,9 @@ defmodule ShopifyAPI.REST.Fulfillment do
       iex> ShopifyAPI.REST.Fulfillment.create(auth, string, map)
       {:ok, %{} = fulfillment}
   """
-  def create(%AuthToken{} = auth, order_id, %{fulfillment: %{}} = fulfillment),
-    do: REST.post(auth, "orders/#{order_id}/fulfillments.json", fulfillment)
+  def create(%AuthToken{} = auth, order_id, %{fulfillment: %{}} = fulfillment, options \\ []) do
+    REST.post(auth, "orders/#{order_id}/fulfillments.json", fulfillment, options)
+  end
 
   @doc """
   Update an existing fulfillment.
