@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.11.0
+
 - BREAKING: removed Elixir 1.9 and OTP 21 support
 - Switch `ShopifyAPI.JSONSerializer` to be configured at compile-time, not runtime.
 - BREAKING: Rename Shopify API environment variable from `http_timeout` to `rest_recv_timeout`
