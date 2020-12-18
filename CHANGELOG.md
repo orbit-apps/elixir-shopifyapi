@@ -1,5 +1,7 @@
 ## Unreleased
 
+- BREAKING: Remove `ShopifyAPI.REST.Tag` and associated tests
+
 ## 0.11.0
 
 - BREAKING: removed Elixir 1.9 and OTP 21 support
