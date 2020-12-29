@@ -33,7 +33,7 @@ defmodule ShopifyAPI.ShopServer do
   end
 
   @spec drop(String.t()) :: {:ok, true}
-  def drop(domain), do: {:ok,  :ets.delete(@table, domain)}
+  def drop(domain), do: {:ok, :ets.delete(@table, domain)}
 
   @spec drop!(String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def drop!(domain) do
@@ -41,6 +41,7 @@ defmodule ShopifyAPI.ShopServer do
       {:ok, _} ->
         :ets.delete(@table, domain)
         {:ok, "Shop for #{domain} deleted"}
+
       _ ->
         {:error, "Shop for #{domain} could not be deleted deleted. Shop not found"}
     end
