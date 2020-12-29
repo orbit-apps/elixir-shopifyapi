@@ -42,6 +42,21 @@ defmodule ShopifyAPI.AuthTokenServer do
     :ets.select(@table, match_spec)
   end
 
+  @spec drop(String.t(), String.t()) :: {:ok, true}
+  def drop(shop, app), do: {:ok, :ets.delete(@table, {shop, app})}
+
+
+  @spec drop!(String.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
+  def drop!(shop, app) when is_binary(shop) and is_binary(app) do
+    case get(shop, app) do
+      {:ok, _} ->
+        :ets.delete(@table, {shop, app})
+        {:ok, "Auth token for #{shop}:#{app} deleted"}
+      {:error, _} ->
+        {:error, "Auth token for #{shop}:#{app} could not be deleted. Auth token not found"}
+    end
+  end
+
   def drop_all do
     :ets.delete_all_objects(@table)
   end
