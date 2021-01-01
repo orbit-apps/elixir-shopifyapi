@@ -1,8 +1,9 @@
 defmodule ShopifyAPI.Shop do
   alias ShopifyAPI.AuthToken
 
-  @derive {Jason.Encoder, only: [:domain]}
-  defstruct domain: ""
+  @derive {Jason.Encoder, only: [:domain, :app_data]}
+  defstruct domain: "",
+            app_data: %{}
 
   @typedoc """
       Type that represents a Shopify Shop with
@@ -10,7 +11,8 @@ defmodule ShopifyAPI.Shop do
         - domain corresponding to the full URL for the shop
   """
   @type t :: %__MODULE__{
-          domain: String.t()
+          domain: String.t(),
+          app_data: map()
         }
 
   @spec post_install(AuthToken.t()) :: any()

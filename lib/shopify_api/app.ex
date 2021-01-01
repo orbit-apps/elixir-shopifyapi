@@ -3,13 +3,22 @@ defmodule ShopifyAPI.App do
     ShopifyAPI.App contains logic and a struct for representing a Shopify App.
   """
   @derive {Jason.Encoder,
-           only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
+           only: [
+             :name,
+             :client_id,
+             :client_secret,
+             :auth_redirect_uri,
+             :nonce,
+             :scope,
+             :app_data
+           ]}
   defstruct name: "",
             client_id: "",
             client_secret: "",
             auth_redirect_uri: "",
             nonce: "",
-            scope: ""
+            scope: "",
+            app_data: %{}
 
   @typedoc """
     Type that represents a Shopify App
@@ -20,7 +29,8 @@ defmodule ShopifyAPI.App do
           client_secret: String.t(),
           auth_redirect_uri: String.t(),
           nonce: String.t(),
-          scope: String.t()
+          scope: String.t(),
+          app_data: map()
         }
 
   require Logger

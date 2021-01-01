@@ -1,11 +1,13 @@
 defmodule ShopifyAPI.AuthToken do
-  @derive {Jason.Encoder, only: [:code, :app_name, :shop_name, :token, :timestamp, :plus]}
+  @derive {Jason.Encoder,
+           only: [:code, :app_name, :shop_name, :token, :timestamp, :plus, :app_data]}
   defstruct code: "",
             app_name: "",
             shop_name: "",
             token: "",
             timestamp: 0,
-            plus: false
+            plus: false,
+            app_data: %{}
 
   @typedoc """
       Type that represents a Shopify Auth Token with
@@ -19,7 +21,8 @@ defmodule ShopifyAPI.AuthToken do
           shop_name: String.t(),
           token: String.t(),
           timestamp: 0,
-          plus: boolean()
+          plus: boolean(),
+          app_data: map()
         }
 
   @spec create_key(t()) :: String.t()
