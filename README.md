@@ -43,13 +43,13 @@ If you want persisted Apps, Shops, and Tokens add configuration to your function
 ```elixir
 config :shopify_api, ShopifyAPI.AuthTokenServer,
   initializer: {MyApp.AuthToken, :init, []},
-  persistance: {MyApp.AuthToken, :save, []}
+  persistence: {MyApp.AuthToken, :save, []}
 config :shopify_api, ShopifyAPI.AppServer,
   initializer: {MyApp.ShopifyApp, :init, []},
-  persistance: {MyApp.ShopifyApp, :save, []}
+  persistence: {MyApp.ShopifyApp, :save, []}
 config :shopify_api, ShopifyAPI.ShopServer,
   initializer: {MyApp.Shop, :init, []},
-  persistance: {MyApp.Shop, :save, []}
+  persistence: {MyApp.Shop, :save, []}
 ```
 
 ## Installing this app in a Shop

@@ -1,6 +1,7 @@
 ## Unreleased
 
 - BREAKING: Remove `ShopifyAPI.REST.Tag` and associated tests
+- BREAKING: Noted spelling fix of persistance to persistence in v 0.10.0
 
 ## 0.11.0
 
@@ -26,6 +27,7 @@
 
 ## 0.10.0
 
+- BREAKING: `AppServer`, `ShopServer`, `AuthTokenServer` configuration had spelling mistake which was corrected, persistance became persistence.
 - BREAKING: Rename `ShopifyAPI.CacheSupervisor` to `ShopifyAPI.Supervisor`.
 - Upgrade `AppServer`, `ShopServer`, and `AuthTokenServer` to use ets-backed caching.
 - Change default Shopify API version to `2020-10`.
