@@ -99,12 +99,12 @@ defmodule ShopifyAPI.Bulk.Query do
     raise(ShopifyAPI.Bulk.InProgressError, "Shop: #{token.shop_name}, bulk id: #{bulk_id}")
   end
 
-  defp raise_error!(%HTTPoison.Response{body: %{"errors" => "Unavailable Shop"}} = msg, token) do
+  defp raise_error!(%HTTPoison.Response{status_code: 423} = msg, token) do
     Telemetry.send(@log_module, token, {:error, :shop_unavailable, msg})
     raise(ShopifyAPI.ShopUnavailableError, "Shop: #{token.shop_name}")
   end
 
-  defp raise_error!(%HTTPoison.Response{body: %{"errors" => "Not Found"}} = msg, token) do
+  defp raise_error!(%HTTPoison.Response{status_code: 404} = msg, token) do
     Telemetry.send(@log_module, token, {:error, :shop_not_found, msg})
     raise(ShopifyAPI.ShopNotFoundError, "Shop: #{token.shop_name}")
   end

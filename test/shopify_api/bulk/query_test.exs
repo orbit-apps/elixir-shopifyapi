@@ -126,6 +126,36 @@ defmodule ShopifyAPI.Bulk.QueryTest do
     end
   end
 
+  test "exec/1 with 404 response", %{
+    bypass: bypass,
+    shop: _shop,
+    auth_token: token,
+    options: options
+  } do
+    Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
+      Plug.Conn.resp(conn, 404, Jason.encode!(""))
+    end)
+
+    assert_raise ShopifyAPI.ShopNotFoundError, fn ->
+      Query.exec!(token, "fake_query", options)
+    end
+  end
+
+  test "exec/1 with 423 response", %{
+    bypass: bypass,
+    shop: _shop,
+    auth_token: token,
+    options: options
+  } do
+    Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
+      Plug.Conn.resp(conn, 423, Jason.encode!(""))
+    end)
+
+    assert_raise ShopifyAPI.ShopUnavailableError, fn ->
+      Query.exec!(token, "fake_query", options)
+    end
+  end
+
   @json1 %{"test" => "foo"}
   @json2 %{"test" => "bar fuzz"}
   @json3 %{"test" => "baz\nbuzz"}

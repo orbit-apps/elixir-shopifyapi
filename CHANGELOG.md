@@ -2,6 +2,7 @@
 
 - BREAKING: Remove `ShopifyAPI.REST.Tag` and associated tests
 - BREAKING: Noted spelling fix of persistance to persistence in v 0.10.0
+- Fix: match on status code instead of error string when raising custom bulk fetch errors
 
 ## 0.11.0
 
