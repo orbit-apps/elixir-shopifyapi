@@ -6,6 +6,7 @@ defmodule ShopifyAPI.Bulk.Query do
   @type bulk_query_response :: :no_objects | String.t()
   @stream_http_timeout 5_000
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
+  @shop_unavailable_status_codes [402, 423]
 
   @polling_query """
   {
@@ -99,7 +100,8 @@ defmodule ShopifyAPI.Bulk.Query do
     raise(ShopifyAPI.Bulk.InProgressError, "Shop: #{token.shop_name}, bulk id: #{bulk_id}")
   end
 
-  defp raise_error!(%HTTPoison.Response{status_code: 423} = msg, token) do
+  defp raise_error!(%HTTPoison.Response{status_code: code} = msg, token)
+       when code in @shop_unavailable_status_codes do
     Telemetry.send(@log_module, token, {:error, :shop_unavailable, msg})
     raise(ShopifyAPI.ShopUnavailableError, "Shop: #{token.shop_name}")
   end
