@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: also handle 403s when raising custom bulk fetch errors
+
 ## 0.12.1
 
 - Fix: properly handle both 402 and 423s when raising custom bulk fetch errors

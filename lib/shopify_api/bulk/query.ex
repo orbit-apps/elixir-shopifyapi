@@ -6,7 +6,14 @@ defmodule ShopifyAPI.Bulk.Query do
   @type bulk_query_response :: :no_objects | String.t()
   @stream_http_timeout 5_000
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
-  @shop_unavailable_status_codes [402, 423]
+
+  # According to Shopify's documentation, 403 is supposed to be returned when requesting a
+  # resource while lacking appropriate scopes, which is the case for the REST API. For the
+  # GraphQL API, when you request a resource while lacking appropriate scopes, a 200 is returned
+  # with an "ACCESS_DENIED" error message. We are seeing GraphQL responses with both 402 and 403
+  # statuses with an "Unavailable Shop" error message
+  # https://shopify.dev/concepts/about-apis/response-codes
+  @shop_unavailable_status_codes [402, 403, 423]
 
   @polling_query """
   {
