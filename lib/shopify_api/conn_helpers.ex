@@ -1,9 +1,10 @@
 defmodule ShopifyAPI.ConnHelpers do
   @moduledoc false
-  require Logger
 
   alias Plug.Conn
   alias ShopifyAPI.{App, AppServer, AuthTokenServer, Security, Shop, ShopServer}
+
+  require Logger
 
   @shopify_shop_header "x-shopify-shop-domain"
   @shopify_topics_header "x-shopify-topic"

@@ -20,9 +20,10 @@ defmodule ShopifyAPI.Throttled do
   request will be retried after a delay and re-check of the ets table, to a
   maximum of 10 total attempts (this is configurable).
   """
-  require Logger
 
   alias ShopifyAPI.RateLimiting
+
+  require Logger
 
   @request_max_tries 10
 

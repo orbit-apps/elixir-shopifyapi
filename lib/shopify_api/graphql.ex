@@ -3,11 +3,11 @@ defmodule ShopifyAPI.GraphQL do
   Interface to Shopify's GraphQL Admin API.
   """
 
-  require Logger
-
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.GraphQL.{JSONParseError, Response, Telemetry}
   alias ShopifyAPI.JSONSerializer
+
+  require Logger
 
   @default_graphql_version "2020-10"
 

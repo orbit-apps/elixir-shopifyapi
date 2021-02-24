@@ -2,6 +2,12 @@ defmodule ShopifyAPI.App do
   @moduledoc """
     ShopifyAPI.App contains logic and a struct for representing a Shopify App.
   """
+
+  alias ShopifyAPI.AuthRequest
+  alias ShopifyAPI.JSONSerializer
+
+  require Logger
+
   @derive {Jason.Encoder,
            only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
   defstruct name: "",
@@ -22,10 +28,6 @@ defmodule ShopifyAPI.App do
           nonce: String.t(),
           scope: String.t()
         }
-
-  require Logger
-  alias ShopifyAPI.AuthRequest
-  alias ShopifyAPI.JSONSerializer
 
   @doc """
     Generates the install URL for an App and a Shop.
@@ -72,9 +74,11 @@ defmodule ShopifyAPI.AuthRequest do
     AuthRequest.post/3 contains logic to request AuthTokens from Shopify given an App,
     Shop domain, and the auth code from the App install.
   """
-  require Logger
 
   alias ShopifyAPI.JSONSerializer
+
+  require Logger
+
   @headers [{"Content-Type", "application/json"}]
 
   defp access_token_url(domain), do: "#{ShopifyAPI.transport()}#{domain}/admin/oauth/access_token"

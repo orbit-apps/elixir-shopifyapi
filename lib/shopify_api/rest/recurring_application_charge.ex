@@ -3,9 +3,10 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
   ShopifyAPI REST API Recurring Application Charge resource
   """
 
-  require Logger
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Create a recurring application charge.

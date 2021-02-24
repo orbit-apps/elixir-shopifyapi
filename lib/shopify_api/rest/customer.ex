@@ -3,9 +3,10 @@ defmodule ShopifyAPI.REST.Customer do
   Shopify REST API Customer resource
   """
 
-  require Logger
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Returns all the customers.

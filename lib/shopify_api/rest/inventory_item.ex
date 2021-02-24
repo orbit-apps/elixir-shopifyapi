@@ -2,9 +2,11 @@ defmodule ShopifyAPI.REST.InventoryItem do
   @moduledoc """
   ShopifyAPI REST API InventoryItem resource
   """
-  require Logger
+
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Return a list of inventory items.

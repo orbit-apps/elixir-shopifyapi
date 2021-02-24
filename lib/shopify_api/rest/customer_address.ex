@@ -3,9 +3,10 @@ defmodule ShopifyAPI.REST.CustomerAddress do
   Shopify REST API Customer Address resources.
   """
 
-  require Logger
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Return a list of all addresses for a customer.

@@ -2,6 +2,7 @@ defmodule ShopifyAPI.GraphQL.Telemetry do
   @moduledoc """
   Helper module handle instrumentation with telemetry
   """
+
   alias HTTPoison.Error
   alias ShopifyAPI.GraphQL.Response
 

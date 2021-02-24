@@ -4,12 +4,14 @@ defmodule ShopifyAPI.Plugs.Webhook do
   get fired off to the :shopify_api :webhook_filter {module, function, _} setting getting passed a
   ShopifyAPI.EventPipe.Event.t.
   """
+
   import Plug.Conn
-  require Logger
 
   alias Plug.Conn
   alias ShopifyAPI.{ConnHelpers, JSONSerializer, Security}
   alias ShopifyAPI.EventPipe.Event
+
+  require Logger
 
   def init(opts), do: opts
 

@@ -2,9 +2,11 @@ defmodule ShopifyAPI.REST.Location do
   @moduledoc """
   ShopifyAPI REST API Location resource
   """
-  require Logger
+
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Return a list of locations.

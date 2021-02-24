@@ -3,10 +3,10 @@ defmodule ShopifyAPI.RateLimiting.GraphQLTracker do
   Handles Tracking of GraphQL API throttling and when the API will be available for a request.
   """
 
+  @behaviour ShopifyAPI.RateLimiting.Tracker
+
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.RateLimiting
-
-  @behaviour RateLimiting.Tracker
 
   @name :shopify_api_graphql_availability_tracker
 

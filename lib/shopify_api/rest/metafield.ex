@@ -1,16 +1,16 @@
 defmodule ShopifyAPI.REST.Metafield do
-  @enforce_keys [:key, :namespace, :value, :value_type]
-  defstruct key: "",
-            namespace: "",
-            value: 0,
-            value_type: ""
-
   @moduledoc """
   ShopifyAPI REST API Metafield resource
   """
 
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  @enforce_keys [:key, :namespace, :value, :value_type]
+  defstruct key: "",
+            namespace: "",
+            value: 0,
+            value_type: ""
 
   @doc """
   Get a list of all metafields that belong to a resource.

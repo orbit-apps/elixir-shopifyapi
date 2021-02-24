@@ -2,9 +2,10 @@ defmodule ShopifyAPI.RateLimiting.RESTTracker do
   @moduledoc """
   Handles Tracking of API throttling and when the API will be available for a request.
   """
-  alias ShopifyAPI.RateLimiting
 
-  @behaviour RateLimiting.Tracker
+  @behaviour ShopifyAPI.RateLimiting.Tracker
+
+  alias ShopifyAPI.RateLimiting
 
   @name :shopify_api_rest_availability_tracker
 

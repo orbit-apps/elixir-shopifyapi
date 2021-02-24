@@ -22,8 +22,10 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
   ```
   """
+
   import Plug.Conn
   import ShopifyAPI.ConnHelpers
+
   require Logger
 
   @session_key :shopify_api_admin_authenticated

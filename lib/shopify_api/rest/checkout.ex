@@ -3,9 +3,10 @@ defmodule ShopifyAPI.REST.Checkout do
   Shopify REST API Checkout resources.
   """
 
-  require Logger
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Return a single checkout resource.

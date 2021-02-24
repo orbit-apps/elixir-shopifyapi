@@ -3,9 +3,10 @@ defmodule ShopifyAPI.REST.MarketingEvent do
   ShopifyAPI REST API MarketingEvent resource
   """
 
-  require Logger
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.REST
+
+  require Logger
 
   @doc """
   Return a list of all marketing events.

@@ -7,10 +7,11 @@ defmodule ShopifyAPI.REST.Request do
   """
 
   use HTTPoison.Base
-  require Logger
 
   alias HTTPoison.Error
   alias ShopifyAPI.{AuthToken, JSONSerializer, RateLimiting, Throttled}
+
+  require Logger
 
   @default_api_version "2020-10"
 

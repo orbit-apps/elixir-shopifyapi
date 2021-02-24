@@ -1,8 +1,8 @@
 defmodule ShopifyAPI.Bulk.Cancel do
-  require Logger
-
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.Bulk.Query
+
+  require Logger
 
   @polling_timeout_message "BulkFetch timed out before completion"
   @auto_cancel_sleep_duration 1_000

@@ -1,10 +1,11 @@
 defmodule ShopifyAPI.Router do
   use Plug.Router
-  require Logger
 
   alias Plug.Conn
   alias ShopifyAPI.{App, AuthToken, AuthTokenServer, ConnHelpers}
   alias ShopifyAPI.Shop
+
+  require Logger
 
   plug(:match)
   plug(:dispatch)
