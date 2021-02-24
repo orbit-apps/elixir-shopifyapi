@@ -26,8 +26,8 @@ jobs:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
 
-      - name: Deps get
-        run: mix deps.get
+      - name: Deps get and check unused
+        run: mix deps.get && mix deps.unlock --check-unused
 
       - name: Check Credo
         run: mix credo
