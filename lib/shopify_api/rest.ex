@@ -11,6 +11,8 @@ defmodule ShopifyAPI.REST do
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.REST.Request
 
+  @default_pagination Application.compile_env(:shopify_api, :pagination, :auto)
+
   @doc """
   Underlying utility retrieval function. The options passed affect both the
   return value and, ultimately, the number of requests made to Shopify.
@@ -26,18 +28,20 @@ defmodule ShopifyAPI.REST do
   @spec get(AuthToken.t(), path :: String.t(), keyword(), keyword()) ::
           {:ok, %{required(String.t()) => [map()]}} | Enumerable.t()
   def get(%AuthToken{} = auth, path, params \\ [], options \\ []) do
-    case pagination(options) do
+    {pagination, opts} = Keyword.pop(options, :pagination, @default_pagination)
+
+    case pagination do
       :none ->
-        with {:ok, response} <- Request.perform(auth, :get, path, "", params) do
+        with {:ok, response} <- Request.perform(auth, :get, path, "", params, opts) do
           {:ok, fetch_body(response)}
         end
 
       :stream ->
-        Request.stream(auth, path, params)
+        Request.stream(auth, path, params, opts)
 
       :auto ->
         auth
-        |> Request.stream(path, params)
+        |> Request.stream(path, params, opts)
         |> collect_results()
     end
   end
@@ -82,10 +86,5 @@ defmodule ShopifyAPI.REST do
 
   defp fetch_body(http_response) do
     Map.fetch!(http_response, :body)
-  end
-
-  @spec pagination(keyword) :: atom | nil
-  defp pagination(options) do
-    Keyword.get(options, :pagination, Application.get_env(:shopify_api, :pagination, :auto))
   end
 end

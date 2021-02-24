@@ -63,9 +63,10 @@ defmodule ShopifyAPI.REST.Request do
     end
   end
 
-  @spec stream(AuthToken.t(), String.t(), keyword()) :: Enumerable.t()
-  def stream(auth, path, params) do
+  @spec stream(AuthToken.t(), String.t(), keyword(), keyword()) :: Enumerable.t()
+  def stream(auth, path, params, options \\ []) do
     headers = headers(auth)
+    opts = Keyword.put_new(options, :token, auth)
 
     start_fun = fn -> auth |> url(path) |> add_params_to_url(params) end
 
@@ -73,7 +74,7 @@ defmodule ShopifyAPI.REST.Request do
       url when is_binary(url) ->
         shopify_response =
           Throttled.request(
-            fn -> logged_request(:get, url, "", headers, token: auth) end,
+            fn -> logged_request(:get, url, "", headers, opts) end,
             auth,
             RateLimiting.RESTTracker
           )
