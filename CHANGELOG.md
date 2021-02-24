@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: Allow options to be passed to HTTPoison when making GET requests through `ShopifyAPI.REST`.
+
 ## 0.12.2
 
 - Fix: also handle 403s when raising custom bulk fetch errors
