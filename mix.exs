@@ -42,7 +42,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:bypass, "~> 2.1", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test]},
       {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.23.0", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.24.0", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
       {:stream_data, "~> 0.5.0", only: :test},
       # Everything else
