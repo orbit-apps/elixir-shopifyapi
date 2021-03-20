@@ -12,14 +12,29 @@ defmodule ShopifyAPI.REST.RecurringApplicationCharge do
 
   ## Example
 
+      iex> ShopifyAPI.REST.RecurringApplicationCharge.create(auth, %{recurring_application_charge: map()})
+      {:ok, %{} = recurring_application_charge}
+
+        or
+
       iex> ShopifyAPI.REST.RecurringApplicationCharge.create(auth, map)
       {:ok, %{} = recurring_application_charge}
+
   """
   def create(
         %AuthToken{} = auth,
         %{recurring_application_charge: %{}} = recurring_application_charge
       ) do
     REST.post(auth, "recurring_application_charges.json", recurring_application_charge)
+  end
+  
+  def create(
+        %AuthToken{} = auth,
+        %{} = recurring_application_charge
+      ) do
+    REST.post(auth, "recurring_application_charges.json", %{
+      recurring_application_charge: recurring_application_charge
+    })
   end
 
   @doc """
