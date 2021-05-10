@@ -118,6 +118,11 @@ defmodule ShopifyAPI.Bulk.Query do
     raise(ShopifyAPI.ShopNotFoundError, "Shop: #{token.shop_name}")
   end
 
+  defp raise_error!(%HTTPoison.Response{status_code: 401} = msg, token) do
+    Telemetry.send(@log_module, token, {:error, :shop_auth, msg})
+    raise(ShopifyAPI.ShopAuthError, "Shop: #{token.shop_name}")
+  end
+
   defp raise_error!(msg, token) do
     Telemetry.send(@log_module, token, {:error, :generic, msg})
     raise(ShopifyAPI.Bulk.QueryError, inspect(msg))
