@@ -92,11 +92,6 @@ defmodule ShopifyAPI.ConnHelpers do
   end
 
   @doc false
-  def verify_nonce(%App{nonce: nonce}, params) do
-    nonce == params["state"]
-  end
-
-  @doc false
   @spec verify_params_with_hmac(App.t(), map()) :: boolean()
   def verify_params_with_hmac(%App{client_secret: secret}, params) do
     params["hmac"] ==
