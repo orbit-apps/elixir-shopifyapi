@@ -33,6 +33,7 @@ jobs:
         run: mix credo
 
       - name: Check Formatting
+        if: ${{ matrix.elixir != '1.11.4' }}
         run: mix format --check-formatted
 
       - name: Run Tests

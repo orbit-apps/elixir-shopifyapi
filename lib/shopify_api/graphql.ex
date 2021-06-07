@@ -116,9 +116,7 @@ defmodule ShopifyAPI.GraphQL do
           currently_available: currently_available,
           maximum_available: maximum_available
         } ->
-          "#{@log_module} for #{shop}:#{app} received #{status} in #{div(time, 1_000)}ms [cost #{
-            actual_cost
-          } bucket #{currently_available}/#{maximum_available}]"
+          "#{@log_module} for #{shop}:#{app} received #{status} in #{div(time, 1_000)}ms [cost #{actual_cost} bucket #{currently_available}/#{maximum_available}]"
       end
     end)
   end
