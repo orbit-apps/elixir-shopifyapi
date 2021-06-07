@@ -7,7 +7,7 @@ defmodule ShopifyAPI.RateLimiting.RESTCallLimits do
   @over_limit_status_code 429
   # API Overlimit error code
   @spec limit_header_or_status_code(any) :: nil | :over_limit
-  def limit_header_or_status_code(%{status_code: @over_limit_status_code()}),
+  def limit_header_or_status_code(%{status_code: @over_limit_status_code}),
     do: :over_limit
 
   def limit_header_or_status_code(%{headers: headers}),
