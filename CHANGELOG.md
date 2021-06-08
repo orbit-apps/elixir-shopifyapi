@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: Nonce check on install when Shopify does not pass a nonce to the endpoint.
+
 ## 0.12.3
 
 - Fix: Allow options to be passed to HTTPoison when making GET requests through `ShopifyAPI.REST`.

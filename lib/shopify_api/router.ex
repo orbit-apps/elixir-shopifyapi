@@ -22,7 +22,7 @@ defmodule ShopifyAPI.Router do
     Logger.info("Authorized #{ConnHelpers.shop_domain(conn)}")
 
     with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
-         true <- ConnHelpers.verify_nonce(app, conn.query_params),
+         true <- verify_nonce(app, conn.query_params),
          true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params),
          {:ok, auth_token} <- request_auth_token(conn, app) do
       Shop.post_install(auth_token)
@@ -39,6 +39,14 @@ defmodule ShopifyAPI.Router do
         |> Conn.resp(404, "Not Found.")
         |> Conn.halt()
     end
+  end
+
+  defp verify_nonce(%_{nonce: nonce}, %{"state" => state}), do: nonce == state
+
+  # Shopify doesn't pass the nonce back if the install was initiated from the partners dashboard.
+  defp verify_nonce(_, _) do
+    Logger.info("No nonce passed to install most likely dev install, skipping check")
+    true
   end
 
   defp request_auth_token(conn, app) do
