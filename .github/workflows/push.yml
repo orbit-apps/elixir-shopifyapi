@@ -36,14 +36,7 @@ jobs:
         run: mix format --check-formatted
 
       - name: Run Tests
-        run: mix do compile --warnings-as-errors, coveralls.json, test
-
-      - name: Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          yml: ./codecov.yml
-          file: ./cover/excoveralls.json
+        run: mix do compile --warnings-as-errors, test
 
       - name: Dialyzer
         run: mix dialyzer --halt-exit-status
