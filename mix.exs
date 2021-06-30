@@ -14,7 +14,6 @@ defmodule Plug.ShopifyAPI.MixProject do
         plt_add_apps: [:mix, :ex_unit],
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ],
-      test_coverage: [tool: ExCoveralls],
       package: package(),
 
       # Ex_Doc configuration
@@ -43,7 +42,6 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:credo, "~> 1.0", only: [:dev, :test]},
       {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.24.0", only: [:dev], runtime: false},
-      {:excoveralls, ">= 0.0.0", only: [:dev, :test]},
       {:stream_data, "~> 0.5.0", only: :test},
       # Everything else
       {:gen_stage, "~> 1.0"},
