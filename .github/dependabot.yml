@@ -1,18 +1,11 @@
 version: 2
-registries:
-  hex-organization-oban:
-    type: hex-organization
-    organization: oban
-    key: "${{secrets.HEX_ORGANIZATION_OBAN_KEY}}"
-
 updates:
-- package-ecosystem: mix
-  directory: "/"
-  schedule:
-    interval: daily
-  ignore:
-  - dependency-name: poison
-    versions:
-    - "> 3.1.0"
-  registries:
-  - hex-organization-oban
+  - package-ecosystem: mix
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
