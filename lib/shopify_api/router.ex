@@ -21,23 +21,28 @@ defmodule ShopifyAPI.Router do
   get "/authorized/:app" do
     Logger.info("Authorized #{ConnHelpers.shop_domain(conn)}")
 
-    with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
-         true <- verify_nonce(app, conn.query_params),
-         true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params),
-         {:ok, auth_token} <- request_auth_token(conn, app) do
-      Shop.post_install(auth_token)
-      AuthTokenServer.set(auth_token)
-
-      conn
-      |> Conn.resp(200, "Authenticated.")
-      |> Conn.halt()
-    else
-      res ->
-        Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
+    if auth_code_present?(conn) do
+      with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
+           true <- verify_nonce(app, conn.query_params),
+           true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params),
+           {:ok, auth_token} <- request_auth_token(conn, app) do
+        Shop.post_install(auth_token)
+        AuthTokenServer.set(auth_token)
 
         conn
-        |> Conn.resp(404, "Not Found.")
+        |> Conn.resp(200, "Authenticated.")
         |> Conn.halt()
+      else
+        res ->
+          Logger.info("#{__MODULE__} failed authorized with: #{inspect(res)}")
+
+          conn
+          |> Conn.resp(404, "Not Found.")
+          |> Conn.halt()
+      end
+    else
+      # No auth code given, redirect to shopify's app install page
+      install_app(conn)
     end
   end
 
@@ -88,4 +93,6 @@ defmodule ShopifyAPI.Router do
         |> Conn.halt()
     end
   end
+
+  defp auth_code_present?(conn), do: ConnHelpers.auth_code(conn) != nil
 end
