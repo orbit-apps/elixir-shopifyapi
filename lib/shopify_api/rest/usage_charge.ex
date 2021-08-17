@@ -43,9 +43,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
       ) do
     REST.get(
       auth,
-      "recurring_application_charges/#{recurring_application_charge_id}/usage_charges/#{
-        usage_charge_id
-      }.json",
+      "recurring_application_charges/#{recurring_application_charge_id}/usage_charges/#{usage_charge_id}.json",
       params,
       Keyword.merge([pagination: :none], options)
     )

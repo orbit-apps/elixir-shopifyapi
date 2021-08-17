@@ -183,9 +183,7 @@ defmodule ShopifyAPI.REST.Request do
       module = module_name()
       method = method |> to_string() |> String.upcase()
 
-      "#{module} #{method} #{url} #{app} #{shop} (#{remaining_calls(response)}) [#{
-        div(time, 1_000)
-      }ms]"
+      "#{module} #{method} #{url} #{app} #{shop} (#{remaining_calls(response)}) [#{div(time, 1_000)}ms]"
     end)
   end
 
