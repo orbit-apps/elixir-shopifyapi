@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.12.5
+
+- Elixir 1.12 compatibility
+
 ## 0.12.4
 
 - Fix: Nonce check on install when Shopify does not pass a nonce to the endpoint.
