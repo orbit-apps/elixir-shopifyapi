@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Dependency updates: telemetry, ex_doc, plug_cowboy, gen_stage
+
 ## 0.12.5
 
 - Elixir 1.12 compatibility
