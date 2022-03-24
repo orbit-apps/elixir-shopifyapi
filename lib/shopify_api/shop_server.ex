@@ -17,10 +17,10 @@ defmodule ShopifyAPI.ShopServer do
   @spec count() :: integer()
   def count, do: :ets.info(@table, :size)
 
-  @spec set(Shop.t()) :: :ok
-  def set(%Shop{domain: domain} = shop) do
+  @spec set(Shop.t(), boolean()) :: :ok
+  def set(%Shop{domain: domain} = shop, should_persist \\ false) do
     :ets.insert(@table, {domain, shop})
-    do_persist(shop)
+    if should_persist, do: do_persist(shop)
     :ok
   end
 
@@ -41,7 +41,7 @@ defmodule ShopifyAPI.ShopServer do
   @impl GenServer
   def init(:ok) do
     create_table!()
-    for %Shop{} = shop <- do_initialize(), do: set(shop)
+    for %Shop{} = shop <- do_initialize(), do: set(shop, false)
     {:ok, :no_state}
   end
 
