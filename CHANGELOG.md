@@ -1,5 +1,7 @@
 ## Unreleased
 
+- New ShopServer.get_by_client_id/1
+
 ## 0.12.6
 
 - Dependency updates: telemetry, ex_doc, plug_cowboy, gen_stage

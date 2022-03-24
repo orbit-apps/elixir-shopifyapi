@@ -35,6 +35,13 @@ defmodule ShopifyAPI.AppServer do
     end
   end
 
+  def get_by_client_id(client_id) do
+    case :ets.match_object(@table, {:_, %{client_id: client_id}}) do
+      [{_, app}] -> {:ok, app}
+      [] -> :error
+    end
+  end
+
   ## GenServer Callbacks
 
   def start_link(_opts) do
