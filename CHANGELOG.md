@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Fix: Don't persist Shop on ShopServer init
 - New ShopServer.get_by_client_id/1
 
 ## 0.12.6
