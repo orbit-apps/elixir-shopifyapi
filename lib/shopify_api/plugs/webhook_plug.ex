@@ -156,7 +156,7 @@ defmodule ShopifyAPI.WebhookPlug do
     shopify_hmac = get_hmac!(conn)
 
     with {:ok, body, conn} <- read_body(conn) do
-      payload_hmac = Base.encode64(:crypto.hmac(:sha256, secret, body))
+      payload_hmac = ShopifyAPI.Security.base64_sha256_hmac(body, secret)
 
       if secure_compare(shopify_hmac, payload_hmac) do
         {:ok, conn, JSON.decode!(body)}
