@@ -27,10 +27,11 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   require Logger
 
   @session_key :shopify_api_admin_authenticated
+  @defaults [shopify_mount_path: "/shop"]
 
-  def init(opts), do: opts
+  def init(opts), do: Keyword.merge(opts, @defaults)
 
-  def call(conn, _options) do
+  def call(conn, options) do
     if get_session(conn, @session_key) do
       # rehydrate the conn.assigns for the app, shop and auth token.
       conn
@@ -38,11 +39,11 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       |> assign_shop(get_session(conn, :shop_name))
       |> assign_auth_token()
     else
-      do_authentication(conn)
+      do_authentication(conn, options)
     end
   end
 
-  defp do_authentication(conn) do
+  defp do_authentication(conn, options) do
     with {:ok, app} <- fetch_shopify_app(conn),
          true <- verify_params_with_hmac(app, conn.query_params) do
       # store the App and Shop name in the session for use on other page views
@@ -56,17 +57,20 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
     else
       false ->
         Logger.info("#{__MODULE__} failed hmac validation")
-        send_unauthorized_response(conn)
+
+        conn
+        |> delete_session(@session_key)
+        |> resp(401, "Not Authorized.")
+        |> halt()
 
       :error ->
-        send_unauthorized_response(conn)
-    end
-  end
+        install_url =
+          options[:shopify_mount_path] <> "/install?app=up_sell&shop=" <> shop_domain(conn)
 
-  defp send_unauthorized_response(conn) do
-    conn
-    |> delete_session(@session_key)
-    |> resp(401, "Not Authorized.")
-    |> halt()
+        conn
+        |> resp(:found, "")
+        |> put_resp_header("location", install_url)
+        |> halt()
+    end
   end
 end
