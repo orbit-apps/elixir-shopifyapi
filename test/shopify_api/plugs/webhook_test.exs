@@ -1,9 +1,9 @@
-defmodule ShopifyAPI.WebhookPlugTest do
+defmodule ShopifyAPI.Plugs.WebhookTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
   alias ShopifyAPI.{App, AppServer, Shop, ShopServer}
-  alias ShopifyAPI.WebhookPlug
+  alias ShopifyAPI.Plugs.Webhook
 
   @secret "new_secret"
 
@@ -32,7 +32,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
     end
   end
 
-  @opts WebhookPlug.init(prefix: "/shopify/webhooks/", callback: {MockExecutor, :call, []})
+  @opts Webhook.init(prefix: "/shopify/webhooks/", callback: {MockExecutor, :call, []})
 
   test "ignores non-webhook requests" do
     ignorables = [
@@ -43,7 +43,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
     ]
 
     for req <- ignorables do
-      conn = WebhookPlug.call(req, @opts)
+      conn = Webhook.call(req, @opts)
       assert conn.status == nil
       refute conn.halted
     end
@@ -51,7 +51,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
 
   test "ignores requests lacking required webhook headers" do
     req = conn(:post, "/shopify/webhooks", [])
-    conn = WebhookPlug.call(req, @opts)
+    conn = Webhook.call(req, @opts)
     assert conn.status == nil
     refute conn.halted
   end
@@ -67,7 +67,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
       |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac)
-      |> WebhookPlug.call(@opts)
+      |> Webhook.call(@opts)
 
     assert_received {:webhook, @app, @shop, "orders/create", ^payload}
 
@@ -88,7 +88,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac <> "nope")
 
-    conn = WebhookPlug.call(req, @opts)
+    conn = Webhook.call(req, @opts)
 
     assert conn.halted
     assert conn.status == 500
@@ -98,7 +98,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
 
   test "responds with an error if the handler returns an error" do
     opts =
-      WebhookPlug.init(
+      Webhook.init(
         prefix: "/shopify/webhooks/",
         callback: {BadExecutor, :call, []}
       )
@@ -114,7 +114,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac)
 
-    conn = WebhookPlug.call(req, opts)
+    conn = Webhook.call(req, opts)
 
     assert conn.halted
     assert conn.status == 500
@@ -133,7 +133,7 @@ defmodule ShopifyAPI.WebhookPlugTest do
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac <> "nope")
 
-    conn = WebhookPlug.call(req, @opts)
+    conn = Webhook.call(req, @opts)
 
     assert conn.halted
     assert conn.status == 500
@@ -143,9 +143,17 @@ defmodule ShopifyAPI.WebhookPlugTest do
 
   # Encodes an object as JSON, generating a HMAC string for integrity verification.
   # Returns a two-tuple containing the Base64-encoded HMAC and JSON payload string.
-  defp encode_with_hmac(payload) when is_map(payload) do
-    json_payload = Jason.encode!(payload)
-    hmac = Base.encode64(:crypto.hmac(:sha256, @secret, json_payload))
-    {hmac, json_payload}
+  if System.otp_release() >= "22" do
+    defp encode_with_hmac(payload) when is_map(payload) do
+      json_payload = Jason.encode!(payload)
+      hmac = Base.encode64(:crypto.mac(:hmac, :sha256, @secret, json_payload))
+      {hmac, json_payload}
+    end
+  else
+    defp encode_with_hmac(payload) when is_map(payload) do
+      json_payload = Jason.encode!(payload)
+      hmac = Base.encode64(:crypto.hmac(:sha256, @secret, json_payload))
+      {hmac, json_payload}
+    end
   end
 end

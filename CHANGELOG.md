@@ -4,9 +4,9 @@
 - Fix: Don't persist Shop on ShopServer init
 - Admin Authenication Plug now redirects to install if shop is not found
 - New ShopServer.get_by_client_id/1
-- BREAKING: Replace `ShopifyAPI.Plugs.Webhook` with `ShopifyAPI.WebhookPlug`.
+- BREAKING: Replace `ShopifyAPI.Plugs.Webhook` with new implementation.
   + This version does not use the `Event` struct, and is configured differently.
-  Please see the docs for `ShopifyAPI.WebhookPlug` for more details.
+  Please see the docs for `ShopifyAPI.Plugs.Webhook` for more details.
 
 ## 0.12.6
 

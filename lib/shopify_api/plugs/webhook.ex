@@ -1,4 +1,4 @@
-defmodule ShopifyAPI.WebhookPlug do
+defmodule ShopifyAPI.Plugs.Webhook do
   @moduledoc """
   A Plug to handle incoming webhooks from Shopify.
 
@@ -43,12 +43,12 @@ defmodule ShopifyAPI.WebhookPlug do
   ## Example Installations
 
       # No default app provided -- make sure to append the app name to webhook URLs in Shopify.
-      plug ShopifyAPI.WebhookPlug,
+      plug ShopifyAPI.Plugs.Webhook,
            prefix: "/shopify/webhooks/",
            callback: {WebhookHandler, :handle_webhook, []}
 
       # Default app provided -- if app name is not present in URL, defaults to "reporting-tool".
-      plug ShopifyAPI.WebhookPlug,
+      plug ShopifyAPI.Plugs.Webhook,
            prefix: "/webhook",
            app_name: "reporting-tool",
            callback: {WebhookHandler, :handle_webhook, []}

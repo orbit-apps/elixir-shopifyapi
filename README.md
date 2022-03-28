@@ -34,10 +34,10 @@ scope "/shop" do
 end
 ```
 
-To handle incoming webhooks from Shopify, add the `ShopifyAPI.WebhookPlug` to your `Endpoint` module (before the JSON parser configuration):
+To handle incoming webhooks from Shopify, add the `ShopifyAPI.Plugs.Webhook` to your `Endpoint` module (before the JSON parser configuration):
 
 ```elixir
-plug ShopifyAPI.WebhookPlug,
+plug ShopifyAPI.Plugs.Webhook,
   app_name: "my-app-name",
   prefix: "/shopify/webhook",
   callback: {WebhookHandler, :handle_webhook, []}
@@ -102,10 +102,10 @@ end
 
 ## Webhooks
 
-To set up your app to receive webhooks, first you'll need to add `ShopifyAPI.WebhookPlug` to your `Endpoint` module:
+To set up your app to receive webhooks, first you'll need to add `ShopifyAPI.Plugs.Webhook` to your `Endpoint` module:
 
 ```elixir
-plug ShopifyAPI.WebhookPlug,
+plug ShopifyAPI.Plugs.Webhook,
   app_name: "my-app-name",
   prefix: "/shopify/webhook",
   callback: {WebhookHandler, :handle_webhook, []}
