@@ -22,55 +22,96 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
   ```
   """
-  import Plug.Conn
-  import ShopifyAPI.ConnHelpers
+  alias Plug.Conn
   require Logger
 
+  @shopify_shop_header "x-shopify-shop-domain"
   @session_key :shopify_api_admin_authenticated
   @defaults [shopify_mount_path: "/shop"]
 
   def init(opts), do: Keyword.merge(opts, @defaults)
 
   def call(conn, options) do
-    if get_session(conn, @session_key) do
-      # rehydrate the conn.assigns for the app, shop and auth token.
-      conn
-      |> assign_app(get_session(conn, :app_name))
-      |> assign_shop(get_session(conn, :shop_name))
-      |> assign_auth_token()
+    if Conn.get_session(conn, @session_key) do
+      rehydrate_session(conn)
     else
       do_authentication(conn, options)
     end
   end
 
+  defp rehydrate_session(conn) do
+    with app_name <- Conn.get_session(conn, :app_name),
+         myshopify_domain <- Conn.get_session(conn, :shop_domain),
+         {:ok, app} <- ShopifyAPI.AppServer.get(app_name),
+         {:ok, shop} <- ShopifyAPI.ShopServer.get(myshopify_domain),
+         {:ok, auth_token} <- ShopifyAPI.AuthTokenServer.get(myshopify_domain, app_name) do
+      conn
+      |> assign_app(app)
+      |> assign_shop(shop)
+      |> assign_auth_token(auth_token)
+    else
+      error ->
+        Logger.debug("Failed to rehydrate session #{inspect(error)}")
+
+        conn
+        |> Conn.delete_session(@session_key)
+        |> Conn.resp(401, "Not Authorized.")
+        |> Conn.halt()
+    end
+  end
+
   defp do_authentication(conn, options) do
-    with {:ok, app} <- fetch_shopify_app(conn),
-         true <- verify_params_with_hmac(app, conn.query_params) do
+    with app_name <- conn.params["app"] || List.last(conn.path_info),
+         {:ok, app} <- ShopifyAPI.AppServer.get(app_name),
+         true <- valid_hmac?(app, conn.query_params),
+         myshopify_domain <- shop_domain_from_conn(conn),
+         {:ok, shop} <- ShopifyAPI.ShopServer.get(myshopify_domain),
+         {:ok, auth_token} <- ShopifyAPI.AuthTokenServer.get(myshopify_domain, app_name) do
       # store the App and Shop name in the session for use on other page views
       conn
       |> assign_app(app)
-      |> assign_shop()
-      |> assign_auth_token()
-      |> put_session(:app_name, app_name(conn))
-      |> put_session(:shop_domain, shop_domain(conn))
-      |> put_session(@session_key, true)
+      |> assign_shop(shop)
+      |> assign_auth_token(auth_token)
+      |> Conn.put_session(:app_name, app_name)
+      |> Conn.put_session(:shop_domain, myshopify_domain)
+      |> Conn.put_session(@session_key, true)
     else
       false ->
         Logger.info("#{__MODULE__} failed hmac validation")
 
         conn
-        |> delete_session(@session_key)
-        |> resp(401, "Not Authorized.")
-        |> halt()
+        |> Conn.delete_session(@session_key)
+        |> Conn.resp(401, "Not Authorized.")
+        |> Conn.halt()
 
-      :error ->
+      _ ->
         install_url =
-          options[:shopify_mount_path] <> "/install?app=up_sell&shop=" <> shop_domain(conn)
+          options[:shopify_mount_path] <>
+            "/install?app=up_sell&shop=" <> shop_domain_from_conn(conn)
 
         conn
-        |> resp(:found, "")
-        |> put_resp_header("location", install_url)
-        |> halt()
+        |> Conn.resp(:found, "")
+        |> Conn.put_resp_header("location", install_url)
+        |> Conn.halt()
     end
+  end
+
+  defp assign_app(conn, app), do: Conn.assign(conn, :app, app)
+  defp assign_shop(conn, shop), do: Conn.assign(conn, :shop, shop)
+  defp assign_auth_token(conn, auth_token), do: Conn.assign(conn, :auth_token, auth_token)
+
+  defp shop_domain_from_conn(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
+
+  defp shop_domain_from_header(conn),
+    do: conn |> Conn.get_req_header(@shopify_shop_header) |> List.first()
+
+  defp valid_hmac?(%ShopifyAPI.App{client_secret: secret}, params) do
+    params["hmac"] ==
+      params
+      |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.map(fn {key, value} -> key <> "=" <> value end)
+      |> Enum.join("&")
+      |> ShopifyAPI.Security.base16_sha256_hmac(secret)
   end
 end
