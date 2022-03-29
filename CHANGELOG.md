@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Refactor: removed AdminAuthenticator's use of ConnHelpers
 - Fix: Don't persist Shop on ShopServer init
 - Admin Authenication Plug now redirects to install if shop is not found
 - New ShopServer.get_by_client_id/1
