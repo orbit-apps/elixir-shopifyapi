@@ -34,9 +34,13 @@ scope "/shop" do
 end
 ```
 
-If you want to be able to handle webhooks you need to add this to your endpoint before the parsers section
+To handle incoming webhooks from Shopify, add the `ShopifyAPI.Plugs.Webhook` to your `Endpoint` module (before the JSON parser configuration):
+
 ```elixir
-plug(ShopifyAPI.Plugs.Webhook, mount: "/shop/webhook")
+plug ShopifyAPI.Plugs.Webhook,
+  app_name: "my-app-name",
+  prefix: "/shopify/webhook",
+  callback: {WebhookHandler, :handle_webhook, []}
 ```
 
 If you want persisted Apps, Shops, and Tokens add configuration to your functions.
@@ -98,25 +102,39 @@ end
 
 ## Webhooks
 
-Setting up webhook handling requires adding a handler to your configuration.
+To set up your app to receive webhooks, first you'll need to add `ShopifyAPI.Plugs.Webhook` to your `Endpoint` module:
 
 ```elixir
-config :shopify_api, webhook_filter: {MyApp.WebhookFilter, :process, []}
-config :shopify_api, ShopifyAPI.Webhook, uri: "https://testapp.ngrok.io/shop/webhook"
+plug ShopifyAPI.Plugs.Webhook,
+  app_name: "my-app-name",
+  prefix: "/shopify/webhook",
+  callback: {WebhookHandler, :handle_webhook, []}
 ```
 
-A handler will need to be created
+You'll also need to define a corresponding `WebhookHandler` module in your app:
 
 ```elixir
-defmodule MyApp.WebhookFilter do
-  def process(%{action: "orders/create", object: %{}} = event) do
-    IO.inspect(event, label: event)
-    # ....
+defmodule WebhookHandler do
+  def handle_webhook(app, shop, domain, payload) do
+    # TODO implement me!
   end
 end
 ```
 
-And finally webhooks will have to be registered with Shopify. After installing a shop you will need to fire a webhook creation.
+And there you go!
+
+Now webhooks sent to `YOUR_URL/shopify/webhook` will be interpreted as webhooks for the `my-app-name` app.
+If you append an app name to the URL in the Shopify configuration, that app will be used instead (e.g. `/shopify/webhook/private-app-name`).
+
+If you'd like to install webhooks using ShopifyAPI, we need to do a small bit more work:
+
+```elixir
+# Add this to your configuration so that ShopifyAPI knows the webhook prefix.
+config :shopify_api, ShopifyAPI.Webhook, uri: "https://your-app-url/shop/webhook"
+```
+
+Now once a shop is installed, you can create webhook subscriptions.
+This will automatically append your app's name to the generated webhook URL:
 
 ```elixir
 token = ShopifyAPI.AuthTokenServer.get("shop domain", "app name")

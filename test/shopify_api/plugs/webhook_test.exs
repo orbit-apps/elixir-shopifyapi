@@ -2,71 +2,158 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  alias Plug.Conn
+  alias ShopifyAPI.{App, AppServer, Shop, ShopServer}
   alias ShopifyAPI.Plugs.Webhook
-  alias ShopifyAPI.{App, AppServer, JSONSerializer, Shop, ShopServer}
 
-  @app %App{name: "test"}
+  @secret "new_secret"
+
+  @app %App{name: "testapp", client_secret: @secret}
   @shop %Shop{domain: "test-shop.example.com"}
-  @req_body %{app: @app.name, shop: @shop.domain}
 
-  def webhook_callback(v) do
-    send(self(), {:webhook_callback, v})
-  end
-
-  setup_all do
-    Application.put_env(:shopify_api, :webhook_filter, {__MODULE__, :webhook_callback, []})
-    ShopServer.set(@shop)
+  setup do
     AppServer.set(@app)
+    ShopServer.set(@shop)
+
+    Process.register(self(), :webhook_plug_test)
+
     :ok
   end
 
-  test "401s with invalid hmac" do
-    # Create a test connection
-    conn =
-      :post
-      |> conn("/webhook/#{@app.name}", JSONSerializer.encode!(@req_body))
-      |> Conn.put_req_header("x-shopify-hmac-sha256", "invalid")
-      |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
-      # Invoke the plug
-      |> Webhook.call(mount: "/webhook")
-
-    # Assert the response and status
-    assert conn.state == :sent
-    assert conn.status == 401
-    assert conn.resp_body == "Not Authorized"
+  defmodule MockExecutor do
+    def call(app, shop, topic, payload) do
+      send(:webhook_plug_test, {:webhook, app, shop, topic, payload})
+      :ok
+    end
   end
 
-  test "fires callback and 200s with valid hmac" do
-    # Create a test connection
+  defmodule BadExecutor do
+    def call(_app, _shop, _topic, _payload) do
+      raise "something went wrong!"
+    end
+  end
+
+  @opts Webhook.init(prefix: "/shopify/webhooks/", callback: {MockExecutor, :call, []})
+
+  test "ignores non-webhook requests" do
+    ignorables = [
+      conn(:get, "/", []),
+      conn(:post, "/shopify", []),
+      conn(:get, "/shopify/webhooks", []),
+      conn(:get, "/shopify/webhooks/abcd", [])
+    ]
+
+    for req <- ignorables do
+      conn = Webhook.call(req, @opts)
+      assert conn.status == nil
+      refute conn.halted
+    end
+  end
+
+  test "ignores requests lacking required webhook headers" do
+    req = conn(:post, "/shopify/webhooks", [])
+    conn = Webhook.call(req, @opts)
+    assert conn.status == nil
+    refute conn.halted
+  end
+
+  test "dispatches verified webhook requests to the configured callback" do
+    payload = %{"id" => 1234}
+    {hmac, json_payload} = encode_with_hmac(payload)
+
     conn =
       :post
-      |> conn("/webhook/#{@app.name}?", JSONSerializer.encode!(@req_body))
-      |> Conn.fetch_query_params()
-      |> Conn.put_req_header(
-        "x-shopify-hmac-sha256",
-        "VsxCOHbZ+BlpaPvV4cpAiBk4v2Zc35BpRBP3bYiuiog="
-      )
-      |> Conn.put_req_header("x-shopify-shop-domain", @shop.domain)
-      # Invoke the plug
-      |> Webhook.call(mount: "/webhook")
+      |> conn("/shopify/webhooks/testapp", json_payload)
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-topic", "orders/create")
+      |> put_req_header("x-shopify-hmac-sha256", hmac)
+      |> Webhook.call(@opts)
 
-    # Assert the response and status
-    assert conn.state == :sent
+    assert_received {:webhook, @app, @shop, "orders/create", ^payload}
+
+    assert conn.halted
     assert conn.status == 200
-    assert conn.resp_body == "ok."
+    assert conn.resp_body == "ok"
+  end
 
-    expected_event = %ShopifyAPI.EventPipe.Event{
-      action: nil,
-      app: @app,
-      assigns: %{},
-      callback: nil,
-      destination: "client",
-      object: %{"app" => @app.name, "shop" => @shop.domain},
-      shop: @shop,
-      token: %{}
-    }
+  test "responds with an error if the payload cannot be verified" do
+    payload = %{"id" => 1234}
+    {hmac, json_payload} = encode_with_hmac(payload)
 
-    assert_receive({:webhook_callback, ^expected_event})
+    req =
+      :post
+      |> conn("/shopify/webhooks/testapp", json_payload)
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-topic", "orders/create")
+      |> put_req_header("x-shopify-hmac-sha256", hmac <> "nope")
+
+    conn = Webhook.call(req, @opts)
+
+    assert conn.halted
+    assert conn.status == 500
+    assert conn.resp_body == "internal server error"
+    refute_received {:webhook, _, _, _}
+  end
+
+  test "responds with an error if the handler returns an error" do
+    opts =
+      Webhook.init(
+        prefix: "/shopify/webhooks/",
+        callback: {BadExecutor, :call, []}
+      )
+
+    payload = %{"id" => 1234}
+    {hmac, json_payload} = encode_with_hmac(payload)
+
+    req =
+      :post
+      |> conn("/shopify/webhooks", json_payload)
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-topic", "orders/create")
+      |> put_req_header("x-shopify-hmac-sha256", hmac)
+
+    conn = Webhook.call(req, opts)
+
+    assert conn.halted
+    assert conn.status == 500
+    assert conn.resp_body == "internal server error"
+  end
+
+  test "responds with an error if the app is not registered" do
+    payload = %{"id" => 1234}
+    {hmac, json_payload} = encode_with_hmac(payload)
+
+    req =
+      :post
+      |> conn("/shopify/webhooks/unknown-app", json_payload)
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-topic", "orders/create")
+      |> put_req_header("x-shopify-hmac-sha256", hmac <> "nope")
+
+    conn = Webhook.call(req, @opts)
+
+    assert conn.halted
+    assert conn.status == 500
+    assert conn.resp_body == "internal server error"
+    refute_received {:webhook, _, _, _}
+  end
+
+  # Encodes an object as JSON, generating a HMAC string for integrity verification.
+  # Returns a two-tuple containing the Base64-encoded HMAC and JSON payload string.
+  if System.otp_release() >= "22" do
+    defp encode_with_hmac(payload) when is_map(payload) do
+      json_payload = Jason.encode!(payload)
+      hmac = Base.encode64(:crypto.mac(:hmac, :sha256, @secret, json_payload))
+      {hmac, json_payload}
+    end
+  else
+    defp encode_with_hmac(payload) when is_map(payload) do
+      json_payload = Jason.encode!(payload)
+      hmac = Base.encode64(:crypto.hmac(:sha256, @secret, json_payload))
+      {hmac, json_payload}
+    end
   end
 end
