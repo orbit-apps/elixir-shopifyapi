@@ -110,8 +110,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       params
       |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
       |> Enum.sort_by(&elem(&1, 0))
-      |> Enum.map(fn {key, value} -> key <> "=" <> value end)
-      |> Enum.join("&")
+      |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
       |> ShopifyAPI.Security.base16_sha256_hmac(secret)
   end
 end
