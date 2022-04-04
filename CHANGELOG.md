@@ -6,6 +6,7 @@
 - Admin Authenication Plug now redirects to install if shop is not found
 - New ShopServer.get_by_client_id/1
 - New AuthShopSessionToken plug for Shop Admin authentication with the Shopify JWT.
+- BREAKING: remove old `EventPipe.Event` as it is not used any more.
 - BREAKING: Replace `ShopifyAPI.Plugs.Webhook` with new implementation.
   + This version does not use the `Event` struct, and is configured differently.
   Please see the docs for `ShopifyAPI.Plugs.Webhook` for more details.
