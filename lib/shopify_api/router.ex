@@ -3,11 +3,12 @@ defmodule ShopifyAPI.Router do
   require Logger
 
   alias Plug.Conn
-  alias ShopifyAPI.{App, AuthToken, AuthTokenServer, ConnHelpers}
-  alias ShopifyAPI.Shop
 
   plug(:match)
   plug(:dispatch)
+
+  @shopify_shop_header "x-shopify-shop-domain"
+  @auth_code_param_name "code"
 
   get "/install/:app" do
     install_app(conn)
@@ -19,15 +20,15 @@ defmodule ShopifyAPI.Router do
 
   # Shopify Callback on App authorization
   get "/authorized/:app" do
-    Logger.info("Authorized #{ConnHelpers.shop_domain(conn)}")
+    Logger.info("Authorized #{shop_domain(conn)}")
 
-    if auth_code_present?(conn) do
-      with {:ok, app} <- ConnHelpers.fetch_shopify_app(conn),
+    if conn.params[@auth_code_param_name] != nil do
+      with {:ok, app} <- conn |> app_name() |> ShopifyAPI.AppServer.get(),
            true <- verify_nonce(app, conn.query_params),
-           true <- ConnHelpers.verify_params_with_hmac(app, conn.query_params),
+           true <- verify_params_with_hmac(app, conn.query_params),
            {:ok, auth_token} <- request_auth_token(conn, app) do
-        Shop.post_install(auth_token)
-        AuthTokenServer.set(auth_token)
+        ShopifyAPI.Shop.post_install(auth_token)
+        ShopifyAPI.AuthTokenServer.set(auth_token)
 
         conn
         |> Conn.resp(200, "Authenticated.")
@@ -55,15 +56,17 @@ defmodule ShopifyAPI.Router do
   end
 
   defp request_auth_token(conn, app) do
+    auth_code = conn.params[@auth_code_param_name]
+
     app
-    |> App.fetch_token(ConnHelpers.shop_domain(conn), ConnHelpers.auth_code(conn))
+    |> ShopifyAPI.App.fetch_token(shop_domain(conn), auth_code)
     |> case do
       {:ok, token} ->
         {:ok,
-         %AuthToken{
-           app_name: ConnHelpers.app_name(conn),
-           shop_name: ConnHelpers.shop_domain(conn),
-           code: ConnHelpers.auth_code(conn),
+         %ShopifyAPI.AuthToken{
+           app_name: app_name(conn),
+           shop_name: shop_domain(conn),
+           code: auth_code,
            timestamp: String.to_integer(conn.query_params["timestamp"]),
            token: token
          }}
@@ -75,10 +78,11 @@ defmodule ShopifyAPI.Router do
 
   defp install_app(conn) do
     conn
-    |> ConnHelpers.fetch_shopify_app()
+    |> app_name()
+    |> ShopifyAPI.AppServer.get()
     |> case do
       {:ok, app} ->
-        install_url = App.install_url(app, ConnHelpers.shop_domain(conn))
+        install_url = ShopifyAPI.App.install_url(app, shop_domain(conn))
 
         conn
         |> Conn.put_resp_header("location", install_url)
@@ -94,5 +98,25 @@ defmodule ShopifyAPI.Router do
     end
   end
 
-  defp auth_code_present?(conn), do: ConnHelpers.auth_code(conn) != nil
+  defp shop_domain_from_header(conn) do
+    conn
+    |> Conn.get_req_header(@shopify_shop_header)
+    |> List.first()
+  end
+
+  def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
+
+  @doc false
+  defp app_name(conn), do: conn.params["app"] || List.last(conn.path_info)
+
+  @doc false
+  @spec verify_params_with_hmac(ShopifyAPI.App.t(), map()) :: boolean()
+  def verify_params_with_hmac(%ShopifyAPI.App{client_secret: secret}, params) do
+    params["hmac"] ==
+      params
+      |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
+      |> ShopifyAPI.Security.base16_sha256_hmac(secret)
+  end
 end
