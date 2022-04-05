@@ -1,5 +1,7 @@
 ## Unreleased
 
+- New PutShopifyContentHeaders plug for Shop Admin iframe serving.
+
 ## 0.13.0
 
 This is one of the bigger updates in a while, there are breaking changes with
