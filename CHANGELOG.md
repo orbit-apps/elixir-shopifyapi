@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.13.0
+
+This is one of the bigger updates in a while, there are breaking changes with
+the new Webhook plug, please read the new documentation and examples closely.
+
 - Refactor: removed AdminAuthenticator's use of ConnHelpers
 - Refactor: removed the Router's use of ConnHelpers
 - Fix: Don't persist Shop on ShopServer init
