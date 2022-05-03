@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: Call ShopServer.set/2 with shop and persist true when Shop install happens.
+
 ## 0.13.1
 
 - New PutShopifyContentHeaders plug for Shop Admin iframe serving.
