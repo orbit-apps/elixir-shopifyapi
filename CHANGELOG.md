@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.13.3
+
 - Fix/New: Forward to the Shopify Shop's admin for the app on successful install
   as the final step in the AuthToken fetch.
 
