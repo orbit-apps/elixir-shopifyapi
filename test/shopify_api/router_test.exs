@@ -100,7 +100,7 @@ defmodule Test.ShopifyAPI.RouterTest do
         |> parse()
         |> Router.call(%{})
 
-      assert conn.status == 200
+      assert conn.status == 302
       {:ok, %{token: auth_token}} = AuthTokenServer.get(shop_domain, @app_name)
       assert auth_token == @token.access_token
     end
