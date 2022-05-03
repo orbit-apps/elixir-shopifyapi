@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.13.2
+
 - Fix: Call ShopServer.set/2 with shop and persist true when Shop install happens.
 
 ## 0.13.1

@@ -21,7 +21,7 @@ The package can be installed by adding `shopify_api` to your list of dependencie
 ```elixir
 def deps do
   [
-    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "v0.13.1"}
+    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "v0.13.2"}
   ]
 end
 ```
