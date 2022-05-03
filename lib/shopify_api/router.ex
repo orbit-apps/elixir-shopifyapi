@@ -26,13 +26,19 @@ defmodule ShopifyAPI.Router do
       with {:ok, app} <- conn |> app_name() |> ShopifyAPI.AppServer.get(),
            true <- verify_nonce(app, conn.query_params),
            true <- verify_params_with_hmac(app, conn.query_params),
-           {:ok, auth_token} <- request_auth_token(conn, app) do
-        auth_token |> shop_from_auth_token() |> ShopifyAPI.ShopServer.set(true)
+           {:ok, auth_token} <- request_auth_token(conn, app),
+           shop <- shop_from_auth_token(auth_token) do
+        ShopifyAPI.ShopServer.set(shop, true)
         ShopifyAPI.AuthTokenServer.set(auth_token, true)
         ShopifyAPI.Shop.post_install(auth_token)
 
+        Logger.debug("new install for #{shop.domain}, redirecting to shopify admin")
+
+        redirect_url = app |> installed_redirect_uri(shop) |> URI.to_string()
+
         conn
-        |> Conn.resp(200, "Authenticated.")
+        |> Conn.put_resp_header("location", redirect_url)
+        |> Conn.resp(unquote(302), "You are being redirected.")
         |> Conn.halt()
       else
         res ->
@@ -123,4 +129,13 @@ defmodule ShopifyAPI.Router do
 
   defp shop_from_auth_token(%ShopifyAPI.AuthToken{shop_name: myshopify_domain}),
     do: %ShopifyAPI.Shop{domain: myshopify_domain}
+
+  defp installed_redirect_uri(%_{client_id: app_api_key}, %_{domain: myshopify_domain}) do
+    %URI{
+      scheme: "https",
+      port: 443,
+      host: myshopify_domain,
+      path: "/admin/apps/#{app_api_key}"
+    }
+  end
 end

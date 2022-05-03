@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Fix/New: Forward to the Shopify Shop's admin for the app on successful install
+  as the final step in the AuthToken fetch.
+
 ## 0.13.2
 
 - Fix: Call ShopServer.set/2 with shop and persist true when Shop install happens.
