@@ -27,8 +27,9 @@ defmodule ShopifyAPI.Router do
            true <- verify_nonce(app, conn.query_params),
            true <- verify_params_with_hmac(app, conn.query_params),
            {:ok, auth_token} <- request_auth_token(conn, app) do
+        auth_token |> shop_from_auth_token() |> ShopifyAPI.ShopServer.set(true)
+        ShopifyAPI.AuthTokenServer.set(auth_token, true)
         ShopifyAPI.Shop.post_install(auth_token)
-        ShopifyAPI.AuthTokenServer.set(auth_token)
 
         conn
         |> Conn.resp(200, "Authenticated.")
@@ -119,4 +120,7 @@ defmodule ShopifyAPI.Router do
       |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
       |> ShopifyAPI.Security.base16_sha256_hmac(secret)
   end
+
+  defp shop_from_auth_token(%ShopifyAPI.AuthToken{shop_name: myshopify_domain}),
+    do: %ShopifyAPI.Shop{domain: myshopify_domain}
 end
