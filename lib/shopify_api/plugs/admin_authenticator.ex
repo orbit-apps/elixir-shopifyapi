@@ -1,12 +1,14 @@
 defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   @moduledoc """
-  The ShopifyAPI.Plugs.AdminAuthenticator plug allows for easy admin authentication. The plug when included
-  in your route will verify Shopify signatures, that are added to the iframe call on admin page load, and
-  set a session cookie for the duration of the session.
+  The ShopifyAPI.Plugs.AdminAuthenticator plug allows for easy admin authentication. The plug
+  when included in your route will verify Shopify signatures, that are added to the iframe call
+  on admin page load, and set a session cookie for the duration of the session.
 
-  The plug will assign the Shop, App and AuthToken to the Conn for easy access in your admin controller.
+  The plug will assign the Shop, App and AuthToken to the Conn for easy access in your
+  admin controller.
 
-  Make sure to include the App name in the path, in our example it is included directly in the path `"/shop-admin/:app"`.
+  Make sure to include the App name in the path, in our example it is included directly in the
+  path `"/shop-admin/:app"`.
 
   ## Example Usage
   ```elixir
