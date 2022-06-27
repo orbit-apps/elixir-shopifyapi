@@ -7,6 +7,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   alias ShopifyAPI.{App, AppServer, AuthToken, AuthTokenServer, Shop, ShopServer}
 
   @app %App{name: "test"}
+  @uninstalled_shop "uninstalled.myshopify.com"
   @shop %Shop{domain: "test-shop.example.com"}
   @auth_token %AuthToken{app_name: @app.name, shop_name: @shop.domain, token: "test"}
   @params %{
@@ -74,6 +75,33 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
       assert Conn.get_session(conn, :app_name) == @app.name
       assert Conn.get_session(conn, :shop_domain) == @shop.domain
       assert Conn.get_session(conn, :auth_token) == nil
+    end
+  end
+
+  describe "without an installed shop" do
+    setup do
+      params = %{
+        @params
+        | shop: @uninstalled_shop,
+          hmac: "a750bd98910efb8729f2edc4e444a733ce1a6692a09181e43cfae0e00a61226a"
+      }
+
+      # Create a test connection
+      conn =
+        :get
+        |> conn("/admin/#{@app.name}?" <> URI.encode_query(params))
+        |> init_test_session(%{})
+        |> Conn.fetch_query_params()
+
+      [conn: conn]
+    end
+
+    test "redirects to install url", %{conn: conn} do
+      conn = AdminAuthenticator.call(conn, shopify_mount_path: "/shop")
+
+      assert Conn.get_resp_header(conn, "location") == [
+               "/shop/install?app=" <> @app.name <> "&shop=" <> @uninstalled_shop
+             ]
     end
   end
 
