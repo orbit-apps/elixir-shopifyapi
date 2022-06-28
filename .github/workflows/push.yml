@@ -9,8 +9,13 @@ jobs:
 
     strategy:
       matrix:
-        otp: [23.3.4, 24.2.1]
-        elixir: [1.11.4, 1.12.1, 1.13.2]
+        include:
+          - otp: 24.3.4.2
+            elixir: 1.12.3
+          - otp: 24.3.4.2
+            elixir: 1.13.4
+          - otp: 25.0.2
+            elixir: 1.13.4
 
     steps:
       - uses: actions/checkout@v3
@@ -33,7 +38,6 @@ jobs:
         run: mix credo
 
       - name: Check Formatting
-        if: ${{ matrix.elixir != '1.11.4' }}
         run: mix format --check-formatted
 
       - name: Run Tests
