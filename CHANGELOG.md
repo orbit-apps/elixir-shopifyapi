@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.13.4
+
 - Fix: Hardcoded App Name in Authentication Plug
 
 ## 0.13.3
