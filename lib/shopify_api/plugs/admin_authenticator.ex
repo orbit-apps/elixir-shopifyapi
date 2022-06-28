@@ -1,12 +1,14 @@
 defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   @moduledoc """
-  The ShopifyAPI.Plugs.AdminAuthenticator plug allows for easy admin authentication. The plug when included
-  in your route will verify Shopify signatures, that are added to the iframe call on admin page load, and
-  set a session cookie for the duration of the session.
+  The ShopifyAPI.Plugs.AdminAuthenticator plug allows for easy admin authentication. The plug
+  when included in your route will verify Shopify signatures, that are added to the iframe call
+  on admin page load, and set a session cookie for the duration of the session.
 
-  The plug will assign the Shop, App and AuthToken to the Conn for easy access in your admin controller.
+  The plug will assign the Shop, App and AuthToken to the Conn for easy access in your
+  admin controller.
 
-  Make sure to include the App name in the path, in our example it is included directly in the path `"/shop-admin/:app"`.
+  Make sure to include the App name in the path, in our example it is included directly in the
+  path `"/shop-admin/:app"`.
 
   ## Example Usage
   ```elixir
@@ -84,14 +86,11 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
         |> Conn.resp(401, "Not Authorized.")
         |> Conn.halt()
 
+      # Try redirecting to the install path
       _ ->
-        install_url =
-          options[:shopify_mount_path] <>
-            "/install?app=up_sell&shop=" <> shop_domain_from_conn(conn)
-
         conn
         |> Conn.resp(:found, "")
-        |> Conn.put_resp_header("location", install_url)
+        |> Conn.put_resp_header("location", install_path(options, conn))
         |> Conn.halt()
     end
   end
@@ -112,5 +111,16 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       |> Enum.sort_by(&elem(&1, 0))
       |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
       |> ShopifyAPI.Security.base16_sha256_hmac(secret)
+  end
+
+  defp install_path(options, conn) do
+    app_name = conn.params["app"] || List.last(conn.path_info)
+
+    options[:shopify_mount_path] <>
+      "/install" <>
+      "?app=" <>
+      app_name <>
+      "&shop=" <>
+      shop_domain_from_conn(conn)
   end
 end

@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: Hardcoded App Name in Authentication Plug
+
 ## 0.13.3
 
 - Fix/New: Forward to the Shopify Shop's admin for the app on successful install
