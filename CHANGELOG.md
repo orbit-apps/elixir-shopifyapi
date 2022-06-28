@@ -3,6 +3,7 @@
 ## 0.13.4
 
 - Fix: Hardcoded App Name in Authentication Plug
+- New: Moved to erlang 25 and dropping Erlang 23 and Elixir 1.11 from testing matrix
 
 ## 0.13.3
 
