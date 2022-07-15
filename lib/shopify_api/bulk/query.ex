@@ -100,7 +100,7 @@ defmodule ShopifyAPI.Bulk.Query do
   end
 
   defp raise_error!(
-         "A bulk operation for this app and shop is already in progress: " <> bulk_id = msg,
+         "A bulk query operation for this app and shop is already in progress: " <> bulk_id = msg,
          token
        ) do
     Telemetry.send(@log_module, token, {:error, :in_progress, msg}, bulk_id)
