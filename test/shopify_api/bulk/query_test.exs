@@ -112,7 +112,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
             %{
               "field" => nil,
               "message" =>
-                "A bulk operation for this app and shop is already in progress: gid://fake-bulk-op-id"
+                "A bulk query operation for this app and shop is already in progress: gid://fake-bulk-op-id"
             }
           ]
         )

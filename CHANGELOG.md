@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.13.5
+
+- Fix: adjust pattern match on Shopify's bulk operation in progress error
+
 ## 0.13.4
 
 - Fix: Hardcoded App Name in Authentication Plug
