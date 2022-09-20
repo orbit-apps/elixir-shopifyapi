@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: app_name setting for webhook plug was not passed through on initialization
+
 ## 0.13.5
 
 - Fix: adjust pattern match on Shopify's bulk operation in progress error
