@@ -64,6 +64,9 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
   import Plug.Conn
   import Plug.Crypto, only: [secure_compare: 2]
+
+  require Logger
+
   alias Plug.Conn
   alias Plug.Router.Utils, as: RouterUtils
 
@@ -71,12 +74,11 @@ defmodule ShopifyAPI.Plugs.Webhook do
   alias ShopifyAPI.AppServer
   alias ShopifyAPI.ShopServer
 
-  alias ShopifyAPI.JSONSerializer, as: JSON
-
   def init(opts) do
     prefix = opts |> Keyword.fetch!(:prefix) |> RouterUtils.split()
     callback = opts |> Keyword.fetch!(:callback) |> validate_mfa()
-    %{prefix: prefix, callback: callback}
+    app_name = Keyword.get(opts, :app_name)
+    %{prefix: prefix, callback: callback, app_name: app_name}
   end
 
   def call(%Conn{} = conn, %{} = opts) do
@@ -120,6 +122,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
           Map.merge(metadata, %{reason: reason})
         )
 
+        Logger.warn("In webhook plug, errored with: #{inspect(reason)}")
+
         conn
         |> send_resp(500, "internal server error")
         |> halt()
@@ -159,7 +163,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
       payload_hmac = ShopifyAPI.Security.base64_sha256_hmac(body, secret)
 
       if secure_compare(shopify_hmac, payload_hmac) do
-        {:ok, conn, JSON.decode!(body)}
+        {:ok, conn, ShopifyAPI.JSONSerializer.decode!(body)}
       else
         {:error, {:hmac_mismatch, shopify_hmac, payload_hmac}}
       end
