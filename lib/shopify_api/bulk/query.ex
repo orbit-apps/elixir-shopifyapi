@@ -75,6 +75,24 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
+  @spec fetch_url!(AuthToken.t(), String.t()) :: String.t()
+  def fetch_url!(%AuthToken{} = token, id) do
+    query = """
+      query {
+        node(id: "#{id}") {
+          ... on BulkOperation {
+            url
+          }
+        }
+      }
+    """
+
+    case ShopifyAPI.graphql_request(token, query, 1) do
+      {:ok, %{response: %{"node" => %{"url" => url}}}} -> url
+      error -> raise_error!(error, token)
+    end
+  end
+
   @spec exec!(AuthToken.t(), String.t(), list()) :: bulk_query_response()
   def exec!(%AuthToken{} = token, query, opts) do
     with bulk_query <- bulk_query_string(query),

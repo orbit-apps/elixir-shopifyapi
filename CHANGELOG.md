@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Add `Bulk.process_stream_from_id!/2`
+  - intended for use after receiving a `bulk_operations/finish` webhook
+
 ## 0.13.6
 
 - Fix: app_name setting for webhook plug was not passed through on initialization

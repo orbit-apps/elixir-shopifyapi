@@ -108,6 +108,14 @@ defmodule ShopifyAPI.Bulk do
     |> decode_json!()
   end
 
+  @spec process_stream_from_id!(AuthToken.t(), String.t()) :: Enumerable.t()
+  def process_stream_from_id!(token, bulk_op_id) do
+    token
+    |> Query.fetch_url!(bulk_op_id)
+    |> Query.stream_fetch!(token)
+    |> decode_json!()
+  end
+
   defp resolve_options(opts), do: Keyword.merge(@defaults, opts, fn _k, _dv, nv -> nv end)
 
   defp decode_json!(stream), do: Stream.map(stream, &ShopifyAPI.JSONSerializer.decode!/1)
