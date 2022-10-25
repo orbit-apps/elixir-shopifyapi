@@ -15,7 +15,7 @@ defmodule ShopifyAPI.Bulk.Query do
   # https://shopify.dev/concepts/about-apis/response-codes
   @shop_unavailable_status_codes [402, 403, 423]
 
-  @polling_query """
+  @bulk_status_query """
   {
     currentBulkOperation {
       id
@@ -93,19 +93,26 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec exec!(AuthToken.t(), String.t(), list()) :: bulk_query_response()
-  def exec!(%AuthToken{} = token, query, opts) do
+  @spec async_exec!(AuthToken.t(), String.t()) :: {:ok, String.t()}
+  def async_exec!(%AuthToken{} = token, query) do
     with bulk_query <- bulk_query_string(query),
          {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
          :ok <- handle_errors(resp),
-         bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]),
+         bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]) do
+      {:ok, bulk_query_id}
+    else
+      {:error, msg} ->
+        raise_error!(msg, token)
+    end
+  end
+
+  @spec exec!(AuthToken.t(), String.t(), list()) :: bulk_query_response()
+  def exec!(%AuthToken{} = token, query, opts) do
+    with {:ok, bulk_query_id} <- async_exec!(token, query),
          {:ok, url} <- poll(token, bulk_query_id, opts[:polling_rate], opts[:max_poll_count]) do
       Telemetry.send(@log_module, token, {:success, :query})
       url
     else
-      {:error, msg} ->
-        raise_error!(msg, token)
-
       {:error, :timeout, bulk_id} ->
         Telemetry.send(@log_module, token, {:error, :timeout, "Bulk op timed out"}, bulk_id)
         Cancel.perform(opts[:auto_cancel], token, bulk_id)
@@ -190,7 +197,7 @@ defmodule ShopifyAPI.Bulk.Query do
   @spec status(AuthToken.t()) :: {:ok, status_response()} | {:error, any()}
   def status(%AuthToken{} = token) do
     token
-    |> ShopifyAPI.graphql_request(@polling_query, 1)
+    |> ShopifyAPI.graphql_request(@bulk_status_query, 1)
     |> case do
       {:ok, %{response: %{"currentBulkOperation" => response}}} ->
         {:ok, response}
