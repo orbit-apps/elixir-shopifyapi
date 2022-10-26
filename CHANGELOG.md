@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.13.7
+
 - New Bulk.Query.async_exec!/2 returns bulk_query_id, useful for when using the
   bulk query completed webhook.
 - Add `Bulk.process_stream_from_id!/2`
