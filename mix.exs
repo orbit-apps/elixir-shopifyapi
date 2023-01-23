@@ -45,7 +45,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:stream_data, "~> 0.5.0", only: :test},
       # Everything else
       {:gen_stage, "~> 1.0"},
-      {:httpoison, "~> 1.0"},
+      {:httpoison, "~> 2.0"},
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
       {:plug, "~> 1.0"},
