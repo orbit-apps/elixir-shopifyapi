@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.14.0
+- Add 401 unauthorized response to Webhook plug
+- Call webhook handler even when the shop is not in the ShopServer
+
 ## 0.13.7
 
 - New Bulk.Query.async_exec!/2 returns bulk_query_id, useful for when using the

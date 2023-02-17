@@ -49,13 +49,6 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     end
   end
 
-  test "ignores requests lacking required webhook headers" do
-    req = conn(:post, "/shopify/webhooks", [])
-    conn = Webhook.call(req, @opts)
-    assert conn.status == nil
-    refute conn.halted
-  end
-
   test "dispatches verified webhook requests to the configured callback" do
     payload = %{"id" => 1234}
     {hmac, json_payload} = encode_with_hmac(payload)
@@ -76,7 +69,26 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     assert conn.resp_body == "ok"
   end
 
-  test "responds with an error if the payload cannot be verified" do
+  test "dispatches manditory webhook requests to the configured callback" do
+    payload = %{"id" => 1234}
+    {hmac, json_payload} = encode_with_hmac(payload)
+
+    conn =
+      :post
+      |> conn("/shopify/webhooks/testapp", json_payload)
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("x-shopify-topic", "shop/redact")
+      |> put_req_header("x-shopify-hmac-sha256", hmac)
+      |> Webhook.call(@opts)
+
+    assert_received {:webhook, @app, nil, "shop/redact", ^payload}
+
+    assert conn.halted
+    assert conn.status == 200
+    assert conn.resp_body == "ok"
+  end
+
+  test "responds with a 401 if the payload cannot be verified" do
     payload = %{"id" => 1234}
     {hmac, json_payload} = encode_with_hmac(payload)
 
@@ -91,8 +103,8 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     conn = Webhook.call(req, @opts)
 
     assert conn.halted
-    assert conn.status == 500
-    assert conn.resp_body == "internal server error"
+    assert conn.status == 401
+    assert conn.resp_body == "unauthorized"
     refute_received {:webhook, _, _, _}
   end
 
@@ -108,7 +120,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
 
     req =
       :post
-      |> conn("/shopify/webhooks", json_payload)
+      |> conn("/shopify/webhooks/testapp", json_payload)
       |> put_req_header("content-type", "application/json")
       |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
       |> put_req_header("x-shopify-topic", "orders/create")
@@ -136,8 +148,8 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     conn = Webhook.call(req, @opts)
 
     assert conn.halted
-    assert conn.status == 500
-    assert conn.resp_body == "internal server error"
+    assert conn.status == 401
+    assert conn.resp_body == "unauthorized"
     refute_received {:webhook, _, _, _}
   end
 

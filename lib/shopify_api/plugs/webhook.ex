@@ -91,35 +91,58 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
   defp handle_webhook_request(%Conn{} = conn, %{} = opts) do
     start = System.monotonic_time()
-    topic = get_topic!(conn)
-    domain = get_domain!(conn)
-    metadata = %{domain: domain, topic: topic, request_id: get_request_id(conn)}
 
+    with {:ok, topic} <- fetch_topic(conn),
+         {:ok, app} <- get_app(conn, opts),
+         {:ok, conn, payload} <- verify_and_read_body(conn, app) do
+      domain = get_domain(conn)
+      shop = get_shop(domain)
+
+      metadata = %{domain: domain, topic: topic, request_id: get_request_id(conn)}
+
+      call_webhook_handler(conn, opts, %{
+        app: app,
+        topic: topic,
+        payload: payload,
+        domain: domain,
+        shop: shop,
+        metadata: metadata,
+        start: start
+      })
+    else
+      {:error, reason} ->
+        Logger.debug("In webhook plug, unauthorized: #{inspect(reason)}")
+
+        conn
+        |> send_resp(401, "unauthorized")
+        |> halt()
+    end
+  end
+
+  def call_webhook_handler(conn, opts, params) do
     :telemetry.execute(
       [:shopify_api, :webhook, :start],
       %{time: System.system_time()},
-      metadata
+      params.metadata
     )
 
-    with {:ok, shop} <- get_shop(domain),
-         {:ok, app} <- get_app(conn, opts),
-         {:ok, conn, payload} <- verify_and_read_body(conn, app),
-         :ok <- apply_webhook(opts.callback, app, shop, topic, payload) do
-      :telemetry.execute(
-        [:shopify_api, :webhook, :stop],
-        %{duration: System.monotonic_time() - start},
-        metadata
-      )
+    case apply_webhook(opts.callback, params.app, params.shop, params.topic, params.payload) do
+      :ok ->
+        :telemetry.execute(
+          [:shopify_api, :webhook, :stop],
+          %{duration: System.monotonic_time() - params.start},
+          params.metadata
+        )
 
-      conn
-      |> send_resp(200, "ok")
-      |> halt()
-    else
+        conn
+        |> send_resp(200, "ok")
+        |> halt()
+
       {:error, reason} ->
         :telemetry.execute(
           [:shopify_api, :webhook, :exception],
-          %{duration: System.monotonic_time() - start},
-          Map.merge(metadata, %{reason: reason})
+          %{duration: System.monotonic_time() - params.start},
+          Map.merge(params.metadata, %{reason: reason})
         )
 
         Logger.warn("In webhook plug, errored with: #{inspect(reason)}")
@@ -132,8 +155,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
   defp get_shop(domain) do
     case ShopServer.get(domain) do
-      {:ok, shop} -> {:ok, shop}
-      :error -> {:error, :shop_not_found}
+      {:ok, shop} -> shop
+      :error -> nil
     end
   end
 
@@ -157,9 +180,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
 
   # Verifies the request body with the X-Shopify-HMAC-SHA256 header
   defp verify_and_read_body(%Conn{} = conn, %App{client_secret: secret}) do
-    shopify_hmac = get_hmac!(conn)
-
-    with {:ok, body, conn} <- read_body(conn) do
+    with {:ok, shopify_hmac} <- fetch_hmac(conn),
+         {:ok, body, conn} <- read_body(conn) do
       payload_hmac = ShopifyAPI.Security.base64_sha256_hmac(body, secret)
 
       if secure_compare(shopify_hmac, payload_hmac) do
@@ -181,7 +203,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   # A webhook request both matches the configured path prefix and has the
   # appropriate X-Shopify-* headers. All other requests should be ignored.
   defp is_webhook_request?(%Conn{path_info: path} = conn, %{prefix: prefix} = _opts),
-    do: is_post?(conn) and matches?(prefix, path) and has_shopify_webhook_headers?(conn)
+    do: is_post?(conn) and matches?(prefix, path)
 
   defp is_post?(%Conn{method: method}), do: method == "POST"
 
@@ -189,20 +211,20 @@ defmodule ShopifyAPI.Plugs.Webhook do
   defp matches?([], _), do: true
   defp matches?(_, _), do: false
 
-  # We require three X-Shopify-* headers to handle webhooks.
-  defp has_shopify_webhook_headers?(%Conn{req_headers: headers}) do
-    shopify_headers = for {"x-shopify-" <> header, _} <- headers, do: header
-    Enum.all?(~w(shop-domain topic hmac-sha256), &(&1 in shopify_headers))
+  defp fetch_hmac(conn), do: get_header(conn, "x-shopify-hmac-sha256")
+  defp fetch_topic(conn), do: get_header(conn, "x-shopify-topic")
+
+  defp get_domain(conn) do
+    case get_header(conn, "x-shopify-shop-domain") do
+      {:ok, domain} -> domain
+      {:error, _} -> nil
+    end
   end
 
-  defp get_hmac!(conn), do: get_header!(conn, "x-shopify-hmac-sha256")
-  defp get_topic!(conn), do: get_header!(conn, "x-shopify-topic")
-  defp get_domain!(conn), do: get_header!(conn, "x-shopify-shop-domain")
-
-  defp get_header!(%Conn{} = conn, key) when is_binary(key) do
+  defp get_header(%Conn{} = conn, key) when is_binary(key) do
     case get_req_header(conn, key) do
-      [value | _] -> String.trim(value)
-      [] -> raise KeyError, key: key, term: conn.req_headers
+      [value | _] -> {:ok, String.trim(value)}
+      [] -> {:error, "header not found #{key}"}
     end
   end
 
