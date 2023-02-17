@@ -23,7 +23,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
     :ok
   end
 
-  describe "without a session and an invalid hmac" do
+  describe "with an invalid hmac" do
     test "responds with 401 and halts" do
       params = %{@params | hmac: "invalid"}
       # Create a test connection
@@ -40,7 +40,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
     end
   end
 
-  describe "without a session" do
+  describe "with a valid hmac" do
     setup do
       # Create a test connection
       conn =
@@ -66,15 +66,6 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
       assert conn.assigns.app == @app
       assert conn.assigns.shop == @shop
       assert conn.assigns.auth_token == @auth_token
-    end
-
-    test "sets the session but no authtoken", %{conn: conn} do
-      conn = AdminAuthenticator.call(conn, [])
-
-      assert Conn.get_session(conn, :shopify_api_admin_authenticated) == true
-      assert Conn.get_session(conn, :app_name) == @app.name
-      assert Conn.get_session(conn, :shop_domain) == @shop.domain
-      assert Conn.get_session(conn, :auth_token) == nil
     end
   end
 
@@ -102,31 +93,6 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
       assert Conn.get_resp_header(conn, "location") == [
                "/shop/install?app=" <> @app.name <> "&shop=" <> @uninstalled_shop
              ]
-    end
-  end
-
-  describe "with a session" do
-    setup do
-      # Create a test connection
-      conn =
-        :get
-        |> conn("/admin/#{@app.name}?" <> URI.encode_query(@params))
-        |> init_test_session(%{
-          app_name: @app.name,
-          shop_domain: @shop.domain,
-          shopify_api_admin_authenticated: true
-        })
-        |> Conn.fetch_query_params()
-
-      [conn: conn]
-    end
-
-    test "assigns the app, shop, and authtoken", %{conn: conn} do
-      conn = AdminAuthenticator.call(conn, [])
-
-      assert conn.assigns.app == @app
-      assert conn.assigns.shop == @shop
-      assert conn.assigns.auth_token == @auth_token
     end
   end
 end
