@@ -1,4 +1,5 @@
 ## Unreleased
+- Add ShopServer.delete/1
 
 ## 0.14.0
 - Add 401 unauthorized response to Webhook plug
