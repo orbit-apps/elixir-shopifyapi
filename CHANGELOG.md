@@ -1,7 +1,6 @@
 ## Unreleased
 - Remove usage of session and session rehydration from AdminAuthenticator plug.
-
-## 0.14.0
+- Add ShopServer.delete/1
 - Add 401 unauthorized response to Webhook plug
 - Call webhook handler even when the shop is not in the ShopServer
 

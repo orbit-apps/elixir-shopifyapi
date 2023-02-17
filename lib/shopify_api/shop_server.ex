@@ -32,6 +32,13 @@ defmodule ShopifyAPI.ShopServer do
     end
   end
 
+  @spec delete(String.t()) :: :ok
+  def delete(domain) do
+    true = :ets.delete(@table, domain)
+
+    :ok
+  end
+
   ## GenServer Callbacks
 
   def start_link(_opts) do
