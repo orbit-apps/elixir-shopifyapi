@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Take advantage of increased admin API rate limits for plus shops https://shopify.dev/changelog/increased-admin-api-rate-limits-for-shopify-plus
+
 ## 0.14.0
 
 - Remove usage of session and session rehydration from AdminAuthenticator plug.

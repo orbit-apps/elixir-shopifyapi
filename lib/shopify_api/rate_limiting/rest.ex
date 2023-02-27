@@ -1,7 +1,7 @@
 defmodule ShopifyAPI.RateLimiting.REST do
-  @plus_bucket 80
+  @plus_bucket 400
   @nonplus_bucket 40
-  @plus_requests_per_second 4
+  @plus_requests_per_second 20
   @nonplus_requests_per_second 2
 
   @over_limit_status_code 429
