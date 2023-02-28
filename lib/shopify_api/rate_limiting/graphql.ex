@@ -1,8 +1,8 @@
 defmodule ShopifyAPI.RateLimiting.GraphQL do
-  @plus_bucket 2000
+  @plus_bucket 10_000
   @nonplus_bucket 1000
 
-  @plus_restore_rate 100
+  @plus_restore_rate 500
   @nonplus_restore_rate 50
 
   @max_query_cost 1000
