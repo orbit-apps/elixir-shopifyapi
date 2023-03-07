@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.14.2
+
 - Relax telemetry requirement to still include 0.4
 
 ## 0.14.1
