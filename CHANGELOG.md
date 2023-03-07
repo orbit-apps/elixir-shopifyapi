@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Relax telemetry requirement to still include 0.4
+
 ## 0.14.1
 
 - Take advantage of increased admin API rate limits for plus shops https://shopify.dev/changelog/increased-admin-api-rate-limits-for-shopify-plus
