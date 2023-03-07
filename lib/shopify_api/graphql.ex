@@ -92,14 +92,14 @@ defmodule ShopifyAPI.GraphQL do
 
     response = Response.handle(raw_response)
 
-    log_request(auth, response, time)
+    log_request(auth, response, time, options)
 
     Telemetry.send(@log_module, auth, url, time, response)
 
     response
   end
 
-  defp log_request(%{app_name: app, shop_name: shop} = _token, response, time) do
+  defp log_request(%{app_name: app, shop_name: shop} = _token, response, time, opts) do
     Logger.debug(fn ->
       status =
         case response do
@@ -119,7 +119,17 @@ defmodule ShopifyAPI.GraphQL do
           "#{@log_module} for #{shop}:#{app} received #{status} in #{div(time, 1_000)}ms [cost #{actual_cost} bucket #{currently_available}/#{maximum_available}]"
       end
     end)
+
+    if Keyword.get(opts, :log_request_id, false) do
+      id = get_request_id(response)
+      if id, do: Logger.info("#{@log_module} for #{shop} - request id: #{id}")
+    end
   end
+
+  defp get_request_id({_, %{headers: headers}}),
+    do: headers |> List.keyfind("X-Request-ID", 0, {nil, nil}) |> elem(1)
+
+  defp get_request_id(_), do: nil
 
   defp build_url(%{shop_name: domain}, opts) do
     version = Keyword.get(opts, :version, configured_version())

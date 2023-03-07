@@ -93,10 +93,10 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec async_exec!(AuthToken.t(), String.t()) :: {:ok, String.t()}
-  def async_exec!(%AuthToken{} = token, query) do
+  @spec async_exec!(AuthToken.t(), String.t(), keyword()) :: {:ok, String.t()}
+  def async_exec!(%AuthToken{} = token, query, opts \\ []) do
     with bulk_query <- bulk_query_string(query),
-         {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
+         {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10, %{}, opts),
          :ok <- handle_errors(resp),
          bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]) do
       {:ok, bulk_query_id}
@@ -107,8 +107,8 @@ defmodule ShopifyAPI.Bulk.Query do
   end
 
   @spec exec!(AuthToken.t(), String.t(), list()) :: bulk_query_response()
-  def exec!(%AuthToken{} = token, query, opts) do
-    with {:ok, bulk_query_id} <- async_exec!(token, query),
+  def exec!(%AuthToken{} = token, query, opts \\ []) do
+    with {:ok, bulk_query_id} <- async_exec!(token, query, opts),
          {:ok, url} <- poll(token, bulk_query_id, opts[:polling_rate], opts[:max_poll_count]) do
       Telemetry.send(@log_module, token, {:success, :query})
       url
