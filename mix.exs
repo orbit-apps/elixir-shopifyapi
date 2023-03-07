@@ -1,7 +1,7 @@
 defmodule Plug.ShopifyAPI.MixProject do
   use Mix.Project
 
-  @version "0.14.1"
+  @version "0.14.2"
 
   def project do
     [
@@ -49,7 +49,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
       {:plug, "~> 1.0"},
-      {:telemetry, "~> 1.0"}
+      {:telemetry, "~> 0.4 or ~> 1.0"}
     ]
   end
 
