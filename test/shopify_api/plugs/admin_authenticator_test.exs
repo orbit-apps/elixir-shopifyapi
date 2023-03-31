@@ -95,4 +95,25 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
              ]
     end
   end
+
+  describe "without an hmac" do
+    setup do
+      params = %{shop: @uninstalled_shop}
+
+      # Create a test connection
+      conn =
+        :get
+        |> conn("/admin/#{@app.name}?" <> URI.encode_query(params))
+        |> init_test_session(%{})
+        |> Conn.fetch_query_params()
+
+      [conn: conn]
+    end
+
+    test "plug does not halt", %{conn: conn} do
+      conn = AdminAuthenticator.call(conn, shopify_mount_path: "/shop")
+
+      refute conn.halted
+    end
+  end
 end
