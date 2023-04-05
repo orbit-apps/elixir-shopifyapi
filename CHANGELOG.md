@@ -1,5 +1,7 @@
 ## Unreleased
 
+- AdminAuthenticator plug passes through if there is no hmac
+
 ## 0.14.2
 
 - Relax telemetry requirement to still include 0.4
