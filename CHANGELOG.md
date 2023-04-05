@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.14.3
+
 - AdminAuthenticator plug passes through if there is no hmac
 
 ## 0.14.2
