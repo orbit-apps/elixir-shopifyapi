@@ -39,7 +39,7 @@ jobs:
       - name: Check Credo
         run: mix credo
 
-      - if: ${{ matrix.elixir == '1.14.1' }}
+      - if: ${{ matrix.elixir == '1.14.4' }}
         name: Check Formatting
         run: mix format --check-formatted
 
