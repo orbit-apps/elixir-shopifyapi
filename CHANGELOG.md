@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: typo in `REST.UsageCharges.all/4`
+
 ## 0.14.3
 
 - AdminAuthenticator plug passes through if there is no hmac
