@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.14.4
+
 - Fix: typo in `REST.UsageCharges.all/4`
 
 ## 0.14.3
