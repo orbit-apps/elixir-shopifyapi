@@ -31,7 +31,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
 
   ## Example
 
-      iex> ShopifyAPI.REST.UsageCharge.get(auth, integer)
+      iex> ShopifyAPI.REST.UsageCharge.get(auth, integer, %{usage_charge: %{id: integer}})
       {:ok, %{} = usage_charge}
   """
   def get(
@@ -60,7 +60,7 @@ defmodule ShopifyAPI.REST.UsageCharge do
   def all(%AuthToken{} = auth, recurring_application_charge_id, params \\ [], options \\ []) do
     REST.get(
       auth,
-      "recurring_application_charge_id/#{recurring_application_charge_id}/usage_charges.json",
+      "recurring_application_charges/#{recurring_application_charge_id}/usage_charges.json",
       params,
       Keyword.merge([pagination: :none], options)
     )
