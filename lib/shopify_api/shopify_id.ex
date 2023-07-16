@@ -9,10 +9,42 @@ defmodule ShopifyAPI.ShopifyId do
 
   This aims to reduce the confusion, around shopify ids and allow for convenient typspecs and guards.
 
-  Can be used in a schema as
+  ## With Ecto
+
+  ShopifyId can be used in a schema with:
   ```elixir
   field :order_id, ShopifyAPI.ShopifyId, type: :order
   ```
+
+  ## With Absinthe
+
+  ShopifyId can be used as an Absinthe custom type with:
+  ```elixir
+    defmodule MyAppGraphQL.Schema.CustomTypes do
+      use Absinthe.Schema.Notation
+
+      alias Wishlist.ShopifyAPI.ShopifyId
+      alias Absinthe.Blueprint.Input
+
+      scalar :shopify_customer_id, name: "ShopifyCustomerId" do
+        description("The `CustomerId` scalar type represents a shopify customer id.")
+
+        serialize(&ShopifyId.stringify/1)
+        parse(&parse_shopify_customer_id/1)
+      end
+
+      @spec parse_shopify_customer_id(Input.String.t()) :: {:ok, ShopifyId.t(:customer)} | :error
+      @spec parse_shopify_customer_id(Input.Integer.t()) :: {:ok, ShopifyId.t(:customer)} | :error
+      @spec parse_shopify_customer_id(Input.Null.t()) :: {:ok, nil}
+      defp parse_shopify_customer_id(%Input.String{value: value}), do: ShopifyId.new(value, :customer)
+
+      defp parse_shopify_customer_id(%Input.Integer{value: value}),
+        do: ShopifyId.new(value, :customer)
+
+      defp parse_shopify_customer_id(%Input.Null{}), do: {:ok, nil}
+    end
+  ```
+
   """
 
   @type t(object_type) :: %__MODULE__{
