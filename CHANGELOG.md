@@ -1,6 +1,8 @@
 ## Unreleased
 
 - Fix: typo in `REST.UsageCharges.all/4`
+- BREAKING: fixed hmac validation of Plug.AdminAuthenticator, now only authenticates when hmac is present
+- Added the ability to set a default app name for the Plug.AdminAuthenticator
 
 ## 0.14.3
 

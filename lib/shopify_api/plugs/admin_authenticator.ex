@@ -4,6 +4,9 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   when included in your route will verify Shopify signatures, that are added to the iframe call
   on admin page load, and set a session cookie for the duration of the session.
 
+  NOTE: This plug only does authentication for the initial iframe load, it will check for the
+  presents of the hmac and do the validation, if no hmac is present it will just continue.
+
   The plug will assign the Shop, App and AuthToken to the Conn for easy access in your
   admin controller when the a valid hmac is provided.
 
@@ -11,7 +14,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   Shopify expects this behaviour and has started rejecting new apps that do not behave this way.
 
   Make sure to include the App name in the path, in our example it is included directly in the
-  path `"/shop-admin/:app"`.
+  path `"/shop-admin/:app"`. Or include the :app_name in the mount parameters.
 
   ## Example Usage
   ```elixir
@@ -37,12 +40,15 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   def init(opts), do: Keyword.merge(opts, @defaults)
 
   def call(conn, options) do
-    do_authentication(conn, options)
+    if should_do_authentication?(conn) do
+      do_authentication(conn, options)
+    else
+      conn
+    end
   end
 
   defp do_authentication(conn, options) do
-    with :ok <- has_hmac(conn.query_params),
-         app_name <- conn.params["app"] || List.last(conn.path_info),
+    with app_name <- conn.params["app"] || List.last(conn.path_info) || options[:app_name],
          {:ok, app} <- ShopifyAPI.AppServer.get(app_name),
          :ok <- validate_hmac(app, conn.query_params),
          myshopify_domain <- shop_domain_from_conn(conn),
@@ -74,6 +80,8 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
         conn
     end
   end
+
+  defp should_do_authentication?(conn), do: has_hmac(conn.query_params) == :ok
 
   defp assign_app(conn, app), do: Conn.assign(conn, :app, app)
   defp assign_shop(conn, shop), do: Conn.assign(conn, :shop, shop)
@@ -109,7 +117,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
 
   defp install_path(options, conn) do
-    app_name = conn.params["app"] || List.last(conn.path_info)
+    app_name = conn.params["app"] || List.last(conn.path_info) || options[:app_name]
 
     options[:shopify_mount_path] <>
       "/install" <>
