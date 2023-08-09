@@ -1,5 +1,6 @@
 ## Unreleased
 
+- New: ShopifyId struct adds convenience around shopify ids
 - Fix: typo in `REST.UsageCharges.all/4`
 
 ## 0.14.3

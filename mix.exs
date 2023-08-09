@@ -49,7 +49,8 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
       {:plug, "~> 1.0"},
-      {:telemetry, "~> 0.4 or ~> 1.0"}
+      {:telemetry, "~> 0.4 or ~> 1.0"},
+      {:ecto_sql, "~> 3.6", only: [:dev, :test]}
     ]
   end
 
