@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.15.0
+
 - New: ShopifyId struct adds convenience around shopify ids
 - Fix: typo in `REST.UsageCharges.all/4`
 - BREAKING: fixed hmac validation of Plug.AdminAuthenticator, now only authenticates when hmac is present
