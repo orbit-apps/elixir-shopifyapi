@@ -42,6 +42,13 @@ defmodule ShopifyAPI.AuthTokenServer do
     :ets.select(@table, match_spec)
   end
 
+  @spec delete(String.t(), String.t()) :: :ok
+  def delete(shop_name, app) do
+    :ets.delete(@table, {shop_name, app})
+
+    :ok
+  end
+
   def drop_all do
     :ets.delete_all_objects(@table)
   end
