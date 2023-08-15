@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add AuthTokenServer.delete/2
+
 ## 0.15.0
 
 - New: ShopifyId struct adds convenience around shopify ids
