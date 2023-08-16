@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.15.1
+
 - Add AuthTokenServer.delete/2
 
 ## 0.15.0
