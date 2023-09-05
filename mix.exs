@@ -11,7 +11,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [
-        plt_add_apps: [:mix, :ex_unit],
+        plt_add_apps: [:mix, :ex_unit, :ecto],
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ],
       package: package(),
@@ -44,13 +44,13 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:ex_doc, "~> 0.30.2", only: [:dev], runtime: false},
       {:stream_data, "~> 0.6.0", only: :test},
       # Everything else
+      {:ecto_sql, "~> 3.6", optional: true},
       {:gen_stage, "~> 1.0"},
       {:httpoison, "~> 2.0"},
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
       {:plug, "~> 1.0"},
-      {:telemetry, "~> 0.4 or ~> 1.0"},
-      {:ecto_sql, "~> 3.6", only: [:dev, :test]}
+      {:telemetry, "~> 0.4 or ~> 1.0"}
     ]
   end
 
