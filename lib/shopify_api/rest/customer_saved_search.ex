@@ -14,7 +14,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def all do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 
@@ -27,7 +27,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def count do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 
@@ -40,7 +40,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def get do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 
@@ -53,7 +53,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def query do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 
@@ -66,7 +66,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def create do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 
@@ -79,7 +79,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def update do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 
@@ -92,7 +92,7 @@ defmodule ShopifyAPI.REST.CustomerSavedSearch do
       {:error, "Not implemented" }
   """
   def delete do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 end

@@ -36,7 +36,7 @@ defmodule ShopifyAPI.Bulk.Cancel do
   end
 
   defp poll(_, token, _bid, max_poll, depth) when max_poll == depth do
-    Logger.warn("#{__MODULE__} Cancel polling timed out for #{token.shop_name}")
+    Logger.warning("#{__MODULE__} Cancel polling timed out for #{token.shop_name}")
     {:error, :cancelation_timedout}
   end
 
