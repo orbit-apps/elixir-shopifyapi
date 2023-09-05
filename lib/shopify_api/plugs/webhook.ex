@@ -145,7 +145,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
           Map.merge(params.metadata, %{reason: reason})
         )
 
-        Logger.warn("In webhook plug, errored with: #{inspect(reason)}")
+        Logger.warning("In webhook plug, errored with: #{inspect(reason)}")
 
         conn
         |> send_resp(500, "internal server error")

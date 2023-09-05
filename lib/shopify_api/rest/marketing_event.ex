@@ -102,7 +102,7 @@ defmodule ShopifyAPI.REST.MarketingEvent do
       {:error, "Not implemented" }
   """
   def create_engagement do
-    Logger.warn("#{__MODULE__} error, resource not implemented.")
+    Logger.warning("#{__MODULE__} error, resource not implemented.")
     {:error, "Not implemented"}
   end
 end
