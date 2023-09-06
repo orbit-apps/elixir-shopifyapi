@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: ecto_sql dependency declaration, marked as optional instead of dev and test only
+
 ## 0.15.1
 
 - Add AuthTokenServer.delete/2

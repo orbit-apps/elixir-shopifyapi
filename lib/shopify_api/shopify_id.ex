@@ -104,7 +104,7 @@ defmodule ShopifyAPI.ShopifyId do
   ###################
   # Ecto ParameterizedType Callbacks
   #
-  # Only used it Ecto is a dependency.
+  # Only used if Ecto is a dependency.
   ###################
 
   use ShopifyAPI.ShopifyId.Ecto
