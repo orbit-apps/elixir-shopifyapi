@@ -1,5 +1,7 @@
 defmodule ShopifyAPI.ShopServer do
-  @moduledoc "Write-through cache for Shop structs."
+  @moduledoc """
+  Write-through cache for Shop structs.
+  """
 
   use GenServer
 
@@ -35,20 +37,17 @@ defmodule ShopifyAPI.ShopServer do
   @spec delete(String.t()) :: :ok
   def delete(domain) do
     true = :ets.delete(@table, domain)
-
     :ok
   end
 
   ## GenServer Callbacks
 
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
-  end
+  def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @impl GenServer
   def init(:ok) do
     create_table!()
-    for %Shop{} = shop <- do_initialize(), do: set(shop, false)
+    for shop when is_struct(shop, Shop) <- do_initialize(), do: set(shop, false)
     {:ok, :no_state}
   end
 

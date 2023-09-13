@@ -3,6 +3,8 @@ defmodule ShopifyAPI.Router do
   require Logger
 
   alias Plug.Conn
+  alias ShopifyAPI.App
+  alias ShopifyAPI.AppServer
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.UserToken
 
@@ -25,7 +27,7 @@ defmodule ShopifyAPI.Router do
     Logger.info("Authorized #{shop_domain(conn)}")
 
     if conn.params[@auth_code_param_name] != nil do
-      with {:ok, app} <- conn |> app_name() |> ShopifyAPI.AppServer.get(),
+      with {:ok, app} <- conn |> app_name() |> AppServer.get(),
            true <- verify_nonce(app, conn.query_params),
            true <- verify_params_with_hmac(app, conn.query_params),
            {:ok, auth_token} <- request_auth_token(conn, app),
@@ -82,7 +84,7 @@ defmodule ShopifyAPI.Router do
     auth_code = conn.params[@auth_code_param_name]
     timestamp = String.to_integer(conn.query_params["timestamp"])
 
-    case ShopifyAPI.App.fetch_token(app, myshopify_domain, auth_code) do
+    case App.fetch_token(app, myshopify_domain, auth_code) do
       {:ok, %UserToken{} = token} ->
         {:ok, %{token | timestamp: timestamp}}
 
@@ -96,12 +98,9 @@ defmodule ShopifyAPI.Router do
   end
 
   defp install_app(conn) do
-    conn
-    |> app_name()
-    |> ShopifyAPI.AppServer.get()
-    |> case do
+    case conn |> app_name() |> AppServer.get() do
       {:ok, app} ->
-        install_url = ShopifyAPI.App.install_url(app, shop_domain(conn))
+        install_url = App.install_url(app, shop_domain(conn))
 
         conn
         |> Conn.put_resp_header("location", install_url)

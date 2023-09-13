@@ -1,6 +1,6 @@
 defmodule ShopifyAPI.App do
   @moduledoc """
-    ShopifyAPI.App contains logic and a struct for representing a Shopify App.
+  ShopifyAPI.App contains logic and a struct for representing a Shopify App.
   """
   @derive {Jason.Encoder,
            only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
@@ -12,7 +12,7 @@ defmodule ShopifyAPI.App do
             scope: ""
 
   @typedoc """
-    Type that represents a Shopify App
+  Type that represents a Shopify App
   """
   @type t :: %__MODULE__{
           name: String.t(),
@@ -34,7 +34,7 @@ defmodule ShopifyAPI.App do
   alias ShopifyAPI.UserToken
 
   @doc """
-    Generates the install URL for an App and a Shop.
+  Generates the install URL for an App and a Shop.
   """
   @spec install_url(__MODULE__.t(), String.t(), boolean()) :: String.t()
   def install_url(app, domain, per_user \\ false)
@@ -47,9 +47,9 @@ defmodule ShopifyAPI.App do
   end
 
   @doc """
-    After an App is installed and the Shop owner ends up back on ourside of the fence we
-    need to request an AuthToken. This function uses ShopifyAPI.AuthRequest.post/3 to
-    fetch and parse the AuthToken.
+  After an App is installed and the Shop owner ends up back on ourside of the fence we
+  need to request an AuthToken. This function uses ShopifyAPI.AuthRequest.post/3 to
+  fetch and parse the AuthToken.
   """
   @spec fetch_token(__MODULE__.t(), String.t(), String.t()) ::
           UserToken.ok_t() | AuthToken.ok_t() | {:error, String.t()}

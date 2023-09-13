@@ -1,7 +1,7 @@
 defmodule ShopifyAPI.AuthRequest do
   @moduledoc """
-    AuthRequest.post/3 contains logic to request AuthTokens from Shopify given an App,
-    Shop domain, and the auth code from the App install.
+  AuthRequest.post/3 contains logic to request AuthTokens from Shopify given an App,
+  Shop domain, and the auth code from the App install.
   """
   require Logger
 

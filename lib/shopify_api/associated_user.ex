@@ -20,7 +20,7 @@ defmodule ShopifyAPI.AssociatedUser do
             collaborator: false
 
   @typedoc """
-      Type that represents a Shopify Associated User
+  Type that represents a Shopify Associated User
   """
   @type t :: %__MODULE__{
           id: integer(),

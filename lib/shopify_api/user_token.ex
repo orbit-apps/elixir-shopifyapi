@@ -1,4 +1,9 @@
 defmodule ShopifyAPI.UserToken do
+  @moduledoc """
+  Represents the auth token for individual users, Shopify documentation for the auth process
+  is here https://shopify.dev/docs/apps/auth/oauth/getting-started#online-access-mode
+  """
+
   @derive {Jason.Encoder,
            only: [
              :code,
@@ -26,10 +31,10 @@ defmodule ShopifyAPI.UserToken do
             associated_user_id: 0
 
   @typedoc """
-      Type that represents a Shopify Online Access Mode Auth Token with
+  Type that represents a Shopify Online Access Mode Auth Token with
 
-        - app_name corresponding to %ShopifyAPI.App{name: app_name}
-        - shop_name corresponding to %ShopifyAPI.Shop{domain: shop_name}
+    - app_name corresponding to %ShopifyAPI.App{name: app_name}
+    - shop_name corresponding to %ShopifyAPI.Shop{domain: shop_name}
   """
   @type t :: %__MODULE__{
           code: String.t(),
@@ -58,14 +63,14 @@ defmodule ShopifyAPI.UserToken do
   def create_key(shop, app, associated_user_id), do: "#{shop}:#{app}:#{associated_user_id}"
 
   @spec new(App.t(), String.t(), map(), String.t(), String.t()) :: t()
-  def new(app, myshopify_domain, associated_user, auth_code, token) do
-    %__MODULE__{
-      associated_user: AssociatedUser.from_auth_request(associated_user),
-      associated_user_id: associated_user["id"],
+  def new(app, myshopify_domain, user_params, auth_code, token) when is_struct(app, App) do
+    struct(__MODULE__,
+      associated_user: AssociatedUser.from_auth_request(user_params),
+      associated_user_id: user_params["id"],
       app_name: app.name,
       shop_name: myshopify_domain,
       code: auth_code,
       token: token
-    }
+    )
   end
 end

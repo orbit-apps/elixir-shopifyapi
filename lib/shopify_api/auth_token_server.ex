@@ -1,5 +1,7 @@
 defmodule ShopifyAPI.AuthTokenServer do
-  @moduledoc "Write-through cache for AuthToken structs."
+  @moduledoc """
+  Write-through cache for AuthToken structs.
+  """
 
   use GenServer
 
@@ -8,19 +10,16 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   @table __MODULE__
 
-  def all do
-    @table
-    |> :ets.tab2list()
-    |> Map.new()
-  end
+  def all, do: @table |> :ets.tab2list() |> Map.new()
 
   @spec count() :: integer()
   def count, do: :ets.info(@table, :size)
 
   @spec set(AuthToken.t()) :: :ok
-  def set(%AuthToken{} = token, persist? \\ true) do
+  @spec set(AuthToken.t(), boolean()) :: :ok
+  def set(token, should_persist \\ true) when is_struct(token, AuthToken) do
     :ets.insert(@table, {{token.shop_name, token.app_name}, token})
-    if persist?, do: do_persist(token)
+    if should_persist, do: do_persist(token)
     :ok
   end
 
@@ -45,19 +44,14 @@ defmodule ShopifyAPI.AuthTokenServer do
   @spec delete(String.t(), String.t()) :: :ok
   def delete(shop_name, app) do
     :ets.delete(@table, {shop_name, app})
-
     :ok
   end
 
-  def drop_all do
-    :ets.delete_all_objects(@table)
-  end
+  def drop_all, do: :ets.delete_all_objects(@table)
 
   ## GenServer Callbacks
 
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
-  end
+  def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @impl GenServer
   def init(:ok) do
@@ -87,7 +81,7 @@ defmodule ShopifyAPI.AuthTokenServer do
   end
 
   # Attempts to persist an AuthToken if a persistence callback is configured
-  defp do_persist(%AuthToken{} = token) do
+  defp do_persist(token) when is_struct(token, AuthToken) do
     key = AuthToken.create_key(token)
 
     case Config.lookup(__MODULE__, :persistence) do

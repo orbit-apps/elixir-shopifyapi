@@ -5,20 +5,15 @@ defmodule ShopifyAPI.Shop do
   defstruct domain: ""
 
   @typedoc """
-      Type that represents a Shopify Shop with
+  Type that represents a Shopify Shop with
 
-        - domain corresponding to the full URL for the shop
+    - domain corresponding to the full myshopify hostname for the shop
   """
-  @type t :: %__MODULE__{
-          domain: String.t()
-        }
+  @type t :: %__MODULE__{domain: String.t()}
 
   @spec post_install(AuthToken.t()) :: any()
-  def post_install(%AuthToken{} = token) do
-    :post_install
-    |> shop_config
-    |> call_post_install(token)
-  end
+  def post_install(token) when is_struct(token, AuthToken),
+    do: :post_install |> shop_config |> call_post_install(token)
 
   defp shop_config(key),
     do: Application.get_env(:shopify_api, ShopifyAPI.Shop)[key]

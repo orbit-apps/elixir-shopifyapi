@@ -1,6 +1,4 @@
 defmodule ShopifyAPI.Plugs.PutShopifyContentHeaders do
-  import Plug.Conn
-
   @moduledoc """
   A Plug to handle setting the content security and frame ancestors headers for Shop Admin.
 
@@ -15,6 +13,8 @@ defmodule ShopifyAPI.Plugs.PutShopifyContentHeaders do
   end
   ```
   """
+
+  import Plug.Conn
 
   def init(opts), do: opts
 
