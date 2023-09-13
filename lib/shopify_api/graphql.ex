@@ -123,7 +123,7 @@ defmodule ShopifyAPI.GraphQL do
 
   defp build_url(%{shop_name: domain}, opts) do
     version = Keyword.get(opts, :version, configured_version())
-    "#{ShopifyAPI.transport()}#{domain}/admin/api/#{version}/graphql.json"
+    "#{ShopifyAPI.transport()}://#{domain}/admin/api/#{version}/graphql.json"
   end
 
   defp build_headers(%{token: access_token}, opts) do

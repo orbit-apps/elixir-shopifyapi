@@ -27,7 +27,6 @@ defmodule ShopifyAPI.App do
 
   require Logger
 
-  alias ShopifyAPI.AssociatedUser
   alias ShopifyAPI.AuthRequest
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.JSONSerializer
@@ -36,10 +35,10 @@ defmodule ShopifyAPI.App do
   @doc """
   Generates the install URL for an App and a Shop.
   """
-  @spec install_url(__MODULE__.t(), String.t(), boolean()) :: String.t()
-  def install_url(app, domain, per_user \\ false)
+  @spec install_url(t(), String.t(), boolean()) :: String.t()
+  def install_url(app, domain, use_user_tokens \\ false)
       when is_struct(app, __MODULE__) and is_binary(domain) do
-    query_params = app |> install_query_params(per_user) |> URI.encode_query()
+    query_params = app |> install_query_params(use_user_tokens) |> URI.encode_query()
 
     %URI{scheme: "https", port: 443, host: domain, path: "/admin/oauth/authorize"}
     |> URI.append_query(query_params)
@@ -69,27 +68,22 @@ defmodule ShopifyAPI.App do
     end
   end
 
-  defp install_query_params(app, per_user) do
+  defp install_query_params(app, use_user_tokens) do
     [
       client_id: app.client_id,
       scope: app.scope,
       redirect_uri: app.auth_redirect_uri,
       state: app.nonce
-    ] ++ per_user_query_params(per_user)
+    ] ++ per_user_query_params(use_user_tokens)
   end
 
   defp per_user_query_params(true), do: @per_user_query_params
-  defp per_user_query_params(_per_user_enabled), do: []
+  defp per_user_query_params(_use_user_tokens), do: []
 
-  defp create_token(
-         %{"associated_user" => associated_user, "access_token" => token},
-         app,
-         domain,
-         auth_code
-       ) do
+  defp create_token(json, app, domain, auth_code)
+       when is_map_key(json, "associated_user") and is_map_key(json, "access_token") do
     Logger.debug("online token")
-    user = AssociatedUser.from_auth_request(associated_user)
-    {:ok, UserToken.new(app, domain, user, auth_code, token)}
+    {:ok, UserToken.from_auth_request(app, domain, auth_code, json)}
   end
 
   defp create_token(%{"access_token" => token}, app, domain, auth_code) do

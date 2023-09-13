@@ -43,7 +43,7 @@ defmodule ShopifyAPI.Router do
             Logger.debug("new install for #{shop.domain}, redirecting to shopify admin")
 
           %UserToken{associated_user_id: associated_user_id} ->
-            ShopifyAPI.UserTokenServer.set(auth_token, false)
+            ShopifyAPI.UserTokenServer.set(auth_token, true)
 
             Logger.debug(
               "new login for user #{associated_user_id} from #{shop.domain}, redirecting to shopify admin"

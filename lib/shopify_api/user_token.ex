@@ -41,7 +41,7 @@ defmodule ShopifyAPI.UserToken do
           app_name: String.t(),
           shop_name: String.t(),
           token: String.t(),
-          timestamp: 0,
+          timestamp: integer(),
           plus: boolean(),
           scope: String.t(),
           expires_in: integer(),
@@ -62,15 +62,21 @@ defmodule ShopifyAPI.UserToken do
   @spec create_key(String.t(), String.t(), integer()) :: key()
   def create_key(shop, app, associated_user_id), do: "#{shop}:#{app}:#{associated_user_id}"
 
-  @spec new(App.t(), String.t(), map(), String.t(), String.t()) :: t()
-  def new(app, myshopify_domain, user_params, auth_code, token) when is_struct(app, App) do
+  @spec from_auth_request(App.t(), String.t(), String.t(), map()) :: t()
+  def from_auth_request(app, myshopify_domain, auth_code, attrs) when is_struct(app, App) do
+    user = AssociatedUser.from_auth_request(attrs["associated_user"])
+
     struct(__MODULE__,
-      associated_user: AssociatedUser.from_auth_request(user_params),
-      associated_user_id: user_params["id"],
+      associated_user: user,
+      associated_user_id: user.id,
+      associated_user_scope: attrs["associated_user_scope"],
       app_name: app.name,
       shop_name: myshopify_domain,
       code: auth_code,
-      token: token
+      token: attrs["access_token"],
+      timestamp: DateTime.to_unix(DateTime.utc_now()),
+      expires_in: attrs["expires_in"],
+      scope: attrs["scope"]
     )
   end
 end
