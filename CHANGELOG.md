@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.15.2
+
 - New: Online Token generation/auth, this allows per merchant admin login tokens. Check out the Plug.AuthShopSessionToken on how to enable it.
 - Fix: ecto_sql dependency declaration, marked as optional instead of dev and test only
 
