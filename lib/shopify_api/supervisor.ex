@@ -21,6 +21,7 @@ defmodule ShopifyAPI.Supervisor do
   alias ShopifyAPI.AppServer
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.ShopServer
+  alias ShopifyAPI.UserTokenServer
 
   def start_link(_opts) do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -28,7 +29,7 @@ defmodule ShopifyAPI.Supervisor do
 
   @impl Supervisor
   def init(:ok) do
-    children = [AppServer, AuthTokenServer, ShopServer]
+    children = [AppServer, AuthTokenServer, ShopServer, UserTokenServer]
     Supervisor.init(children, strategy: :one_for_one)
   end
 end

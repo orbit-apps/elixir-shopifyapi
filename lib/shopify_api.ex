@@ -27,5 +27,5 @@ defmodule ShopifyAPI do
   # Accessor for API transport layer, defaults to `https://`.
   # Override in configuration to `http://` for testing using Bypass.
   @spec transport() :: String.t()
-  def transport, do: Application.get_env(:shopify_api, :transport, "https://")
+  def transport, do: Application.get_env(:shopify_api, :transport, "https")
 end

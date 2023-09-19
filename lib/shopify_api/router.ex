@@ -3,6 +3,10 @@ defmodule ShopifyAPI.Router do
   require Logger
 
   alias Plug.Conn
+  alias ShopifyAPI.App
+  alias ShopifyAPI.AppServer
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.UserToken
 
   plug(:match)
   plug(:dispatch)
@@ -23,16 +27,28 @@ defmodule ShopifyAPI.Router do
     Logger.info("Authorized #{shop_domain(conn)}")
 
     if conn.params[@auth_code_param_name] != nil do
-      with {:ok, app} <- conn |> app_name() |> ShopifyAPI.AppServer.get(),
+      with {:ok, app} <- conn |> app_name() |> AppServer.get(),
            true <- verify_nonce(app, conn.query_params),
            true <- verify_params_with_hmac(app, conn.query_params),
            {:ok, auth_token} <- request_auth_token(conn, app),
            shop <- shop_from_auth_token(auth_token) do
         ShopifyAPI.ShopServer.set(shop, true)
-        ShopifyAPI.AuthTokenServer.set(auth_token, true)
-        ShopifyAPI.Shop.post_install(auth_token)
 
-        Logger.debug("new install for #{shop.domain}, redirecting to shopify admin")
+        Logger.debug("auth_token: #{inspect(auth_token)}")
+
+        case auth_token do
+          %AuthToken{} ->
+            ShopifyAPI.AuthTokenServer.set(auth_token, true)
+            ShopifyAPI.Shop.post_install(auth_token)
+            Logger.debug("new install for #{shop.domain}, redirecting to shopify admin")
+
+          %UserToken{associated_user_id: associated_user_id} ->
+            ShopifyAPI.UserTokenServer.set(auth_token, true)
+
+            Logger.debug(
+              "new login for user #{associated_user_id} from #{shop.domain}, redirecting to shopify admin"
+            )
+        end
 
         redirect_url = app |> installed_redirect_uri(shop) |> URI.to_string()
 
@@ -63,33 +79,28 @@ defmodule ShopifyAPI.Router do
   end
 
   defp request_auth_token(conn, app) do
+    Logger.debug("APP #{inspect(app)}")
+    myshopify_domain = shop_domain(conn)
     auth_code = conn.params[@auth_code_param_name]
+    timestamp = String.to_integer(conn.query_params["timestamp"])
 
-    app
-    |> ShopifyAPI.App.fetch_token(shop_domain(conn), auth_code)
-    |> case do
-      {:ok, token} ->
-        {:ok,
-         %ShopifyAPI.AuthToken{
-           app_name: app_name(conn),
-           shop_name: shop_domain(conn),
-           code: auth_code,
-           timestamp: String.to_integer(conn.query_params["timestamp"]),
-           token: token
-         }}
+    case App.fetch_token(app, myshopify_domain, auth_code) do
+      {:ok, %UserToken{} = token} ->
+        {:ok, %{token | timestamp: timestamp}}
 
-      _msg ->
+      {:ok, %AuthToken{} = token} ->
+        {:ok, %{token | timestamp: timestamp}}
+
+      msg ->
+        Logger.debug("request_auth_token error #{inspect(msg)}}")
         {:error, "unable to fetch token"}
     end
   end
 
   defp install_app(conn) do
-    conn
-    |> app_name()
-    |> ShopifyAPI.AppServer.get()
-    |> case do
+    case conn |> app_name() |> AppServer.get() do
       {:ok, app} ->
-        install_url = ShopifyAPI.App.install_url(app, shop_domain(conn))
+        install_url = App.install_url(app, shop_domain(conn))
 
         conn
         |> Conn.put_resp_header("location", install_url)
@@ -128,6 +139,9 @@ defmodule ShopifyAPI.Router do
   end
 
   defp shop_from_auth_token(%ShopifyAPI.AuthToken{shop_name: myshopify_domain}),
+    do: %ShopifyAPI.Shop{domain: myshopify_domain}
+
+  defp shop_from_auth_token(%ShopifyAPI.UserToken{shop_name: myshopify_domain}),
     do: %ShopifyAPI.Shop{domain: myshopify_domain}
 
   defp installed_redirect_uri(%_{client_id: app_api_key}, %_{domain: myshopify_domain}) do

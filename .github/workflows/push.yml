@@ -1,5 +1,6 @@
-on: [push, pull_request]
 name: Continuous Integration
+on: [push, pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -10,9 +11,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - otp: 25.3.2.5
+          - otp: 25.3.2.6
             elixir: 1.14.5
-          - otp: 25.3.2.5
+          - otp: 25.3.2.6
             elixir: 1.15.5
           - otp: 26.0.2
             elixir: 1.14.5
@@ -39,7 +40,7 @@ jobs:
       - name: Check Credo
         run: mix credo
 
-      - if: ${{ matrix.elixir == '1.14.4' }}
+      - if: ${{ matrix.elixir == '1.15.5' }}
         name: Check Formatting
         run: mix format --check-formatted
 

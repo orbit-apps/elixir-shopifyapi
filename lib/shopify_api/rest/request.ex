@@ -201,7 +201,7 @@ defmodule ShopifyAPI.REST.Request do
 
   # Absolute URL generator
   defp url(%{shop_name: domain}, <<?/, path::binary>>),
-    do: "#{ShopifyAPI.transport()}#{domain}/#{path}"
+    do: "#{ShopifyAPI.transport()}://#{domain}/#{path}"
 
   # Relative with version URL generator
   defp url(shop, path), do: url(shop, "/admin/api/#{version()}/#{path}")

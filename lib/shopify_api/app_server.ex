@@ -1,5 +1,7 @@
 defmodule ShopifyAPI.AppServer do
-  @moduledoc "Write-through cache for App structs."
+  @moduledoc """
+  Write-through cache for App structs.
+  """
 
   use GenServer
 
@@ -8,11 +10,7 @@ defmodule ShopifyAPI.AppServer do
 
   @table __MODULE__
 
-  def all do
-    @table
-    |> :ets.tab2list()
-    |> Map.new()
-  end
+  def all, do: @table |> :ets.tab2list() |> Map.new()
 
   @spec count() :: integer()
   def count, do: :ets.info(@table, :size)
@@ -21,14 +19,14 @@ defmodule ShopifyAPI.AppServer do
   def set(%App{name: name} = app), do: set(name, app)
 
   @spec set(String.t(), App.t()) :: :ok
-  def set(name, %App{} = app) do
+  def set(name, app) when is_binary(name) and is_struct(app, App) do
     :ets.insert(@table, {name, app})
     do_persist(app)
     :ok
   end
 
   @spec get(String.t()) :: {:ok, App.t()} | :error
-  def get(name) do
+  def get(name) when is_binary(name) do
     case :ets.lookup(@table, name) do
       [{^name, app}] -> {:ok, app}
       [] -> :error
@@ -44,9 +42,7 @@ defmodule ShopifyAPI.AppServer do
 
   ## GenServer Callbacks
 
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
-  end
+  def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @impl GenServer
   def init(:ok) do

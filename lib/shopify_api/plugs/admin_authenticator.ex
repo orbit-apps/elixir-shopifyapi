@@ -76,6 +76,12 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
         |> Conn.put_resp_header("location", install_path(options, conn))
         |> Conn.halt()
 
+      {:error, _} ->
+        conn
+        |> Conn.resp(:found, "")
+        |> Conn.put_resp_header("location", install_path(options, conn))
+        |> Conn.halt()
+
       _ ->
         conn
     end
