@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.15.3
+
+- Fix: The dev proxy wasn't authing requests correctly or reading the passed in app_name.
+
 ## 0.15.2
 
 - New: Online Token generation/auth, this allows per merchant admin login tokens. Check out the Plug.AuthShopSessionToken on how to enable it.
