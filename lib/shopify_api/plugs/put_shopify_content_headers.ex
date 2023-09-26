@@ -8,7 +8,7 @@ defmodule ShopifyAPI.Plugs.PutShopifyContentHeaders do
 
   ```elixir
   pipeline :shop_admin do
-    plug ShopifyAPI.Plugs.AdminAuthenticator, shopify_router_mount: "/shop"
+    plug ShopifyAPI.Plugs.AdminAuthenticator, shopify_mount_path: "/shop"
     plug ShopifyAPI.Plugs.PutShopifyContentHeaders
   end
   ```
