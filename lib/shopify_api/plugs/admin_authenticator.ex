@@ -48,7 +48,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
 
   defp do_authentication(conn, options) do
-    with app_name <- conn.params["app"] || List.last(conn.path_info) || options[:app_name],
+    with app_name <- conn.params["app"] || options[:app_name] || List.last(conn.path_info),
          {:ok, app} <- ShopifyAPI.AppServer.get(app_name),
          :ok <- validate_hmac(app, conn.query_params),
          myshopify_domain <- shop_domain_from_conn(conn),
@@ -123,7 +123,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
 
   defp install_path(options, conn) do
-    app_name = conn.params["app"] || List.last(conn.path_info) || options[:app_name]
+    app_name = conn.params["app"] || options[:app_name] || List.last(conn.path_info)
 
     options[:shopify_mount_path] <>
       "/install" <>
