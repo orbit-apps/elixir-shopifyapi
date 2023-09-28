@@ -30,17 +30,19 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
 
   require Logger
 
-  alias ShopifyAPI.App
   alias ShopifyAPI.AppServer
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.ShopServer
   alias ShopifyAPI.UserTokenServer
 
   @defaults [use_online_tokens: false]
+  @client_redirect_header "x-shopify-api-request-failure-reauthorize-url"
 
   def init(opts), do: Keyword.merge(@defaults, opts)
 
   def call(conn, options) do
+    use_online_tokens = options[:use_online_tokens]
+
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
          {:ok, app} <- get_app_from_token(token),
          {true, jwt, _jws} <- verify_token(token, app.client_secret),
@@ -48,8 +50,7 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
          {:ok, user_id} <- get_user_from_jwt(jwt),
          {:ok, shop} <- ShopServer.get(myshopify_domain),
          {:ok, auth_token} <- AuthTokenServer.get(myshopify_domain, app.name),
-         {:ok, user_token} <-
-           fetch_user_token(myshopify_domain, app.name, user_id, options[:use_online_tokens]) do
+         {:ok, user_token} <- get_user_token(myshopify_domain, app, user_id, use_online_tokens) do
       conn
       |> assign(:app, app)
       |> assign(:shop, shop)
@@ -57,16 +58,12 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
       |> assign(:user_id, user_id)
       |> assign(:user_token, user_token)
     else
-      {:error, {:user_token_not_found, %{message: message, app: app_name, shop: shop}}} ->
-        Logger.debug("Could not authenticate user #{inspect(message)}")
-        {:ok, app} = AppServer.get(app_name)
-
-        install_url = App.install_url(app, shop, options[:use_online_tokens])
-        Logger.debug("install_url: #{inspect(install_url)}")
+      {:error, :user_token_invalid, redirect_url} ->
+        Logger.debug("Found invalid user token adding redirect header to #{redirect_url}")
 
         conn
         |> resp(403, "Not Authorized.")
-        |> put_resp_header("X-Shopify-API-Request-Failure-Reauthorize-URL", install_url)
+        |> put_resp_header(@client_redirect_header, redirect_url)
         |> halt()
 
       error ->
@@ -83,8 +80,19 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
     JOSE.JWT.verify_strict(jwk, ["HS256"], token)
   end
 
-  defp fetch_user_token(_domain, _app_name, _user_id, false), do: {:ok, nil}
-  defp fetch_user_token(domain, app, id, true), do: UserTokenServer.get(domain, app, id)
+  defp get_user_token(_domain, _app, _user_id, false), do: {:ok, nil}
+
+  defp get_user_token(domain, app, id, true) do
+    case UserTokenServer.get_valid(domain, app.name, id) do
+      {:ok, token} ->
+        {:ok, token}
+
+      {:error, _} = resp ->
+        Logger.debug("Get user token failed with #{inspect(resp)}")
+        oauth_url = ShopifyAPI.shopify_oauth_url(app, domain, use_user_tokens: true)
+        {:error, :user_token_invalid, oauth_url}
+    end
+  end
 
   defp get_app_from_token(token) do
     with %JOSE.JWT{fields: %{"aud" => client_id}} <- JOSE.JWT.peek_payload(token),

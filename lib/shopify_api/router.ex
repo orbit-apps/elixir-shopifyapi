@@ -100,7 +100,7 @@ defmodule ShopifyAPI.Router do
   defp install_app(conn) do
     case conn |> app_name() |> AppServer.get() do
       {:ok, app} ->
-        oauth_url =  ShopifyAPI.shopify_oauth_url(app, shop_domain(conn))
+        oauth_url = ShopifyAPI.shopify_oauth_url(app, shop_domain(conn))
         Logger.debug("redirecting to Shop oauth url: #{oauth_url}")
 
         conn
