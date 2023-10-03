@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Fix: UserTokens were not being validated on fetch, they are now.  Add redirect OAuth URL if invalid
+- Refactor: OAuth URL generation, moved from App module to root ShopifyAPI module
+
 ## 0.15.3
 
 - Fix: The dev proxy wasn't authing requests correctly or reading the passed in app_name.

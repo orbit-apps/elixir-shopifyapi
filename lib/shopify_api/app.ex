@@ -23,27 +23,12 @@ defmodule ShopifyAPI.App do
           scope: String.t()
         }
 
-  @per_user_query_params ["grant_options[]": "per-user"]
-
   require Logger
 
   alias ShopifyAPI.AuthRequest
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.UserToken
-
-  @doc """
-  Generates the install URL for an App and a Shop.
-  """
-  @spec install_url(t(), String.t(), boolean()) :: String.t()
-  def install_url(app, domain, use_user_tokens \\ false)
-      when is_struct(app, __MODULE__) and is_binary(domain) do
-    query_params = app |> install_query_params(use_user_tokens) |> URI.encode_query()
-
-    %URI{scheme: "https", port: 443, host: domain, path: "/admin/oauth/authorize"}
-    |> URI.append_query(query_params)
-    |> URI.to_string()
-  end
 
   @doc """
   After an App is installed and the Shop owner ends up back on ourside of the fence we
@@ -67,18 +52,6 @@ defmodule ShopifyAPI.App do
         {:error, reason}
     end
   end
-
-  defp install_query_params(app, use_user_tokens) do
-    [
-      client_id: app.client_id,
-      scope: app.scope,
-      redirect_uri: app.auth_redirect_uri,
-      state: app.nonce
-    ] ++ per_user_query_params(use_user_tokens)
-  end
-
-  defp per_user_query_params(true), do: @per_user_query_params
-  defp per_user_query_params(_use_user_tokens), do: []
 
   defp create_token(json, app, domain, auth_code)
        when is_map_key(json, "associated_user") and is_map_key(json, "access_token") do

@@ -9,6 +9,9 @@ defmodule ShopifyAPI.UserTokenServer do
   alias ShopifyAPI.UserToken
 
   @table __MODULE__
+  @type t :: UserToken.t()
+  @type ok_t :: {:ok, t()}
+  @type error_not_found :: {:error, :user_token_not_found}
 
   def all do
     @table
@@ -27,22 +30,31 @@ defmodule ShopifyAPI.UserTokenServer do
     :ok
   end
 
-  @spec get(String.t(), String.t(), integer()) :: {:ok, UserToken.t()} | {:error, String.t()}
-  def get(shop, app, user_id) when is_binary(shop) and is_binary(app) and is_number(user_id) do
-    case :ets.lookup(@table, {shop, app, user_id}) do
-      [{_key, token}] ->
-        {:ok, token}
-
-      [] ->
-        {:error,
-         {:user_token_not_found,
-          %{
-            message: "User token for #{shop}:#{app}:#{user_id} could not be found.",
-            shop: shop,
-            app: app
-          }}}
+  @spec get(String.t(), String.t(), integer()) :: ok_t() | error_not_found()
+  def get(myshopify_domain, app_name, user_id)
+      when is_binary(myshopify_domain) and is_binary(app_name) and is_number(user_id) do
+    case :ets.lookup(@table, {myshopify_domain, app_name, user_id}) do
+      [{_key, token}] -> {:ok, token}
+      [] -> {:error, :user_token_not_found}
     end
   end
+
+  @spec get_valid(String.t(), String.t(), integer()) :: ok_t() | {:error, :invalid_user_token}
+  def get_valid(myshopify_domain, app_name, user_id),
+    do: myshopify_domain |> get(app_name, user_id) |> validate()
+
+  @spec validate(ok_t() | error_not_found()) :: ok_t() | {:error, :invalid_user_token}
+  def validate({:ok, user_token}) do
+    now = DateTime.to_unix(DateTime.utc_now())
+
+    if user_token.timestamp + user_token.expires_in >= now do
+      {:ok, user_token}
+    else
+      {:error, :invalid_user_token}
+    end
+  end
+
+  def validate(_), do: {:error, :invalid_user_token}
 
   def get_for_shop(shop) when is_binary(shop) do
     match_spec = [{{{shop, :_, :_}, :"$1"}, [], [:"$1"]}]
