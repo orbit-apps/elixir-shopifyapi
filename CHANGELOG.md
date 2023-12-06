@@ -1,5 +1,6 @@
 ## Unreleased
 
+- New: Shop helper functions to translate from slug <> myshopify domain.
 - Fix: UserTokenServer.delete wasn't using the correct key in to the :ets table
 - New: UserTokenServer.delete_for_shop/1 to delete all the tokens for a shop
 
