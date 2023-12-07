@@ -27,31 +27,11 @@ defmodule ShopifyAPI.AuthRequest do
     HTTPoison.post(access_token_url, encoded_body, @headers)
   end
 
-  if Mix.env() == :test or Mix.env() == :dev do
-    def base_uri(myshopify_domain) do
-      {myshopify_domain, port} =
-        if String.match?(myshopify_domain, ~R/.*:.*/) do
-          [domain, str_port] = String.split(myshopify_domain, ":")
-          {domain, String.to_integer(str_port)}
-        else
-          {myshopify_domain, 443}
-        end
-
-      %URI{
-        scheme: ShopifyAPI.transport(),
-        port: port,
-        host: myshopify_domain,
-        path: "/admin/oauth/access_token"
-      }
-    end
-  else
-    def base_uri(myshopify_domain) do
-      %URI{
-        scheme: ShopifyAPI.transport(),
-        port: 443,
-        host: myshopify_domain,
-        path: "/admin/oauth/access_token"
-      }
-    end
+  @spec base_uri(String.t()) :: URI.t()
+  def base_uri(myshopify_domain) do
+    myshopify_domain
+    |> ShopifyAPI.Shop.to_uri()
+    # TODO use URI.append_path when we drop 1.14 support
+    |> URI.merge("/admin/oauth/access_token")
   end
 end

@@ -2,6 +2,7 @@ defmodule ShopifyAPI do
   alias ShopifyAPI.RateLimiting
   alias ShopifyAPI.Throttled
 
+  @shopify_admin_uri URI.new!("https://admin.shopify.com")
   @shopify_oauth_path "/admin/oauth/authorize"
   @oauth_default_options [use_user_tokens: false]
   @per_user_query_params ["grant_options[]": "per-user"]
@@ -33,6 +34,14 @@ defmodule ShopifyAPI do
   @spec transport() :: String.t()
   def transport, do: Application.get_env(:shopify_api, :transport, "https")
 
+  @spec port() :: integer()
+  def port do
+    case transport() do
+      "https" -> 443
+      _ -> 80
+    end
+  end
+
   @doc """
   Generates the OAuth URL for fetching the App<>Shop token or the UserToken
   depending on if you enable user_user_tokens.
@@ -44,10 +53,22 @@ defmodule ShopifyAPI do
     user_token_query_params = opts |> Keyword.get(:use_user_tokens) |> per_user_query_params()
     query_params = oauth_query_params(app) ++ user_token_query_params
 
-    %URI{scheme: "https", port: 443, host: domain, path: @shopify_oauth_path}
+    domain
+    |> ShopifyAPI.Shop.to_uri()
+    # TODO use URI.append_path when we drop 1.14 support
+    |> URI.merge(shopify_oauth_path())
     |> URI.append_query(URI.encode_query(query_params))
     |> URI.to_string()
   end
+
+  @doc """
+  Helper function to get Shopify's Admin URI.
+  """
+  @spec shopify_admin_uri() :: URI.t()
+  def shopify_admin_uri, do: @shopify_admin_uri
+
+  @spec shopify_oauth_path() :: String.t()
+  def shopify_oauth_path, do: @shopify_oauth_path
 
   defp oauth_query_params(app) do
     [
