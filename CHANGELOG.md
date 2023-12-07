@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Fix: UserTokenServer.delete wasn't using the correct key in to the :ets table
+- New: UserTokenServer.delete_for_shop/1 to delete all the tokens for a shop
+
 ## 0.15.4
 
 - Fix: UserTokens were not being validated on fetch, they are now.  Add redirect OAuth URL if invalid

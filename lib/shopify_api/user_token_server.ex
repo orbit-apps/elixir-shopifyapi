@@ -56,8 +56,8 @@ defmodule ShopifyAPI.UserTokenServer do
 
   def validate(_), do: {:error, :invalid_user_token}
 
-  def get_for_shop(shop) when is_binary(shop) do
-    match_spec = [{{{shop, :_, :_}, :"$1"}, [], [:"$1"]}]
+  def get_for_shop(myshopify_domain) when is_binary(myshopify_domain) do
+    match_spec = [{{{myshopify_domain, :_, :_}, :"$1"}, [], [:"$1"]}]
     :ets.select(@table, match_spec)
   end
 
@@ -66,9 +66,15 @@ defmodule ShopifyAPI.UserTokenServer do
     :ets.select(@table, match_spec)
   end
 
-  @spec delete(String.t(), String.t()) :: :ok
-  def delete(myshopify_domain, app) do
-    :ets.delete(@table, {myshopify_domain, app})
+  @spec delete(UserToken.t()) :: :ok
+  def delete(token) do
+    :ets.delete(@table, {token.shop_name, token.app_name, token.associated_user_id})
+    :ok
+  end
+
+  @spec delete_for_shop(String.t()) :: :ok
+  def delete_for_shop(myshopify_domain) when is_binary(myshopify_domain) do
+    myshopify_domain |> get_for_shop() |> Enum.each(&delete/1)
     :ok
   end
 
