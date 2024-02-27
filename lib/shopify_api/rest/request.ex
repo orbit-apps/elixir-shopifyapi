@@ -246,7 +246,8 @@ defmodule ShopifyAPI.REST.Request do
 
   @spec extract_next_link(list) :: binary | nil
   defp extract_next_link(headers) do
-    for {"Link", link_header} <- headers,
+    for {header, link_header} <- headers,
+        String.downcase(header) == "link",
         links <- String.split(link_header, ",") do
       case Regex.named_captures(@link_regex, links) do
         %{"link" => link, "rel" => "next"} -> link
