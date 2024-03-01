@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.15.6
+
 - Fix: REST pagination broken
 
 ## 0.15.5
