@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: REST pagination broken
+
 ## 0.15.5
 
 - Fix: UserTokenServer.delete wasn't using the correct key in to the :ets table

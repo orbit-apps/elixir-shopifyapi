@@ -116,4 +116,33 @@ defmodule ShopifyAPI.RESTTest do
       assert {:error, %{status_code: 404}} = REST.delete(token, "example")
     end
   end
+
+  describe "extract_results_and_next_link" do
+    test "returns next link if found" do
+      headers = [{"Link", "<https://example.com?page=2>; rel=\"next\""}]
+      response = %HTTPoison.Response{body: "", headers: headers}
+      {_, next_link} = Request.extract_results_and_next_link(response)
+      assert next_link == "https://example.com?page=2"
+    end
+
+    test "returns nil if next link not found" do
+      headers = [{"Link", "<https://example.com?page=1>; rel=\"prev\""}]
+      response = %HTTPoison.Response{body: "", headers: headers}
+      {_, next_link} = Request.extract_results_and_next_link(response)
+      assert next_link == nil
+    end
+
+    test "returns nil if headers are empty" do
+      response = %HTTPoison.Response{body: "", headers: []}
+      {_, next_link} = Request.extract_results_and_next_link(response)
+      assert next_link == nil
+    end
+
+    test "returns nil if 'Link' header is missing" do
+      headers = [{"Content-Type", "application/json"}]
+      response = %HTTPoison.Response{body: "", headers: headers}
+      {_, next_link} = Request.extract_results_and_next_link(response)
+      assert next_link == nil
+    end
+  end
 end
