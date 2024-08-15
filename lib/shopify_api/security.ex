@@ -1,5 +1,9 @@
 defmodule ShopifyAPI.Security do
+  require Logger
+
   def base16_sha256_hmac(text, secret) do
+    Logger.warning("Hmac passed into ShopifyAPI.Security is #{text}")
+
     :sha256
     |> hmac(secret, text)
     |> Base.encode16()

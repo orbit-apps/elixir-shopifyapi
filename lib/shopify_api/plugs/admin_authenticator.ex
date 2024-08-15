@@ -49,6 +49,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
   defp do_authentication(conn, options) do
     with app_name <- conn.params["app"] || options[:app_name] || List.last(conn.path_info),
+         :ok <- Logger.warning("App name is #{app_name}"),
          {:ok, app} <- ShopifyAPI.AppServer.get(app_name),
          :ok <- validate_hmac(app, conn.query_params),
          myshopify_domain <- shop_domain_from_conn(conn),
@@ -103,6 +104,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
   defp validate_hmac(%ShopifyAPI.App{client_secret: secret}, params) do
     request_hmac = params["hmac"]
+    Logger.warning("Request hmac is #{request_hmac}")
 
     params
     |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
@@ -110,8 +112,12 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
     |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
     |> ShopifyAPI.Security.base16_sha256_hmac(secret)
     |> then(fn
-      ^request_hmac -> :ok
-      _ -> {:error, :invalid_hmac}
+      ^request_hmac ->
+        :ok
+
+      hmac ->
+        Logger.warning("Invalid hmac #{hmac}")
+        {:error, :invalid_hmac}
     end)
   end
 
