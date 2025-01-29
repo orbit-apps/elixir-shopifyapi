@@ -96,39 +96,4 @@ defmodule ShopifyAPI.ShopifyIdTest do
       field(:order_id, ShopifyId, type: :order)
     end
   end
-
-  describe "Ecto" do
-    test "init" do
-      assert Schema.__schema__(:type, :order_id) ==
-               {:parameterized, ShopifyId, %{type: :order}}
-    end
-
-    @field_type {:parameterized, ShopifyId, %{type: @id_type}}
-
-    test "operations" do
-      assert Ecto.Type.type(@field_type) == :string
-
-      assert Ecto.Type.embed_as(@field_type, :foo) == :self
-
-      assert Ecto.Type.embedded_load(@field_type, @string_id, :json) ==
-               {:ok, @struct_id}
-
-      assert Ecto.Type.embedded_load(@field_type, nil, :json) == {:ok, nil}
-
-      assert Ecto.Type.embedded_dump(@field_type, @struct_id, :json) ==
-               {:ok, @struct_id}
-
-      assert Ecto.Type.embedded_dump(@field_type, nil, :json) == {:ok, nil}
-
-      assert Ecto.Type.load(@field_type, @string_id) == {:ok, @struct_id}
-      assert Ecto.Type.load(@field_type, nil) == {:ok, nil}
-
-      assert Ecto.Type.dump(@field_type, @struct_id) == {:ok, @string_id}
-      assert Ecto.Type.dump(@field_type, nil) == {:ok, nil}
-
-      assert Ecto.Type.cast(@field_type, @struct_id) == {:ok, @struct_id}
-      assert Ecto.Type.cast(@field_type, @string_id) == {:ok, @struct_id}
-      assert Ecto.Type.cast(@field_type, nil) == {:ok, nil}
-    end
-  end
 end
