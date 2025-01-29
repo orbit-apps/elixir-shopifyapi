@@ -31,7 +31,7 @@ defmodule ShopifyAPI.Shop do
   if Mix.env() == :test or Mix.env() == :dev do
     def to_uri(myshopify_domain) do
       {domain, port} =
-        if String.match?(myshopify_domain, ~R/.*:.*/) do
+        if String.match?(myshopify_domain, ~r/.*:.*/) do
           [domain, str_port] = String.split(myshopify_domain, ":")
           {domain, String.to_integer(str_port)}
         else
