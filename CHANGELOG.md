@@ -1,5 +1,8 @@
 ## Unreleased
 
+- New: bump supported OTP and Elixir ver
+- New: bump deps
+
 ## 0.15.6
 
 - Fix: REST pagination broken
