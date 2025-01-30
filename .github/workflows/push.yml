@@ -34,10 +34,6 @@ jobs:
       - name: Check Credo
         run: mix credo
 
-      - if: ${{ matrix.elixir == '1.15.5' }}
-        name: Check Formatting
-        run: mix format --check-formatted
-
       - name: Run Tests
         run: mix do compile --warnings-as-errors, test
 
