@@ -59,9 +59,6 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       |> assign_shop(shop)
       |> assign_auth_token(auth_token)
     else
-      {:error, :no_hmac} ->
-        conn
-
       {:error, :invalid_hmac} ->
         Logger.info("#{__MODULE__} failed hmac validation")
 
