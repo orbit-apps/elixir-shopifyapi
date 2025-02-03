@@ -2,6 +2,8 @@
 
 - New: bump supported OTP and Elixir ver
 - New: bump deps
+- Refactor: `post_install` to `post_login`, this hook is actually not triggered on install but shop login! We have kept the original post_install config optin but it is now deprecated and will be removed sometime in the future.
+- New: fire `post_login` hook on User based authentication.
 
 ## 0.15.6
 

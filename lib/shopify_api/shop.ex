@@ -1,6 +1,4 @@
 defmodule ShopifyAPI.Shop do
-  alias ShopifyAPI.AuthToken
-
   @derive {Jason.Encoder, only: [:domain]}
   defstruct domain: ""
 
@@ -13,9 +11,16 @@ defmodule ShopifyAPI.Shop do
 
   @shopify_domain "myshopify.com"
 
-  @spec post_install(AuthToken.t()) :: any()
-  def post_install(token) when is_struct(token, AuthToken),
-    do: :post_install |> shop_config |> call_post_install(token)
+  @spec post_login(ShopifyAPI.AuthToken.t() | ShopifyAPI.UserToken.t()) :: any()
+  def post_login(token) when is_struct(token, ShopifyAPI.AuthToken) do
+    :post_login |> shop_config() |> call_post_login(token)
+    # @deprecated
+    :post_install |> shop_config() |> call_post_login(token)
+  end
+
+  def post_login(token) when is_struct(token, ShopifyAPI.UserToken) do
+    :post_login |> shop_config() |> call_post_login(token)
+  end
 
   @spec domain_from_slug(String.t()) :: String.t()
   def domain_from_slug(slug), do: "#{slug}.#{@shopify_domain}"
@@ -48,6 +53,6 @@ defmodule ShopifyAPI.Shop do
   defp shop_config(key),
     do: Application.get_env(:shopify_api, ShopifyAPI.Shop)[key]
 
-  defp call_post_install({module, function, _}, token), do: apply(module, function, [token])
-  defp call_post_install(nil, _token), do: nil
+  defp call_post_login({module, function, _}, token), do: apply(module, function, [token])
+  defp call_post_login(nil, _token), do: nil
 end

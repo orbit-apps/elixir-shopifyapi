@@ -39,8 +39,8 @@ defmodule ShopifyAPI.Router do
         case auth_token do
           %AuthToken{} ->
             ShopifyAPI.AuthTokenServer.set(auth_token, true)
-            ShopifyAPI.Shop.post_install(auth_token)
-            Logger.debug("new install for #{shop.domain}, redirecting to shopify admin")
+            ShopifyAPI.Shop.post_login(auth_token)
+            Logger.debug("new login for #{shop.domain}, redirecting to shopify admin")
 
           %UserToken{associated_user_id: associated_user_id} ->
             ShopifyAPI.UserTokenServer.set(auth_token, true)
@@ -48,6 +48,8 @@ defmodule ShopifyAPI.Router do
             Logger.debug(
               "new login for user #{associated_user_id} from #{shop.domain}, redirecting to shopify admin"
             )
+
+            ShopifyAPI.Shop.post_login(auth_token)
         end
 
         redirect_url = app |> installed_redirect_uri(shop) |> URI.to_string()

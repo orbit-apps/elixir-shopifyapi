@@ -22,7 +22,8 @@ jobs:
           path: priv/plts
           key: ${{runner.os}}-${{matrix.otp}}-${{matrix.elixir}}-plts
 
-      - uses: erlef/setup-elixir@v1
+      - name: Setup elixir
+        uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
@@ -32,10 +33,6 @@ jobs:
 
       - name: Check Credo
         run: mix credo
-
-      - if: ${{ matrix.elixir == '1.15.5' }}
-        name: Check Formatting
-        run: mix format --check-formatted
 
       - name: Run Tests
         run: mix do compile --warnings-as-errors, test
