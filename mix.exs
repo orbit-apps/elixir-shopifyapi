@@ -41,7 +41,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:bypass, "~> 2.1", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test]},
       {:dialyxir, "~> 1.4.1", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.36.0", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.37.1", only: [:dev], runtime: false},
       {:stream_data, "~> 1.1.1", only: :test},
       # Everything else
       {:ecto_sql, "~> 3.6", optional: true},
