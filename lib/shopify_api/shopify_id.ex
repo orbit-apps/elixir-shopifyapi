@@ -101,6 +101,14 @@ defmodule ShopifyAPI.ShopifyId do
       do: shopify_id |> ShopifyId.stringify() |> Jason.Encode.string(opts)
   end
 
+  # TODO remove if check once JSON is generally available.
+  if Code.ensure_loaded?(JSON) do
+    defimpl JSON.Encoder do
+      def encode(shopify_id, encoder),
+        do: shopify_id |> ShopifyAPI.ShopifyId.stringify() |> JSON.encode!(encoder)
+    end
+  end
+
   ###################
   # Ecto ParameterizedType Callbacks
   #
