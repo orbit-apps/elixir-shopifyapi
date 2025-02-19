@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: Added JSON.Encoder for ShopifyId
+
 ## 0.16.0
 
 - New: bump supported OTP and Elixir ver
