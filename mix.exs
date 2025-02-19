@@ -1,13 +1,13 @@
 defmodule Plug.ShopifyAPI.MixProject do
   use Mix.Project
 
-  @version "0.15.6"
+  @version "0.16.1"
 
   def project do
     [
       app: :shopify_api,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [

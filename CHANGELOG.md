@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.16.1
+
 - Fix: Added JSON.Encoder for ShopifyId
 
 ## 0.16.0
