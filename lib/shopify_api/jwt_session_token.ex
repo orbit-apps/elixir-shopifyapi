@@ -43,7 +43,10 @@ defmodule ShopifyAPI.JWTSessionToken do
   def user_id(_),
     do: {:error, "Invalid user token or no id"}
 
-  @spec get_user_token(JOSE.JWT.t(), String.t()) :: any()
+  @spec get_user_token(JOSE.JWT.t(), String.t()) ::
+          {:ok, ShopifyAPI.UserToken.t()}
+          | {:error, :invalid_session_token}
+          | {:error, :failed_fetching_online_token}
   def get_user_token(%JOSE.JWT{} = jwt, token) do
     with {:ok, myshopify_domain} <- myshopify_domain(jwt),
          {:ok, app} <- app(jwt),
@@ -60,15 +63,14 @@ defmodule ShopifyAPI.JWTSessionToken do
               fire_post_login_hook(user_token)
               {:ok, user_token}
 
-            err ->
-              Logger.error("failed exchanging for online token #{inspect(err)}")
-              err
+            error ->
+              error
           end
       end
     else
       error ->
-        Logger.warning("failed getting user token from server #{inspect(error)}")
-        {:error, :no_user_token}
+        Logger.warning("failed getting required informatio from the JWT #{inspect(error)}")
+        {:error, :invalid_session_token}
     end
   end
 

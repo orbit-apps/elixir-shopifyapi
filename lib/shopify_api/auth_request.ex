@@ -43,7 +43,7 @@ defmodule ShopifyAPI.AuthRequest do
     - https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/token-exchange
   """
   @spec request_online_access_token(App.t(), String.t(), String.t()) ::
-          {:ok, UserToken.t()} | {:error, any()}
+          {:ok, UserToken.t()} | {:error, :failed_fetching_online_token}
   def request_online_access_token(app, myshopify_domain, session_token) do
     http_body = %{
       client_id: app.client_id,
@@ -66,7 +66,7 @@ defmodule ShopifyAPI.AuthRequest do
 
       err ->
         Logger.error("error creating token #{inspect(err)}")
-        {:error, "ugh"}
+        {:error, :failed_fetching_online_token}
     end
   end
 end
