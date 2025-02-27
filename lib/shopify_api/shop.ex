@@ -12,13 +12,13 @@ defmodule ShopifyAPI.Shop do
   @shopify_domain "myshopify.com"
 
   @spec post_login(ShopifyAPI.AuthToken.t() | ShopifyAPI.UserToken.t()) :: any()
-  def post_login(token) when is_struct(token, ShopifyAPI.AuthToken) do
+  def post_login(%ShopifyAPI.AuthToken{} = token) do
     :post_login |> shop_config() |> call_post_login(token)
     # @deprecated
     :post_install |> shop_config() |> call_post_login(token)
   end
 
-  def post_login(token) when is_struct(token, ShopifyAPI.UserToken) do
+  def post_login(%ShopifyAPI.UserToken{} = token) do
     :post_login |> shop_config() |> call_post_login(token)
   end
 
