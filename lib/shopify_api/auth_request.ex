@@ -60,7 +60,7 @@ defmodule ShopifyAPI.AuthRequest do
     case HTTPoison.post(access_token_url, encoded_body, @headers) do
       {:ok, %{status_code: 200, body: body}} ->
         json = JSONSerializer.decode!(body)
-        user_token = UserToken.from_auth_request(app, myshopify_domain, "dont_need_this", json)
+        user_token = UserToken.from_auth_request(app, myshopify_domain, json)
         UserTokenServer.set(user_token)
         {:ok, user_token}
 
