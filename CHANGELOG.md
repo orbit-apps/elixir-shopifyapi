@@ -1,5 +1,8 @@
 ## Unreleased
 
+- New: JWT session token module to handle validation, information extraction, and exchange in to a Online Auth Token.
+- BREAKING: Changes how the AuthShopSessionToken plug works, it now only redirects on failure to find an online token or failure to exchange the session token for an online token.
+
 ## 0.16.1
 
 - Fix: Added JSON.Encoder for ShopifyId
