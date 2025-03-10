@@ -63,7 +63,7 @@ defmodule ShopifyAPI.UserToken do
   def create_key(shop, app, associated_user_id), do: "#{shop}:#{app}:#{associated_user_id}"
 
   @spec from_auth_request(App.t(), String.t(), String.t(), map()) :: t()
-  def from_auth_request(app, myshopify_domain, auth_code, attrs) when is_struct(app, App) do
+  def from_auth_request(app, myshopify_domain, auth_code \\ "", attrs) when is_struct(app, App) do
     user = AssociatedUser.from_auth_request(attrs["associated_user"])
 
     struct(__MODULE__,
