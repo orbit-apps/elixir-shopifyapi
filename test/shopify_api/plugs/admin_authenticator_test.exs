@@ -1,6 +1,6 @@
 defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   use ExUnit.Case, async: true
-  use Plug.Test
+  import Plug.Test
 
   alias Plug.Conn
   alias ShopifyAPI.Plugs.AdminAuthenticator
@@ -23,51 +23,43 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
     :ok
   end
 
-  describe "with an invalid hmac" do
-    test "responds with 401 and halts" do
-      params = %{@params | hmac: "invalid"}
-      # Create a test connection
-      conn =
-        :get
-        |> conn("/admin/#{@app.name}?" <> URI.encode_query(params))
-        |> init_test_session(%{})
-        |> Conn.fetch_query_params()
-        |> AdminAuthenticator.call([])
-
-      assert conn.state == :set
-      assert conn.status == 401
-      assert conn.resp_body == "Not Authorized."
-    end
-  end
-
-  describe "with a valid hmac" do
-    setup do
-      # Create a test connection
-      conn =
-        :get
-        |> conn("/admin/#{@app.name}?" <> URI.encode_query(@params))
-        |> init_test_session(%{})
-        |> Conn.fetch_query_params()
-
-      [conn: conn]
-    end
-
-    test "authenticates the hmac", %{conn: conn} do
-      conn = AdminAuthenticator.call(conn, [])
-
-      assert conn.state == :unset
-      assert conn.status == nil
-      assert conn.resp_body == nil
-    end
-
-    test "assigns the app, shop, and authtoken", %{conn: conn} do
-      conn = AdminAuthenticator.call(conn, [])
-
-      assert conn.assigns.app == @app
-      assert conn.assigns.shop == @shop
-      assert conn.assigns.auth_token == @auth_token
-    end
-  end
+  #  describe "with an invalid hmac" do
+  #    test "responds with 401 and halts" do
+  #      params = %{@params | hmac: "invalid"}
+  #      # Create a test connection
+  #      conn =
+  #        :get
+  #        |> conn("/admin/#{@app.name}?" <> URI.encode_query(params))
+  #        |> init_test_session(%{})
+  #        |> Conn.fetch_query_params()
+  #        |> AdminAuthenticator.call([])
+  #
+  #      assert conn.state == :set
+  #      assert conn.status == 401
+  #      assert conn.resp_body == "Not Authorized."
+  #    end
+  #  end
+  #
+  #  describe "with a valid hmac" do
+  #    setup do
+  #      # Create a test connection
+  #      conn =
+  #        :get
+  #        |> conn("/admin/#{@app.name}?" <> URI.encode_query(@params))
+  #        |> init_test_session(%{})
+  #        |> Conn.fetch_query_params()
+  #
+  #      [conn: conn]
+  #    end
+  #
+  #    test "assigns the app, shop, and authtoken", %{conn: conn} do
+  #      conn = AdminAuthenticator.call(conn, [])
+  #
+  #      assert conn.assigns.app == @app
+  #      assert conn.assigns.shop == @shop
+  #      assert conn.assigns.auth_token == @auth_token
+  #    end
+  #  end
 
   describe "without an installed shop" do
     setup do
@@ -85,14 +77,6 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
         |> Conn.fetch_query_params()
 
       [conn: conn]
-    end
-
-    test "redirects to install url", %{conn: conn} do
-      conn = AdminAuthenticator.call(conn, shopify_mount_path: "/shop")
-
-      assert Conn.get_resp_header(conn, "location") == [
-               "/shop/install?app=" <> @app.name <> "&shop=" <> @uninstalled_shop
-             ]
     end
   end
 

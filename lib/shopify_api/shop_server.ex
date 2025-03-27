@@ -34,6 +34,19 @@ defmodule ShopifyAPI.ShopServer do
     end
   end
 
+  @spec get_or_create(String.t(), boolean()) :: {:ok, Shop.t()}
+  def get_or_create(domain, should_persist \\ true) do
+    case get(domain) do
+      {:ok, _} = resp ->
+        resp
+
+      :error ->
+        shop = %Shop{domain: domain}
+        set(shop, should_persist)
+        {:ok, shop}
+    end
+  end
+
   @spec delete(String.t()) :: :ok
   def delete(domain) do
     true = :ets.delete(@table, domain)

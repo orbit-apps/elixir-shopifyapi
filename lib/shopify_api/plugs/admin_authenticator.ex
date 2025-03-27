@@ -30,11 +30,12 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
   ```
   """
-  alias Plug.Conn
-
   require Logger
 
-  @shopify_shop_header "x-shopify-shop-domain"
+  alias Plug.Conn
+
+  alias ShopifyAPI.JWTSessionToken
+
   @defaults [shopify_mount_path: "/shop"]
 
   def init(opts), do: Keyword.merge(opts, @defaults)
@@ -47,36 +48,27 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
     end
   end
 
-  defp do_authentication(conn, options) do
-    with app_name <- conn.params["app"] || options[:app_name] || List.last(conn.path_info),
-         {:ok, app} <- ShopifyAPI.AppServer.get(app_name),
+  defp do_authentication(conn, _options) do
+    token = conn.params["id_token"]
+
+    with {:ok, app} <- JWTSessionToken.app(token),
+         {true, jwt, _jws} <- JWTSessionToken.verify(token, app.client_secret),
          :ok <- validate_hmac(app, conn.query_params),
-         myshopify_domain <- shop_domain_from_conn(conn),
-         {:ok, shop} <- fetch_shop(myshopify_domain),
-         {:ok, auth_token} <- ShopifyAPI.AuthTokenServer.get(myshopify_domain, app_name) do
+         {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
+         {:ok, shop} <- ShopifyAPI.ShopServer.get_or_create(myshopify_domain, true),
+         {:ok, auth_token} <- JWTSessionToken.get_offline_token(jwt, token),
+         {:ok, user_token} <- JWTSessionToken.get_user_token(jwt, token) do
       conn
       |> assign_app(app)
       |> assign_shop(shop)
       |> assign_auth_token(auth_token)
+      |> assign_user_token(user_token)
     else
       {:error, :invalid_hmac} ->
         Logger.info("#{__MODULE__} failed hmac validation")
 
         conn
         |> Conn.resp(401, "Not Authorized.")
-        |> Conn.halt()
-
-      # Try redirecting to the install path
-      {:error, :shop_not_found} ->
-        conn
-        |> Conn.resp(:found, "")
-        |> Conn.put_resp_header("location", install_path(options, conn))
-        |> Conn.halt()
-
-      {:error, _} ->
-        conn
-        |> Conn.resp(:found, "")
-        |> Conn.put_resp_header("location", install_path(options, conn))
         |> Conn.halt()
 
       _ ->
@@ -89,11 +81,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   defp assign_app(conn, app), do: Conn.assign(conn, :app, app)
   defp assign_shop(conn, shop), do: Conn.assign(conn, :shop, shop)
   defp assign_auth_token(conn, auth_token), do: Conn.assign(conn, :auth_token, auth_token)
-
-  defp shop_domain_from_conn(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
-
-  defp shop_domain_from_header(conn),
-    do: conn |> Conn.get_req_header(@shopify_shop_header) |> List.first()
+  defp assign_user_token(conn, user_token), do: Conn.assign(conn, :user_token, user_token)
 
   defp has_hmac(%{"hmac" => hmac}) when is_binary(hmac), do: :ok
   defp has_hmac(_params), do: {:error, :no_hmac}
@@ -110,23 +98,5 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       ^request_hmac -> :ok
       _ -> {:error, :invalid_hmac}
     end)
-  end
-
-  defp fetch_shop(myshopify_domain) do
-    case ShopifyAPI.ShopServer.get(myshopify_domain) do
-      {:ok, shop} -> {:ok, shop}
-      :error -> {:error, :shop_not_found}
-    end
-  end
-
-  defp install_path(options, conn) do
-    app_name = conn.params["app"] || options[:app_name] || List.last(conn.path_info)
-
-    options[:shopify_mount_path] <>
-      "/install" <>
-      "?app=" <>
-      app_name <>
-      "&shop=" <>
-      shop_domain_from_conn(conn)
   end
 end
