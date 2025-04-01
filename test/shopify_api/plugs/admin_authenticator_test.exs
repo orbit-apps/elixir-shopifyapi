@@ -1,5 +1,6 @@
 defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   use ExUnit.Case, async: true
+
   import Plug.Test
 
   alias Plug.Conn

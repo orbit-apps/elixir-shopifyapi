@@ -1,6 +1,7 @@
 defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
   use ExUnit.Case, async: true
-  use Plug.Test
+
+  import Plug.Test
 
   alias ShopifyAPI.Plugs.CustomerAuthenticator
   alias ShopifyAPI.Security

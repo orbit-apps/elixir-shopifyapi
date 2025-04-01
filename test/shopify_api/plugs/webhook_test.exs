@@ -1,6 +1,8 @@
 defmodule ShopifyAPI.Plugs.WebhookTest do
   use ExUnit.Case, async: true
-  use Plug.Test
+
+  import Plug.Test
+  import Plug.Conn
 
   alias ShopifyAPI.{App, AppServer, Shop, ShopServer}
   alias ShopifyAPI.Plugs.Webhook
