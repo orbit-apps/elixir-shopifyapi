@@ -1,22 +1,24 @@
 defmodule ShopifyAPI.Plugs.WebhookTest do
   use ExUnit.Case, async: true
-  use Plug.Test
 
-  alias ShopifyAPI.{App, AppServer, Shop, ShopServer}
+  import Plug.Test
+  import Plug.Conn
+  import ShopifyAPI.Factory
+
+  alias ShopifyAPI.{AppServer, ShopServer}
   alias ShopifyAPI.Plugs.Webhook
 
-  @secret "new_secret"
-
-  @app %App{name: "testapp", client_secret: @secret}
-  @shop %Shop{domain: "test-shop.example.com"}
+  @secret ShopifyAPI.Factory.shopify_app_secret()
 
   setup do
-    AppServer.set(@app)
-    ShopServer.set(@shop)
+    app = build(:app)
+    shop = build(:shop)
+    AppServer.set(app)
+    ShopServer.set(shop)
 
     Process.register(self(), :webhook_plug_test)
 
-    :ok
+    [app: app, shop: shop]
   end
 
   defmodule MockExecutor do
@@ -49,7 +51,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     end
   end
 
-  test "dispatches verified webhook requests to the configured callback" do
+  test "dispatches verified webhook requests to the configured callback", %{app: app, shop: shop} do
     payload = %{"id" => 1234}
     {hmac, json_payload} = encode_with_hmac(payload)
 
@@ -57,19 +59,19 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       :post
       |> conn("/shopify/webhooks/testapp", json_payload)
       |> put_req_header("content-type", "application/json")
-      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-shop-domain", shop.domain)
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac)
       |> Webhook.call(@opts)
 
-    assert_received {:webhook, @app, @shop, "orders/create", ^payload}
+    assert_received {:webhook, ^app, ^shop, "orders/create", ^payload}
 
     assert conn.halted
     assert conn.status == 200
     assert conn.resp_body == "ok"
   end
 
-  test "dispatches manditory webhook requests to the configured callback" do
+  test "dispatches manditory webhook requests to the configured callback", %{app: app} do
     payload = %{"id" => 1234}
     {hmac, json_payload} = encode_with_hmac(payload)
 
@@ -81,14 +83,14 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       |> put_req_header("x-shopify-hmac-sha256", hmac)
       |> Webhook.call(@opts)
 
-    assert_received {:webhook, @app, nil, "shop/redact", ^payload}
+    assert_received {:webhook, ^app, nil, "shop/redact", ^payload}
 
     assert conn.halted
     assert conn.status == 200
     assert conn.resp_body == "ok"
   end
 
-  test "responds with a 401 if the payload cannot be verified" do
+  test "responds with a 401 if the payload cannot be verified", %{shop: shop} do
     payload = %{"id" => 1234}
     {hmac, json_payload} = encode_with_hmac(payload)
 
@@ -96,7 +98,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       :post
       |> conn("/shopify/webhooks/testapp", json_payload)
       |> put_req_header("content-type", "application/json")
-      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-shop-domain", shop.domain)
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac <> "nope")
 
@@ -108,7 +110,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     refute_received {:webhook, _, _, _}
   end
 
-  test "responds with an error if the handler returns an error" do
+  test "responds with an error if the handler returns an error", %{shop: shop} do
     opts =
       Webhook.init(
         prefix: "/shopify/webhooks/",
@@ -122,7 +124,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       :post
       |> conn("/shopify/webhooks/testapp", json_payload)
       |> put_req_header("content-type", "application/json")
-      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-shop-domain", shop.domain)
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac)
 
@@ -133,7 +135,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     assert conn.resp_body == "internal server error"
   end
 
-  test "responds with an error if the app is not registered" do
+  test "responds with an error if the app is not registered", %{shop: shop} do
     payload = %{"id" => 1234}
     {hmac, json_payload} = encode_with_hmac(payload)
 
@@ -141,7 +143,7 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
       :post
       |> conn("/shopify/webhooks/unknown-app", json_payload)
       |> put_req_header("content-type", "application/json")
-      |> put_req_header("x-shopify-shop-domain", "test-shop.example.com")
+      |> put_req_header("x-shopify-shop-domain", shop.domain)
       |> put_req_header("x-shopify-topic", "orders/create")
       |> put_req_header("x-shopify-hmac-sha256", hmac <> "nope")
 

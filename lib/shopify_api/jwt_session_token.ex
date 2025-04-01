@@ -43,6 +43,36 @@ defmodule ShopifyAPI.JWTSessionToken do
   def user_id(_),
     do: {:error, "Invalid user token or no id"}
 
+  @spec get_offline_token(JOSE.JWT.t(), String.t()) ::
+          {:ok, ShopifyAPI.AuthToken.t()}
+          | {:error, :invalid_session_token}
+          | {:error, :failed_fetching_online_token}
+  def get_offline_token(%JOSE.JWT{} = jwt, token) do
+    with {:ok, myshopify_domain} <- myshopify_domain(jwt),
+         {:ok, app} <- app(jwt) do
+      case ShopifyAPI.AuthTokenServer.get(myshopify_domain, app.name) do
+        {:ok, _} = resp ->
+          resp
+
+        {:error, _} ->
+          Logger.warning("No token found, exchanging for new")
+
+          case ShopifyAPI.AuthRequest.request_offline_access_token(app, myshopify_domain, token) do
+            {:ok, token} ->
+              fire_post_login_hook(token)
+              {:ok, token}
+
+            error ->
+              error
+          end
+      end
+    else
+      error ->
+        Logger.warning("failed getting required informatio from the JWT #{inspect(error)}")
+        {:error, :invalid_session_token}
+    end
+  end
+
   @spec get_user_token(JOSE.JWT.t(), String.t()) ::
           {:ok, ShopifyAPI.UserToken.t()}
           | {:error, :invalid_session_token}

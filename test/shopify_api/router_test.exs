@@ -1,6 +1,7 @@
 defmodule Test.ShopifyAPI.RouterTest do
   use ExUnit.Case
-  use Plug.Test
+
+  import Plug.Test
 
   alias ShopifyAPI.{App, Shop}
   alias ShopifyAPI.{AppServer, AuthTokenServer, ShopServer}

@@ -40,4 +40,9 @@ defmodule ShopifyAPI.AuthToken do
       token: token
     }
   end
+
+  @spec from_auth_request(App.t(), String.t(), String.t(), map()) :: t()
+  def from_auth_request(app, myshopify_domain, code \\ "", attrs) when is_struct(app, App) do
+    new(app, myshopify_domain, code, attrs["access_token"])
+  end
 end
