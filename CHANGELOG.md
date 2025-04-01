@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.16.2
+
 - BREAKING: Reworked Plugs.AdminAuthenticator to use the new JWT Session functions, this breaks the old redirect for exchanging sessions on install
 - New: JWT session token module to handle validation, information extraction, and exchange in to a Online Auth Token.
 - BREAKING: Changes how the AuthShopSessionToken plug works, it now only redirects on failure to find an online token or failure to exchange the session token for an online token.
