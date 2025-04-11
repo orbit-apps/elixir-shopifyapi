@@ -7,6 +7,8 @@
 ## 0.16.3
 
 - Fix: 0.16.2 broke the installation path when no JWT was passed along
+- New: Reworked webhook flow, [check readme](README.md#Webhooks) for details on how to use
+- Deprecation: old Plugs.Webhook is being replaced and will be removed eventually
 
 ## 0.16.2
 

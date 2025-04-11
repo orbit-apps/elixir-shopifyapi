@@ -102,26 +102,54 @@ end
 
 ## Webhooks
 
-To set up your app to receive webhooks, first you'll need to add `ShopifyAPI.Plugs.Webhook` to your `Endpoint` module:
-
+Add a custom body reader and HMAC validation to your parser config `body_reader: {ShopifyAPI.WebhookHMACValidator, :read_body, []}` Your parser should now look like:
 ```elixir
-plug ShopifyAPI.Plugs.Webhook,
-  app_name: "my-app-name",
-  prefix: "/shopify/webhook",
-  callback: {WebhookHandler, :handle_webhook, []}
+plug Plug.Parsers,
+  parsers: [:urlencoded, :multipart, :json],
+  pass: ["*/*"],
+  body_reader: {ShopifyAPI.WebhookHMACValidator, :read_body, []},
+  json_decoder: Phoenix.json_library()
 ```
 
-You'll also need to define a corresponding `WebhookHandler` module in your app:
-
+Add a route:
 ```elixir
-defmodule WebhookHandler do
-  def handle_webhook(app, shop, domain, payload) do
-    # TODO implement me!
+pipeline :shopify_webhook do
+  plug ShopifyAPI.Plugs.WebhookEnsureValidation
+  plug ShopifyAPI.Plugs.WebhookScopeSetup
+end
+
+scope "/shopify/webhook", MyAppWeb do
+  pipe_through :shopify_webhook
+  # The app_name path param is optional if the `config :shopify_api, :app_name, "my_app"` is set
+  post "/:app_name", ShopifyWebhooksController, :webhook
+end
+```
+
+Add a controller:
+```elixir
+defmodule SectionsAppWeb.ShopifyWebhooksController do
+  use SectionsAppWeb, :controller
+  require Logger
+
+  def webhook(
+        %{assigns: %{webhook_scope: %{topic: "app_subscriptions/update"} = webhook_scope}} = conn,
+        params
+      ) do
+    Logger.warning("Doing work on app subscription update with params #{inspect(params)}",
+      myshopify_domain: webhook_scope.myshopify_domain
+    )
+
+    json(conn, %{success: true})
+  end
+
+  def webhook(%{assigns: %{webhook_scope: webhook_scope}} = conn, _params) do
+    Logger.warning("Unhandled webhook: #{inspect(webhook_scope.topic)}")
+    json(conn, %{success: true})
   end
 end
 ```
 
-And there you go!
+The old `ShopifyAPI.Plugs.Webhook` method has been deprecated.
 
 Now webhooks sent to `YOUR_URL/shopify/webhook` will be interpreted as webhooks for the `my-app-name` app.
 If you append an app name to the URL in the Shopify configuration, that app will be used instead (e.g. `/shopify/webhook/private-app-name`).
