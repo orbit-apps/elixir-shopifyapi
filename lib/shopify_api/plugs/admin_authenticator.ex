@@ -48,9 +48,9 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
     end
   end
 
-  defp do_authentication(conn, _options) do
-    token = conn.params["id_token"]
-
+  # User auth
+  defp do_authentication(%{params: %{"id_token" => token}} = conn, _options)
+       when is_binary(token) do
     with {:ok, app} <- JWTSessionToken.app(token),
          {true, jwt, _jws} <- JWTSessionToken.verify(token, app.client_secret),
          :ok <- validate_hmac(app, conn.query_params),
@@ -73,6 +73,38 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
       _ ->
         conn
+    end
+  end
+
+  # Offline token auth OR new install
+  defp do_authentication(conn, options) do
+    myshopify_domain = conn.params["shop"]
+    app_name = ShopifyAPI.Config.app_name(conn, options)
+    {:ok, app} = ShopifyAPI.AppServer.get(app_name)
+
+    with :ok <- validate_hmac(app, conn.query_params),
+         {:ok, shop} <- ShopifyAPI.ShopServer.get_or_create(myshopify_domain, true),
+         {:ok, auth_token} <- ShopifyAPI.AuthTokenServer.get(myshopify_domain, app_name) do
+      conn
+      |> assign_app(app)
+      |> assign_shop(shop)
+      |> assign_auth_token(auth_token)
+    else
+      {:error, :invalid_hmac} ->
+        Logger.info("#{__MODULE__} failed hmac validation")
+
+        conn
+        |> Conn.resp(401, "Not Authorized.")
+        |> Conn.halt()
+
+      _err ->
+        oauth_url = ShopifyAPI.shopify_oauth_url(app, myshopify_domain)
+        Logger.info("redirecting to Shop oauth url: #{oauth_url}")
+
+        conn
+        |> Conn.put_resp_header("location", oauth_url)
+        |> Conn.resp(unquote(302), "You are being redirected.")
+        |> Conn.halt()
     end
   end
 
