@@ -1,5 +1,8 @@
 ## Unreleased
 
+- New: Add handle and raw app config to the App struct
+- New: App.new/1 function to load app from parsed Shopify app config toml file
+
 ## 0.16.4
 
 - Fix: Add support for larger webhook payload bodies (15MB vs. the previous 8MB)
