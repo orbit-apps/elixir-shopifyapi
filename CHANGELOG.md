@@ -1,5 +1,7 @@
 ## Unreleased
 
+- New: Add handle and raw app config to the App struct
+- New: App.new/1 function to load app from parsed Shopify app config toml file
 - Fix: 0.16.2 broke the installation path when no JWT was passed along
 - New: Reworked webhook flow, [check readme](README.md#Webhooks) for details on how to use
 - Deprecation: old Plugs.Webhook is being replaced and will be removed eventually
