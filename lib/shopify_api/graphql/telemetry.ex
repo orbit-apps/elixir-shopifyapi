@@ -4,16 +4,17 @@ defmodule ShopifyAPI.GraphQL.Telemetry do
   """
   alias HTTPoison.Error
   alias ShopifyAPI.GraphQL.Response
+  alias ShopifyAPI.Scopes
 
   def send(
         module_name,
-        %{app_name: app, shop_name: shop} = _token,
+        scope,
         time,
         {:ok, %Response{response: response}} = _response
       ) do
     metadata = %{
-      app: app,
-      shop: shop,
+      app: Scopes.app(scope),
+      shop: Scopes.shop(scope),
       module: module_name,
       response: response
     }
@@ -23,7 +24,7 @@ defmodule ShopifyAPI.GraphQL.Telemetry do
 
   def send(
         module_name,
-        %{app_name: app, shop_name: shop} = _token,
+        scope,
         time,
         response
       ) do
@@ -34,8 +35,8 @@ defmodule ShopifyAPI.GraphQL.Telemetry do
       end
 
     metadata = %{
-      app: app,
-      shop: shop,
+      app: Scopes.app(scope),
+      shop: Scopes.shop(scope),
       module: module_name,
       reason: reason
     }
