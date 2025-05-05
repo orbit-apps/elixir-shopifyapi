@@ -1,6 +1,9 @@
 defmodule ShopifyAPI.Bulk.QueryTest do
   use ExUnit.Case
 
+  import ShopifyAPI.Factory
+  import ShopifyAPI.SessionTokenSetup
+
   alias ShopifyAPI.Bulk.Query
 
   @valid_graphql_response %{
@@ -15,30 +18,26 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   @graphql_path "/admin/api/#{@graphql_ver}/graphql.json"
 
   setup _context do
-    bypass = Bypass.open()
-
     Application.put_env(:shopify_api, ShopifyAPI.GraphQL, graphql_version: @graphql_ver)
 
-    token = %ShopifyAPI.AuthToken{
-      token: "token",
-      shop_name: "localhost:#{bypass.port}"
-    }
-
-    shop = %ShopifyAPI.Shop{domain: "localhost:#{bypass.port}"}
-
+    bypass = Bypass.open()
+    myshopify_domain = "localhost:#{bypass.port}"
+    shop = build(:shop, domain: myshopify_domain)
     opts = [polling_rate: 1, max_poll_count: 1, auto_cancel: false]
 
     {:ok,
-     %{
+     [
+       myshopify_domain: myshopify_domain,
        shop: shop,
-       auth_token: token,
        bypass: bypass,
        options: opts,
        url: "localhost:#{bypass.port}/"
-     }}
+     ]}
   end
 
-  test "happy path", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
+  setup [:offline_token]
+
+  test "happy path", %{bypass: bypass, shop: _shop, offline_token: token, options: options} do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
       body =
         @valid_graphql_response
@@ -59,7 +58,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
     assert {:ok, _} = Query.fetch(url, token)
   end
 
-  test "polling timeout", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
+  test "polling timeout", %{bypass: bypass, shop: _shop, offline_token: token, options: options} do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
       body =
         @valid_graphql_response
@@ -77,7 +76,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
     end
   end
 
-  test "invalid graphql", %{bypass: bypass, shop: _shop, auth_token: token, options: options} do
+  test "invalid graphql", %{bypass: bypass, shop: _shop, offline_token: token, options: options} do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
       body =
         @valid_graphql_response
@@ -100,7 +99,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   test "bulk op already in progress", %{
     bypass: bypass,
     shop: _shop,
-    auth_token: token,
+    offline_token: token,
     options: options
   } do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
@@ -129,7 +128,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   test "exec/1 with 404 response", %{
     bypass: bypass,
     shop: _shop,
-    auth_token: token,
+    offline_token: token,
     options: options
   } do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
@@ -144,7 +143,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   test "exec/1 with 423 response", %{
     bypass: bypass,
     shop: _shop,
-    auth_token: token,
+    offline_token: token,
     options: options
   } do
     Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
@@ -160,7 +159,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   @json2 %{"test" => "bar fuzz"}
   @json3 %{"test" => "baz\nbuzz"}
 
-  test "stream_fetch!/2", %{bypass: bypass, url: url, auth_token: token} do
+  test "stream_fetch!/2", %{bypass: bypass, url: url, offline_token: token} do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -178,7 +177,11 @@ defmodule ShopifyAPI.Bulk.QueryTest do
            |> Enum.map(&Jason.decode!/1) == [@json1, @json2, @json3]
   end
 
-  test "stream_fetch!/2 with jsonl across chunks", %{bypass: bypass, url: url, auth_token: token} do
+  test "stream_fetch!/2 with jsonl across chunks", %{
+    bypass: bypass,
+    url: url,
+    offline_token: token
+  } do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
         conn
@@ -200,7 +203,7 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   test "stream_fetch!/2 with non-200 response codes", %{
     bypass: bypass,
     url: url,
-    auth_token: token
+    offline_token: token
   } do
     Bypass.expect(bypass, "GET", "/", fn conn ->
       conn =
