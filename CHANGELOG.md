@@ -1,5 +1,7 @@
 ## Unreleased
 
+- BREAKING: AppServer now defaults to a single app instance, this is a compile env if you want to use the old multi app config add `config :shopify_api, :app_server, :multi_app` to your `config/config.exs`
+- New: Single app mode for AppServer, is API compatible with the multi app setup. This greatly simplifies the most common setup, one app <> one phoenix setup.
 - New: Add handle and raw app config to the App struct
 - New: App.new/1 function to load app from parsed Shopify app config toml file
 - Fix: 0.16.2 broke the installation path when no JWT was passed along

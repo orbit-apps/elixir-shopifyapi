@@ -45,17 +45,6 @@ defmodule ShopifyAPI.Plugs.WebhookScopeSetupTest do
   end
 
   describe "call/2 without required inputs" do
-    test "without an app name the scope is not set", %{conn: conn, shop: shop} do
-      conn =
-        conn
-        |> put_req_header("x-shopify-shop-domain", shop.domain)
-        |> put_req_header("x-shopify-topic", @topic)
-        |> put_req_header("x-shopify-api-version", @api_version)
-        |> WebhookScopeSetup.call(app_name: "invalid")
-
-      refute conn.assigns[:webhook_scope]
-    end
-
     test "without a shop myshopify_domain scope is not set", %{conn: conn} do
       conn =
         conn
