@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix: 0.16.2 broke the installation path when no JWT was passed along
+
 ## 0.16.2
 
 - BREAKING: Reworked Plugs.AdminAuthenticator to use the new JWT Session functions, this breaks the old redirect for exchanging sessions on install
