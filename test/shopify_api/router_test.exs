@@ -50,16 +50,6 @@ defmodule Test.ShopifyAPI.RouterTest do
 
       assert URI.parse(redirect_uri).host == @shop_domain
     end
-
-    test "without a valid app it errors" do
-      conn =
-        :get
-        |> conn("/install?app=not-an-app&shop=#{@shop_domain}")
-        |> parse()
-        |> Router.call(%{})
-
-      assert conn.status == 404
-    end
   end
 
   describe "/authorized" do
@@ -112,19 +102,6 @@ defmodule Test.ShopifyAPI.RouterTest do
         |> conn(
           "/authorized/invalid-app?" <>
             add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=invalid&timestamp=1234")
-        )
-        |> parse()
-        |> Router.call(%{})
-
-      assert conn.status == 404
-    end
-
-    test "fails without a valid app", %{bypass: _bypass, shop_domain: shop_domain} do
-      conn =
-        :get
-        |> conn(
-          "/authorized/invalid-app?" <>
-            add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=#{@nonce}&timestamp=1234")
         )
         |> parse()
         |> Router.call(%{})

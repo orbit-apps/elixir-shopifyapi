@@ -1,14 +1,18 @@
 defmodule ShopifyAPI.SessionTokenSetup do
   import ShopifyAPI.Factory
 
-  def offline_token(%{shop: %ShopifyAPI.Shop{} = shop}) do
-    token = build(:auth_token, %{shop_name: shop.domain})
+  def offline_token(context) do
+    app = context[:app] || build(:app)
+    shop = context[:shop] || build(:shop)
+    token = build(:auth_token, %{app_name: app.name, shop_name: shop.domain})
     ShopifyAPI.AuthTokenServer.set(token)
     [offline_token: token]
   end
 
-  def online_token(%{shop: %ShopifyAPI.Shop{} = shop}) do
-    token = build(:user_token, %{shop_name: shop.domain})
+  def online_token(context) do
+    app = context[:app] || build(:app)
+    shop = context[:shop] || build(:shop)
+    token = build(:user_token, %{app_name: app.name, shop_name: shop.domain})
     ShopifyAPI.UserTokenServer.set(token)
     [online_token: token]
   end

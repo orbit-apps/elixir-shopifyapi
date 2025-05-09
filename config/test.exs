@@ -7,3 +7,5 @@ config :bypass, adapter: Plug.Adapters.Cowboy2
 config :shopify_api,
   customer_api_secret_keys: ["new_secret", "old_secret"],
   transport: "http"
+
+config :shopify_api, :app_name, "testapp"

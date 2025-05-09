@@ -1,4 +1,5 @@
 defmodule ShopifyAPI.Plugs.Webhook do
+  @deprecated "Please use the WebhookHMACValidator and WebhookScopeSetup see the readme for examples"
   @moduledoc """
   A Plug to handle incoming webhooks from Shopify.
 

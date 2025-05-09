@@ -16,17 +16,22 @@ defmodule ShopifyAPI.Factory do
 
   def myshopify_domain, do: Faker.Internet.slug() <> ".myshopify.com"
 
-  def shop_factory do
-    domain = myshopify_domain()
-    %ShopifyAPI.Shop{domain: domain}
+  def shop_factory(params) do
+    domain = params[:domain] || myshopify_domain()
+    shop = %ShopifyAPI.Shop{domain: domain}
+    ShopifyAPI.ShopServer.set(shop)
+    shop
   end
 
   def app_factory do
-    %ShopifyAPI.App{
+    app = %ShopifyAPI.App{
       name: shopify_app_name(),
       client_id: "#{__MODULE__}.id",
       client_secret: shopify_app_secret()
     }
+
+    ShopifyAPI.AppServer.set(app)
+    app
   end
 
   def auth_token_factory(params) do

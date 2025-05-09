@@ -34,6 +34,14 @@ defmodule ShopifyAPI.ShopServer do
     end
   end
 
+  @spec get(String.t()) :: Shop.t() | nil
+  def find(domain) do
+    case get(domain) do
+      {:ok, shop} -> shop
+      _ -> nil
+    end
+  end
+
   @spec get_or_create(String.t(), boolean()) :: {:ok, Shop.t()}
   def get_or_create(domain, should_persist \\ true) do
     case get(domain) do

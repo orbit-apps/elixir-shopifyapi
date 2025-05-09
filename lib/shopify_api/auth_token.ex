@@ -46,3 +46,29 @@ defmodule ShopifyAPI.AuthToken do
     new(app, myshopify_domain, code, attrs["access_token"])
   end
 end
+
+defimpl ShopifyAPI.Scope, for: ShopifyAPI.AuthToken do
+  def shop(auth_token) do
+    case ShopifyAPI.ShopServer.get(auth_token.shop_name) do
+      {:ok, shop} ->
+        shop
+
+      _ ->
+        raise "Failed to find Shop for Scope out of AuthToken #{auth_token.shop_name} in ShopServer"
+    end
+  end
+
+  def app(auth_token) do
+    case ShopifyAPI.AppServer.get(auth_token.app_name) do
+      {:ok, app} ->
+        app
+
+      _ ->
+        raise "Failed to find App for Scope out of AuthToken #{auth_token.app_name} in AppServer"
+    end
+  end
+
+  def auth_token(auth_token), do: auth_token
+
+  def user_token(_auth_token), do: nil
+end

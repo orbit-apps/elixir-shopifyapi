@@ -2,25 +2,28 @@ defmodule ShopifyAPI.App do
   @moduledoc """
   ShopifyAPI.App contains logic and a struct for representing a Shopify App.
   """
-  @derive {Jason.Encoder,
-           only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
   defstruct name: "",
+            handle: "",
             client_id: "",
             client_secret: "",
             auth_redirect_uri: "",
             nonce: "",
-            scope: ""
+            scope: "",
+            config: %{}
 
   @typedoc """
   Type that represents a Shopify App
   """
   @type t :: %__MODULE__{
           name: String.t(),
+          handle: String.t(),
           client_id: String.t(),
           client_secret: String.t(),
           auth_redirect_uri: String.t(),
           nonce: String.t(),
-          scope: String.t()
+          scope: String.t(),
+          # THE toml file
+          config: map()
         }
 
   require Logger
@@ -29,6 +32,36 @@ defmodule ShopifyAPI.App do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.UserToken
+
+  @doc """
+  Build a new App. Maybe even from a Toml file.
+
+  Maybe even see:
+  - https://hex.pm/packages/toml
+  - https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
+  """
+  def new(
+        %{
+          "name" => name,
+          "handle" => handle,
+          "client_id" => client_id,
+          "access_scopes" => %{"scopes" => scopes}
+        } = toml_config
+      ) do
+    %__MODULE__{
+      name: name,
+      handle: handle,
+      client_id: client_id,
+      scope: scopes,
+      config: toml_config
+    }
+  end
+
+  @doc """
+  The client secret likely lives in a runtime variable and should be loaded outside of the usual app definition.
+  """
+  def with_client_secret(%__MODULE__{} = app, client_secret),
+    do: %{app | client_secret: client_secret}
 
   @doc """
   After an App is installed and the Shop owner ends up back on ourside of the fence we
