@@ -20,12 +20,18 @@ defmodule ShopifyAPI.Plugs.PutShopifyContentHeaders do
 
   def call(conn, _options) do
     conn
-    |> put_resp_header("x-frame-options", "ALLOW-FROM https://" <> myshopify_domain(conn))
+    |> put_resp_header("x-frame-options", "ALLOW-FROM " <> myshopify_domain_url(conn))
     |> put_resp_header(
       "content-security-policy",
-      "frame-ancestors https://" <> myshopify_domain(conn) <> " https://admin.shopify.com;"
+      "frame-ancestors " <> myshopify_domain_url(conn) <> " https://admin.shopify.com;"
     )
   end
 
-  defp myshopify_domain(%{assigns: %{shop: %{domain: domain}}}), do: domain
+  defp myshopify_domain_url(conn) do
+    case conn do
+      %{assigns: %{shop: %{domain: domain}}} -> "https://" <> domain
+      %{params: %{"shop" => domain}} -> "https://" <> domain
+      _ -> ""
+    end
+  end
 end
