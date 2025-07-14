@@ -8,6 +8,7 @@
 - New: Reworked webhook flow, [check readme](README.md#Webhooks) for details on how to use
 - Deprecation: old Plugs.Webhook is being replaced and will be removed eventually
 - New: Add Scopes context and Scope protocol. Change GraphQL queries to expect scopes. AuthToken can be used as a scope as a fallback via the defimpl in the AuthToken file.
+- Fix: WebhookEnsureValidation returns 401 on failed HMAC validation
 
 ## 0.16.2
 

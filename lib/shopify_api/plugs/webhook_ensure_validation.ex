@@ -15,7 +15,7 @@ defmodule ShopifyAPI.Plugs.WebhookEnsureValidation do
     Logger.error(msg)
 
     conn
-    |> send_resp(200, "Failed HMAC Validation")
+    |> send_resp(401, "Failed HMAC Validation")
     |> halt()
   end
 end
