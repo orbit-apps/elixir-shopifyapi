@@ -5,13 +5,18 @@ defmodule ShopifyAPI.GraphQL do
 
   require Logger
 
-  alias ShopifyAPI.GraphQL.{JSONParseError, Response, Telemetry}
+  alias ShopifyAPI.GraphQL.GraphQLQuery
+  alias ShopifyAPI.GraphQL.GraphQLResponse
+  alias ShopifyAPI.GraphQL.JSONParseError
+  alias ShopifyAPI.GraphQL.Response
+  alias ShopifyAPI.GraphQL.Telemetry
   alias ShopifyAPI.JSONSerializer
 
   @default_graphql_version "2020-10"
 
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
 
+  @type opts :: keyword()
   @type query_response ::
           {:ok, Response.t()}
           | {:error, JSONParseError.t() | HTTPoison.Response.t() | HTTPoison.Error.t()}
@@ -42,6 +47,40 @@ defmodule ShopifyAPI.GraphQL do
       |> JSONSerializer.encode!()
 
     logged_request(scope, url, body, headers, opts)
+  end
+
+  @doc """
+  Executes the given GrahpQLQuery for the given scope
+
+  Telemetry events are sent to
+    - [:shopify_api, :graphqlquery, :start],
+    - [:shopify_api, :graphqlquery, :stop],
+    - [:shopify_api, :graphqlquery, :exception]
+
+  ShopifyAPI.GraphQL.TelemetryLogger is provided for basic logging.
+  """
+  @spec execute(ShopifyAPI.Scope.t(), GraphQLQuery.t(), opts()) ::
+          {:ok, GraphQLResponse.t()} | {:error, Exception.t()}
+  def execute(%GraphQLQuery{} = query, scope, opts \\ []) do
+    url = build_url(ShopifyAPI.Scopes.myshopify_domain(scope), opts)
+    headers = build_headers(ShopifyAPI.Scopes.access_token(scope), opts)
+    body = JSONSerializer.encode!(%{query: query.query_string, variables: query.variables})
+    metadata = %{scope: scope, query: query}
+
+    :telemetry.span(
+      [:shopify_api, :graphqlquery],
+      metadata,
+      fn ->
+        case Req.post(url, body: body, headers: headers) do
+          {:ok, raw_response} ->
+            response = GraphQLResponse.parse(raw_response, query)
+            {{:ok, response}, Map.put(metadata, :response, response)}
+
+          {:error, exception} ->
+            {{:error, exception}, Map.put(metadata, :error, exception)}
+        end
+      end
+    )
   end
 
   defp build_body(query_string), do: %{query: query_string}

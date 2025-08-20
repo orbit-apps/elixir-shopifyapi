@@ -53,6 +53,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
       {:plug, "~> 1.0"},
+      {:req, "~> 0.5.0"},
       {:telemetry, "~> 0.4 or ~> 1.0"}
     ]
   end

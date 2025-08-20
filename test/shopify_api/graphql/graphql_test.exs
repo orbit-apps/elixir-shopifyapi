@@ -7,6 +7,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
   alias Plug.Conn
 
   alias ShopifyAPI.GraphQL
+  alias ShopifyAPI.GraphQL.GraphQLResponse
   alias ShopifyAPI.GraphQL.Response
   alias ShopifyAPI.JSONSerializer
 
@@ -60,6 +61,79 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
   end
 
   setup [:offline_token]
+
+  describe "execute/3" do
+    defmodule FetchShopTest do
+      use ShopifyAPI.GraphQL.GraphQLQuery
+
+      @theme_list """
+      query {
+        shop {
+          id
+          createdAt
+          email
+          contactEmail
+          shopOwnerName
+          name
+          plan {
+            shopifyPlus
+          }
+          url
+          ianaTimezone
+        }
+      }
+      """
+
+      def query_string, do: @theme_list
+      def name, do: "shop"
+      def path, do: []
+    end
+
+    @fetch_shop_response %{
+      "data" => %{
+        "shop" => %{
+          "contactEmail" => "email@example.com",
+          "createdAt" => "2024-07-31T00:55:30Z",
+          "email" => "email@example.com",
+          "ianaTimezone" => "America/New_York",
+          "id" => "gid://shopify/Shop/10000000000",
+          "name" => "example_shop",
+          "plan" => %{"shopifyPlus" => false},
+          "shopOwnerName" => "Graham Baradoy",
+          "url" => "https://example_shop.myshopify.com"
+        }
+      },
+      "extensions" => %{
+        "cost" => %{
+          "actualQueryCost" => 2,
+          "requestedQueryCost" => 2,
+          "throttleStatus" => %{
+            "currentlyAvailable" => 1998,
+            "maximumAvailable" => 2000.0,
+            "restoreRate" => 100.0
+          }
+        }
+      }
+    }
+
+    test "excutes a GraphQLQuery", %{
+      bypass: bypass,
+      shop: _shop,
+      offline_token: scope
+    } do
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/admin/api/#{GraphQL.configured_version()}/graphql.json",
+        fn conn -> Conn.resp(conn, 200, @fetch_shop_response |> JSONSerializer.encode!()) end
+      )
+
+      assert {:ok, %GraphQLResponse{results: shop}} =
+               FetchShopTest.query() |> GraphQL.execute(scope)
+
+      assert shop["id"] == "gid://shopify/Shop/10000000000"
+    end
+  end
 
   describe "GraphQL query/2" do
     test "when mutation has parametized variables", %{

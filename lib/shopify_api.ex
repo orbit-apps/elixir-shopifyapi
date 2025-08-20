@@ -1,4 +1,6 @@
 defmodule ShopifyAPI do
+  alias ShopifyAPI.GraphQL.GraphQLQuery
+  alias ShopifyAPI.GraphQL.GraphQLResponse
   alias ShopifyAPI.RateLimiting
   alias ShopifyAPI.Throttled
 
@@ -25,6 +27,14 @@ defmodule ShopifyAPI do
     func = fn -> ShopifyAPI.GraphQL.query(scope, query, variables, opts) end
     Throttled.graphql_request(func, scope, estimated_cost)
   end
+
+  @doc """
+  Executes the given GrahpQLQuery for the given scope
+  """
+  @spec execute_graphql(ShopifyAPI.Scope.t(), GraphQLQuery.t(), keyword()) ::
+          {:ok, GraphQLResponse.t()} | {:error, Exception.t()}
+  def execute_graphql(%GraphQLQuery{} = query, scope, opts \\ []),
+    do: ShopifyAPI.GraphQL.execute(query, scope, opts)
 
   def request(token, func), do: Throttled.request(func, token, RateLimiting.RESTTracker)
 
