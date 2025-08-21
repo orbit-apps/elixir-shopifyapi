@@ -29,7 +29,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLResponse do
   def resolve({:ok, %__MODULE__{errors?: true} = response}), do: {:error, response}
   def resolve({:error, error}), do: {:error, error}
 
-  defp set_results(%__MODULE__{raw: %Req.Response{body: %{"data" => data}}} = graphql_response),
+  defp set_results(%__MODULE__{raw: %Req.Response{body: %{"data" => data}, status: 200}} = graphql_response),
     do: %{graphql_response | results: get_in(data, graphql_response.query.path)}
 
   defp set_results(%__MODULE__{raw: %Req.Response{body: _body}} = graphql_response),

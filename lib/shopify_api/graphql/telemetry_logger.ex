@@ -8,12 +8,12 @@ defmodule ShopifyAPI.GraphQL.TelemetryLogger do
 
   alias ShopifyAPI.GraphQL.GraphQLResponse
 
-  def handle_event([:shopify_api, :graphqlquery, :start], _measurements, metadata, _config) do
+  def handle_event([:shopify_api, :graphql_request, :start], _measurements, metadata, _config) do
     Logger.info("ShopifyAPI.GraphQL.start #{metadata.query.name}", details(metadata))
   end
 
   def handle_event(
-        [:shopify_api, :graphqlquery, :stop],
+        [:shopify_api, :graphql_request, :stop],
         measurements,
         %{response: %GraphQLResponse{errors?: false}} = metadata,
         _config
@@ -25,7 +25,7 @@ defmodule ShopifyAPI.GraphQL.TelemetryLogger do
   end
 
   def handle_event(
-        [:shopify_api, :graphqlquery, :stop],
+        [:shopify_api, :graphql_request, :stop],
         measurements,
         %{response: %GraphQLResponse{errors?: true}} = metadata,
         _config
@@ -37,7 +37,7 @@ defmodule ShopifyAPI.GraphQL.TelemetryLogger do
   end
 
   def handle_event(
-        [:shopify_api, :graphqlquery, :stop],
+        [:shopify_api, :graphql_request, :stop],
         measurements,
         %{error: exception} = metadata,
         _config
@@ -68,9 +68,9 @@ defmodule ShopifyAPI.GraphQL.TelemetryLogger do
     :telemetry.attach_many(
       "shopifyapi-graphql-request",
       [
-        [:shopify_api, :graphqlquery, :start],
-        [:shopify_api, :graphqlquery, :stop],
-        [:shopify_api, :graphqlquery, :exception]
+        [:shopify_api, :graphql_request, :start],
+        [:shopify_api, :graphql_request, :stop],
+        [:shopify_api, :graphql_request, :exception]
       ],
       &handle_event/4,
       nil
