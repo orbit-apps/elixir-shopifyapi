@@ -2,6 +2,8 @@ defmodule ShopifyAPI.GraphQL.GraphQLQuery do
   @moduledoc """
   A quiery builder for Shopify GraphQL
 
+  The query is made with a scope that implements `ShopifyAPI.Scope`
+
   In your query file `use ShopifyAPI.GraphQL.GraphQLQuery` and implement
     - query_string/1
     - name/1 - matches the root name of the query

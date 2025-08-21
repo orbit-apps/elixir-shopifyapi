@@ -12,6 +12,8 @@ defmodule ShopifyAPI do
   @doc """
   A helper function for making throttled GraphQL requests.
 
+  Soft deprecated. Please use execute_graphql/3 or [GraphQLQuery](lib/shopify_api/graphql/graphql_query.ex) instead.
+
   ## Example:
 
       iex> query = "mutation metafieldDelete($input: MetafieldDeleteInput!){ metafieldDelete(input: $input) {deletedId userErrors {field message }}}",
@@ -29,9 +31,11 @@ defmodule ShopifyAPI do
   end
 
   @doc """
-  Executes the given GrahpQLQuery for the given scope
+  Executes the given GrahpQLQuery for the given scope.
+
+  See [GraphQLQuery](lib/shopify_api/graphql/graphql_query.ex) for details.
   """
-  @spec execute_graphql(ShopifyAPI.Scope.t(), GraphQLQuery.t(), keyword()) ::
+  @spec execute_graphql(GraphQLQuery.t(), ShopifyAPI.Scope.t(), keyword()) ::
           {:ok, GraphQLResponse.t()} | {:error, Exception.t()}
   def execute_graphql(%GraphQLQuery{} = query, scope, opts \\ []),
     do: ShopifyAPI.GraphQL.execute(query, scope, opts)

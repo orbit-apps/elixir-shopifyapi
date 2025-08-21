@@ -53,9 +53,9 @@ defmodule ShopifyAPI.GraphQL do
   Executes the given GrahpQLQuery for the given scope
 
   Telemetry events are sent to
-    - [:shopify_api, :graphqlquery, :start],
-    - [:shopify_api, :graphqlquery, :stop],
-    - [:shopify_api, :graphqlquery, :exception]
+    - [:shopify_api, :graphql_request, :start],
+    - [:shopify_api, :graphql_request, :stop],
+    - [:shopify_api, :graphql_request, :exception]
 
   ShopifyAPI.GraphQL.TelemetryLogger is provided for basic logging.
   """
@@ -68,7 +68,7 @@ defmodule ShopifyAPI.GraphQL do
     metadata = %{scope: scope, query: query}
 
     :telemetry.span(
-      [:shopify_api, :graphqlquery],
+      [:shopify_api, :graphql_request],
       metadata,
       fn ->
         case Req.post(url, body: body, headers: headers) do
