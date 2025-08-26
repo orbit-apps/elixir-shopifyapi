@@ -59,8 +59,10 @@ defmodule ShopifyAPI.GraphQL do
 
   ShopifyAPI.GraphQL.TelemetryLogger is provided for basic logging.
   """
-  @spec execute(ShopifyAPI.Scope.t(), GraphQLQuery.t(), opts()) ::
-          {:ok, GraphQLResponse.t()} | {:error, Exception.t()}
+  @spec execute(GraphQLQuery.t(), ShopifyAPI.Scope.t(), opts()) ::
+          {:ok, GraphQLResponse.success_t()}
+          | {:ok, GraphQLResponse.failure_t()}
+          | {:error, Exception.t()}
   def execute(%GraphQLQuery{} = query, scope, opts \\ []) do
     url = build_url(ShopifyAPI.Scopes.myshopify_domain(scope), opts)
     headers = build_headers(ShopifyAPI.Scopes.access_token(scope), opts)

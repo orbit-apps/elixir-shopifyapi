@@ -45,6 +45,8 @@ defmodule ShopifyAPI.GraphQL.GraphQLQuery do
 
   defstruct [:name, :query_string, :variables, :path]
 
+  alias ShopifyAPI.GraphQL.GraphQLResponse
+
   @type t :: %__MODULE__{
           name: String.t(),
           query_string: String.t(),
@@ -60,6 +62,9 @@ defmodule ShopifyAPI.GraphQL.GraphQLQuery do
     quote do
       @behaviour unquote(__MODULE__)
 
+      @type t :: unquote(__MODULE__).t()
+
+      @spec query :: t()
       def query do
         query_string()
         |> unquote(__MODULE__).build(name())
@@ -82,14 +87,21 @@ defmodule ShopifyAPI.GraphQL.GraphQLQuery do
     }
   end
 
+  @spec append_path(t(), any()) :: t()
   def append_path(%__MODULE__{} = query, access),
     do: %{query | path: query.path ++ List.wrap(access)}
 
+  @spec assign(t(), any(), any()) :: t()
   def assign(%__MODULE__{} = query, key, value), do: assigns(query, %{key => value})
 
+  @spec assigns(t(), map()) :: t()
   def assigns(%__MODULE__{} = query, map) when is_map(map),
     do: %{query | variables: Map.merge(query.variables, map)}
 
+  @spec execute(t(), ShopifyAPI.Scope.t()) ::
+          {:ok, GraphQLResponse.success_t()}
+          | {:ok, GraphQLResponse.failure_t()}
+          | {:error, Exception.t()}
   def execute(query, scope), do: ShopifyAPI.GraphQL.execute(query, scope)
 
   @doc """
