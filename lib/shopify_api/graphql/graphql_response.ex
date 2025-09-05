@@ -49,8 +49,11 @@ defmodule ShopifyAPI.GraphQL.GraphQLResponse do
 
   defp set_results(
          %__MODULE__{raw: %Req.Response{body: %{"data" => data}, status: 200}} = graphql_response
-       ),
-       do: %{graphql_response | results: get_in(data, graphql_response.query.path)}
+       ) do
+    if is_map(data) and Map.has_key?(data, graphql_response.query.name),
+      do: %{graphql_response | results: get_in(data, graphql_response.query.path)},
+      else: %{graphql_response | errors?: true}
+  end
 
   defp set_results(%__MODULE__{raw: %Req.Response{body: _body}} = graphql_response),
     do: %{graphql_response | errors?: true}
@@ -66,11 +69,11 @@ defmodule ShopifyAPI.GraphQL.GraphQLResponse do
   defp set_user_errors(
          %__MODULE__{
            query: %{name: name},
-           raw: %Req.Response{body: body}
+           raw: %Req.Response{body: %{"data" => data}}
          } = graphql_response
        )
-       when is_map(body) do
-    case get_in(body, ["data", name, "userErrors"]) do
+       when is_map(data) do
+    case get_in(data, [name, "userErrors"]) do
       [_ | _] = user_errors -> %{graphql_response | user_errors: user_errors, errors?: true}
       _ -> graphql_response
     end
