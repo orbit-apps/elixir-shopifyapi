@@ -48,7 +48,7 @@ defmodule ShopifyAPI.GraphQL.TelemetryLogger do
     )
   end
 
-  def handle_event([:shopify_api, :graphqlquery, :exception], _measurements, metadata, _config) do
+  def handle_event([:shopify_api, :graphql_request, :exception], _measurements, metadata, _config) do
     Logger.error(
       "ShopifyAPI.GraphQL.exception #{metadata.query.name} #{metadata.kind} #{inspect(metadata.reason)} #{Exception.format_stacktrace(metadata.stacktrace)}",
       details(metadata)
