@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.16.3
+
 - Fix: 0.16.2 broke the installation path when no JWT was passed along
 
 ## 0.16.2
