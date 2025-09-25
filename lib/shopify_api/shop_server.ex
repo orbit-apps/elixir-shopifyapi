@@ -68,8 +68,13 @@ defmodule ShopifyAPI.ShopServer do
   @impl GenServer
   def init(:ok) do
     create_table!()
-    for shop when is_struct(shop, Shop) <- do_initialize(), do: set(shop, false)
-    {:ok, :no_state}
+    {:ok, :no_state, {:continue, :init_shops}}
+  end
+
+  @impl GenServer
+  def handle_continue(:init_shops, state) do
+    for %Shop{} = shop <- do_initialize(), do: set(shop, false)
+    {:noreply, state}
   end
 
   ## Private Helpers
