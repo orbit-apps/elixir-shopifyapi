@@ -74,6 +74,8 @@ defmodule ShopifyAPI.Plugs.Webhook do
   alias ShopifyAPI.AppServer
   alias ShopifyAPI.ShopServer
 
+  @supported_body_length_bytes 15_000_000
+
   def init(opts) do
     prefix = opts |> Keyword.fetch!(:prefix) |> RouterUtils.split()
     callback = opts |> Keyword.fetch!(:callback) |> validate_mfa()
@@ -181,7 +183,7 @@ defmodule ShopifyAPI.Plugs.Webhook do
   # Verifies the request body with the X-Shopify-HMAC-SHA256 header
   defp verify_and_read_body(%Conn{} = conn, %App{client_secret: secret}) do
     with {:ok, shopify_hmac} <- fetch_hmac(conn),
-         {:ok, body, conn} <- read_body(conn) do
+         {:ok, body, conn} <- read_body(conn, length: @supported_body_length_bytes) do
       payload_hmac = ShopifyAPI.Security.base64_sha256_hmac(body, secret)
 
       if secure_compare(shopify_hmac, payload_hmac) do
