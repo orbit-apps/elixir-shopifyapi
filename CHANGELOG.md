@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.16.4
+
+- Fix: Add support for larger webhook payload bodies (15MB vs. the previous 8MB)
+
 ## 0.16.3
 
 - Fix: 0.16.2 broke the installation path when no JWT was passed along
