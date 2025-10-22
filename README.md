@@ -2,6 +2,7 @@
 
 - [ShopifyAPI and Plug.ShopifyAPI](#ShopifyAPI-and-PlugShopifyAPI)
   - [Installation](#Installation)
+    - [Upgrading to 1.0](#Upgrading-to-1.0)
   - [Installing this app in a Shop](#Installing-this-app-in-a-Shop)
   - [Configuration](#Configuration)
     - [API Version](#API-Version)
@@ -55,6 +56,14 @@ config :shopify_api, ShopifyAPI.ShopServer,
   initializer: {MyApp.Shop, :init, []},
   persistence: {MyApp.Shop, :save, []}
 ```
+
+### Upgrading to 1.0
+
+With version 1.0 there are some stabilty changes and developer UX changes that make this easier to use.
+
+- Webhook Handler has been refactored to some simple configuration and a standard Phoenix Controller
+  - A [Webhook Scope](https://github.com/orbit-apps/elixir-shopifyapi/blob/next/lib/shopify_api/model/webhook_scope.ex) struct is passed along in to your controller for easier access of standard information (Shop, App, etc)
+  - The new setup is [here](https://github.com/orbit-apps/elixir-shopifyapi/blob/next/README.md#webhooks) as a intermediate step this could all be added and the controller could call the existing webhook handler module in the app's codebase.
 
 ## Installing this app in a Shop
 
