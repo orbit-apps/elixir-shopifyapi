@@ -1,10 +1,15 @@
 defmodule ShopifyAPI.GraphQL.GraphQLTest do
   use ExUnit.Case
 
+  import ShopifyAPI.Factory
+  import ShopifyAPI.SessionTokenSetup
+
   alias Plug.Conn
-  alias ShopifyAPI.{AuthToken, JSONSerializer, Shop}
+
   alias ShopifyAPI.GraphQL
+  alias ShopifyAPI.GraphQL.GraphQLResponse
   alias ShopifyAPI.GraphQL.Response
+  alias ShopifyAPI.JSONSerializer
 
   @data %{
     "metafield1" => %{
@@ -52,22 +57,89 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
 
   setup _context do
     bypass = Bypass.open()
+    {:ok, [bypass: bypass, shop: build(:shop, domain: "localhost:#{bypass.port}")]}
+  end
 
-    token = %AuthToken{
-      token: "1234",
-      shop_name: "localhost:#{bypass.port}"
+  setup [:offline_token]
+
+  describe "execute/3" do
+    defmodule FetchShopTest do
+      use ShopifyAPI.GraphQL.GraphQLQuery
+
+      @theme_list """
+      query {
+        shop {
+          id
+          createdAt
+          email
+          contactEmail
+          shopOwnerName
+          name
+          plan {
+            shopifyPlus
+          }
+          url
+          ianaTimezone
+        }
+      }
+      """
+
+      def query_string, do: @theme_list
+      def name, do: "shop"
+      def path, do: []
+    end
+
+    @fetch_shop_response %{
+      "data" => %{
+        "shop" => %{
+          "contactEmail" => "email@example.com",
+          "createdAt" => "2024-07-31T00:55:30Z",
+          "email" => "email@example.com",
+          "ianaTimezone" => "America/New_York",
+          "id" => "gid://shopify/Shop/10000000000",
+          "name" => "example_shop",
+          "plan" => %{"shopifyPlus" => false},
+          "shopOwnerName" => "Graham Baradoy",
+          "url" => "https://example_shop.myshopify.com"
+        }
+      },
+      "extensions" => %{
+        "cost" => %{
+          "actualQueryCost" => 2,
+          "requestedQueryCost" => 2,
+          "throttleStatus" => %{
+            "currentlyAvailable" => 1998,
+            "maximumAvailable" => 2000.0,
+            "restoreRate" => 100.0
+          }
+        }
+      }
     }
 
-    shop = %Shop{domain: "localhost:#{bypass.port}"}
+    test "excutes a GraphQLQuery", %{
+      bypass: bypass,
+      shop: _shop,
+      offline_token: scope
+    } do
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/admin/api/#{GraphQL.configured_version()}/graphql.json",
+        fn conn -> Conn.resp(conn, 200, @fetch_shop_response |> JSONSerializer.encode!()) end
+      )
 
-    {:ok, %{bypass: bypass, auth_token: token, shop: shop}}
+      assert {:ok, %GraphQLResponse{results: shop}} =
+               FetchShopTest.query() |> GraphQL.execute(scope)
+
+      assert shop["id"] == "gid://shopify/Shop/10000000000"
+    end
   end
 
   describe "GraphQL query/2" do
     test "when mutation has parametized variables", %{
       bypass: bypass,
       shop: _shop,
-      auth_token: token
+      offline_token: token
     } do
       response = Map.merge(%{"data" => @data}, %{"extensions" => @metadata})
 
@@ -88,7 +160,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
     test "when mutation is a query string", %{
       bypass: bypass,
       shop: _shop,
-      auth_token: token
+      offline_token: token
     } do
       response = Map.merge(%{"data" => @data}, %{"extensions" => @metadata})
 
@@ -109,7 +181,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
     test "when deleting a metafield that does not exist", %{
       bypass: bypass,
       shop: _shop,
-      auth_token: token
+      offline_token: token
     } do
       response = Map.merge(%{"data" => @data_does_not_exist}, %{"extensions" => @metadata})
 
@@ -131,7 +203,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
     test "when query exceeds max cost for 1000", %{
       bypass: bypass,
       shop: _shop,
-      auth_token: token
+      offline_token: token
     } do
       Bypass.expect_once(
         bypass,
@@ -151,7 +223,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
     test "when response contains metadata", %{
       bypass: bypass,
       shop: _shop,
-      auth_token: token
+      offline_token: token
     } do
       response = Map.merge(%{"data" => @data}, %{"extensions" => @metadata})
 
@@ -180,7 +252,7 @@ defmodule ShopifyAPI.GraphQL.GraphQLTest do
     test "when response does not contain metadata", %{
       bypass: bypass,
       shop: _shop,
-      auth_token: token
+      offline_token: token
     } do
       Bypass.expect_once(
         bypass,

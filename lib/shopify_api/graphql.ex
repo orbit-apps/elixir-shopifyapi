@@ -5,14 +5,18 @@ defmodule ShopifyAPI.GraphQL do
 
   require Logger
 
-  alias ShopifyAPI.AuthToken
-  alias ShopifyAPI.GraphQL.{JSONParseError, Response, Telemetry}
+  alias ShopifyAPI.GraphQL.GraphQLQuery
+  alias ShopifyAPI.GraphQL.GraphQLResponse
+  alias ShopifyAPI.GraphQL.JSONParseError
+  alias ShopifyAPI.GraphQL.Response
+  alias ShopifyAPI.GraphQL.Telemetry
   alias ShopifyAPI.JSONSerializer
 
   @default_graphql_version "2020-10"
 
   @log_module __MODULE__ |> to_string() |> String.trim_leading("Elixir.")
 
+  @type opts :: keyword()
   @type query_response ::
           {:ok, Response.t()}
           | {:error, JSONParseError.t() | HTTPoison.Response.t() | HTTPoison.Error.t()}
@@ -28,10 +32,13 @@ defmodule ShopifyAPI.GraphQL do
       iex> ShopifyAPI.GraphQL.query(auth, query, variables)
       {:ok, %Response{...}}
   """
-  @spec query(AuthToken.t(), String.t(), map(), list()) :: query_response()
-  def query(%AuthToken{} = auth, query_string, variables \\ %{}, opts \\ []) do
-    url = build_url(auth, opts)
-    headers = build_headers(auth, opts)
+  @spec query(ShopifyAPI.Scope.t(), String.t(), map(), list()) :: query_response()
+
+  def query(auth_or_scope, query_string, variables \\ %{}, opts \\ [])
+
+  def query(scope, query_string, variables, opts) do
+    url = build_url(ShopifyAPI.Scopes.myshopify_domain(scope), opts)
+    headers = build_headers(ShopifyAPI.Scopes.access_token(scope), opts)
 
     body =
       query_string
@@ -39,7 +46,43 @@ defmodule ShopifyAPI.GraphQL do
       |> insert_variables(variables)
       |> JSONSerializer.encode!()
 
-    logged_request(auth, url, body, headers, opts)
+    logged_request(scope, url, body, headers, opts)
+  end
+
+  @doc """
+  Executes the given GrahpQLQuery for the given scope
+
+  Telemetry events are sent to
+    - [:shopify_api, :graphql_request, :start],
+    - [:shopify_api, :graphql_request, :stop],
+    - [:shopify_api, :graphql_request, :exception]
+
+  ShopifyAPI.GraphQL.TelemetryLogger is provided for basic logging.
+  """
+  @spec execute(GraphQLQuery.t(), ShopifyAPI.Scope.t(), opts()) ::
+          {:ok, GraphQLResponse.success_t()}
+          | {:ok, GraphQLResponse.failure_t()}
+          | {:error, Exception.t()}
+  def execute(%GraphQLQuery{} = query, scope, opts \\ []) do
+    url = build_url(ShopifyAPI.Scopes.myshopify_domain(scope), opts)
+    headers = build_headers(ShopifyAPI.Scopes.access_token(scope), opts)
+    body = JSONSerializer.encode!(%{query: query.query_string, variables: query.variables})
+    metadata = %{scope: scope, query: query}
+
+    :telemetry.span(
+      [:shopify_api, :graphql_request],
+      metadata,
+      fn ->
+        case Req.post(url, body: body, headers: headers) do
+          {:ok, raw_response} ->
+            response = GraphQLResponse.parse(raw_response, query)
+            {{:ok, response}, Map.put(metadata, :response, response)}
+
+          {:error, exception} ->
+            {{:error, exception}, Map.put(metadata, :error, exception)}
+        end
+      end
+    )
   end
 
   defp build_body(query_string), do: %{query: query_string}
@@ -87,14 +130,14 @@ defmodule ShopifyAPI.GraphQL do
     }
   end
 
-  defp logged_request(auth, url, body, headers, options) do
+  defp logged_request(scope_or_auth, url, body, headers, options) do
     {time, raw_response} = :timer.tc(HTTPoison, :post, [url, body, headers, options])
 
     response = Response.handle(raw_response)
 
-    log_request(auth, response, time)
+    log_request(scope_or_auth, response, time)
 
-    Telemetry.send(@log_module, auth, url, time, response)
+    Telemetry.send(@log_module, scope_or_auth, url, time, response)
 
     response
   end
@@ -121,12 +164,23 @@ defmodule ShopifyAPI.GraphQL do
     end)
   end
 
-  defp build_url(%{shop_name: domain}, opts) do
-    version = Keyword.get(opts, :version, configured_version())
-    "#{ShopifyAPI.transport()}://#{domain}/admin/api/#{version}/graphql.json"
+  defp log_request(scope, response, time) do
+    log_request(
+      %{
+        app_name: ShopifyAPI.Scopes.app_name(scope),
+        shop_name: ShopifyAPI.Scopes.myshopify_domain(scope)
+      },
+      response,
+      time
+    )
   end
 
-  defp build_headers(%{token: access_token}, opts) do
+  defp build_url(myshopify_domain, opts) do
+    version = Keyword.get(opts, :version, configured_version())
+    "#{ShopifyAPI.transport()}://#{myshopify_domain}/admin/api/#{version}/graphql.json"
+  end
+
+  defp build_headers(access_token, opts) do
     headers = [
       {"Content-Type", "application/json"},
       {"X-Shopify-Access-Token", access_token}

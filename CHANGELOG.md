@@ -1,5 +1,14 @@
 ## Unreleased
 
+- BREAKING: AppServer now defaults to a single app instance, this is a compile env if you want to use the old multi app config add `config :shopify_api, :app_server, :multi_app` to your `config/config.exs`
+- New: Single app mode for AppServer, is API compatible with the multi app setup. This greatly simplifies the most common setup, one app <> one phoenix setup.
+- New: Add handle and raw app config to the App struct
+- New: App.new/1 function to load app from parsed Shopify app config toml file
+- New: GraphQL requests through [Req](https://hexdocs.pm/req/Req.html) are now done with GraphQLQuery modules and return GraphQLResponses. Ideally we will deprecate the previoud GraphQL method once people have had a chance to move over from the old method.
+- New: Add Scopes context and Scope protocol. Change GraphQL queries to expect scopes. AuthToken can be used as a scope as a fallback via the defimpl in the AuthToken file.
+- New: Reworked webhook flow, [check readme](README.md#Webhooks) for details on how to use
+- Deprecation: old Plugs.Webhook is being replaced and will be removed eventually
+
 ## 0.16.4
 
 - Fix: Add support for larger webhook payload bodies (15MB vs. the previous 8MB)

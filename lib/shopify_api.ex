@@ -1,4 +1,6 @@
 defmodule ShopifyAPI do
+  alias ShopifyAPI.GraphQL.GraphQLQuery
+  alias ShopifyAPI.GraphQL.GraphQLResponse
   alias ShopifyAPI.RateLimiting
   alias ShopifyAPI.Throttled
 
@@ -10,21 +12,33 @@ defmodule ShopifyAPI do
   @doc """
   A helper function for making throttled GraphQL requests.
 
+  Soft deprecated. Please use execute_graphql/3 or [GraphQLQuery](lib/shopify_api/graphql/graphql_query.ex) instead.
+
   ## Example:
 
       iex> query = "mutation metafieldDelete($input: MetafieldDeleteInput!){ metafieldDelete(input: $input) {deletedId userErrors {field message }}}",
       iex> estimated_cost = 10
       iex> variables = %{input: %{id: "gid://shopify/Metafield/9208558682200"}}
       iex> options = [debug: true]
-      iex> ShopifyAPI.graphql_request(auth_token, query, estimated_cost, variables, options)
+      iex> ShopifyAPI.graphql_request(scope, query, estimated_cost, variables, options)
       {:ok, %ShopifyAPI.GraphQL.Response{...}}
   """
-  @spec graphql_request(ShopifyAPI.AuthToken.t(), String.t(), integer(), map(), list()) ::
+  @spec graphql_request(ShopifyAPI.Scope.t(), String.t(), integer(), map(), list()) ::
           ShopifyAPI.GraphQL.query_response()
-  def graphql_request(token, query, estimated_cost, variables \\ %{}, opts \\ []) do
-    func = fn -> ShopifyAPI.GraphQL.query(token, query, variables, opts) end
-    Throttled.graphql_request(func, token, estimated_cost)
+  def graphql_request(scope, query, estimated_cost, variables \\ %{}, opts \\ []) do
+    func = fn -> ShopifyAPI.GraphQL.query(scope, query, variables, opts) end
+    Throttled.graphql_request(func, scope, estimated_cost)
   end
+
+  @doc """
+  Executes the given GrahpQLQuery for the given scope.
+
+  See [GraphQLQuery](lib/shopify_api/graphql/graphql_query.ex) for details.
+  """
+  @spec execute_graphql(GraphQLQuery.t(), ShopifyAPI.Scope.t(), keyword()) ::
+          {:ok, GraphQLResponse.t()} | {:error, Exception.t()}
+  def execute_graphql(%GraphQLQuery{} = query, scope, opts \\ []),
+    do: ShopifyAPI.GraphQL.execute(query, scope, opts)
 
   def request(token, func), do: Throttled.request(func, token, RateLimiting.RESTTracker)
 
@@ -47,8 +61,8 @@ defmodule ShopifyAPI do
   depending on if you enable user_user_tokens.
   """
   @spec shopify_oauth_url(ShopifyAPI.App.t(), String.t(), list()) :: String.t()
-  def shopify_oauth_url(app, domain, opts \\ [])
-      when is_struct(app, ShopifyAPI.App) and is_binary(domain) and is_list(opts) do
+  def shopify_oauth_url(%ShopifyAPI.App{} = app, domain, opts \\ [])
+      when is_binary(domain) and is_list(opts) do
     opts = Keyword.merge(@oauth_default_options, opts)
     user_token_query_params = opts |> Keyword.get(:use_user_tokens) |> per_user_query_params()
     query_params = oauth_query_params(app) ++ user_token_query_params

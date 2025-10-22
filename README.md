@@ -2,6 +2,7 @@
 
 - [ShopifyAPI and Plug.ShopifyAPI](#ShopifyAPI-and-PlugShopifyAPI)
   - [Installation](#Installation)
+    - [Upgrading to 1.0](#Upgrading-to-1.0)
   - [Installing this app in a Shop](#Installing-this-app-in-a-Shop)
   - [Configuration](#Configuration)
     - [API Version](#API-Version)
@@ -56,6 +57,14 @@ config :shopify_api, ShopifyAPI.ShopServer,
   persistence: {MyApp.Shop, :save, []}
 ```
 
+### Upgrading to 1.0
+
+With version 1.0 there are some stabilty changes and developer UX changes that make this easier to use.
+
+- Webhook Handler has been refactored to some simple configuration and a standard Phoenix Controller
+  - A [Webhook Scope](https://github.com/orbit-apps/elixir-shopifyapi/blob/next/lib/shopify_api/model/webhook_scope.ex) struct is passed along in to your controller for easier access of standard information (Shop, App, etc)
+  - The new setup is [here](https://github.com/orbit-apps/elixir-shopifyapi/blob/next/README.md#webhooks) as a intermediate step this could all be added and the controller could call the existing webhook handler module in the app's codebase.
+
 ## Installing this app in a Shop
 
 There is a boilerplate repo for quickly getting up and running at [ShopifyApp](https://github.com/pixelunion/elixir-shopify-app)
@@ -102,26 +111,54 @@ end
 
 ## Webhooks
 
-To set up your app to receive webhooks, first you'll need to add `ShopifyAPI.Plugs.Webhook` to your `Endpoint` module:
-
+Add a custom body reader and HMAC validation to your parser config `body_reader: {ShopifyAPI.WebhookHMACValidator, :read_body, []}` Your parser should now look like:
 ```elixir
-plug ShopifyAPI.Plugs.Webhook,
-  app_name: "my-app-name",
-  prefix: "/shopify/webhook",
-  callback: {WebhookHandler, :handle_webhook, []}
+plug Plug.Parsers,
+  parsers: [:urlencoded, :multipart, :json],
+  pass: ["*/*"],
+  body_reader: {ShopifyAPI.WebhookHMACValidator, :read_body, []},
+  json_decoder: Phoenix.json_library()
 ```
 
-You'll also need to define a corresponding `WebhookHandler` module in your app:
-
+Add a route:
 ```elixir
-defmodule WebhookHandler do
-  def handle_webhook(app, shop, domain, payload) do
-    # TODO implement me!
+pipeline :shopify_webhook do
+  plug ShopifyAPI.Plugs.WebhookEnsureValidation
+  plug ShopifyAPI.Plugs.WebhookScopeSetup
+end
+
+scope "/shopify/webhook", MyAppWeb do
+  pipe_through :shopify_webhook
+  # The app_name path param is optional if the `config :shopify_api, :app_name, "my_app"` is set
+  post "/:app_name", ShopifyWebhooksController, :webhook
+end
+```
+
+Add a controller:
+```elixir
+defmodule SectionsAppWeb.ShopifyWebhooksController do
+  use SectionsAppWeb, :controller
+  require Logger
+
+  def webhook(
+        %{assigns: %{webhook_scope: %{topic: "app_subscriptions/update"} = webhook_scope}} = conn,
+        params
+      ) do
+    Logger.warning("Doing work on app subscription update with params #{inspect(params)}",
+      myshopify_domain: webhook_scope.myshopify_domain
+    )
+
+    json(conn, %{success: true})
+  end
+
+  def webhook(%{assigns: %{webhook_scope: webhook_scope}} = conn, _params) do
+    Logger.warning("Unhandled webhook: #{inspect(webhook_scope.topic)}")
+    json(conn, %{success: true})
   end
 end
 ```
 
-And there you go!
+The old `ShopifyAPI.Plugs.Webhook` method has been deprecated.
 
 Now webhooks sent to `YOUR_URL/shopify/webhook` will be interpreted as webhooks for the `my-app-name` app.
 If you append an app name to the URL in the Shopify configuration, that app will be used instead (e.g. `/shopify/webhook/private-app-name`).
@@ -152,30 +189,39 @@ be found at [https://hexdocs.pm/shopify_api](https://hexdocs.pm/shopify_api).
 
 ## GraphQL
 
-`GraphQL` implementation handles GraphQL Queries against Shopify API using HTTPoison library as client, this initial implementation consists of hitting Shopify GraphQL and returning the response in a tuple `{:ok, %Response{}} | {:error, %Response{}}` containing the response and metadata(actualQueryCost, throttleStatus).
+GraphQL requests against [Shopify's GraphQL API](https://shopify.dev/docs/api/admin-graphql) are done through modules that use `ShopifyAPI.GraphQL.GraphQLQuery`.
+
+### GraphQL Queries
+
+GraphQL query modules are created with `use ShopifyAPI.GraphQL.GraphQLQuery` and implement the `ShopifyAPI.GraphQL.GraphQLQuery` behaviour. See the [GraphQLQuery](lib/shopify_api/graphql/graphql_query.ex) module for documentation.
+
+### GraphQL Logging
+
+Logging is handled through Telemetry (`[:shopify_api, :graphql_request, :start]`, `[:shopify_api, :graphql_request, :stop]`, `[:shopify_api, :graphql_request, :exception]`). A basic logger is proivided with [ShopifyAPI.GraphQL.TelemetryLogger](lib/shopify_api/graphql/telemetry_logger.ex) and can be used with `ShopifyAPI.GraphQL.TelemetryLogger.attach()` in `application.ex`.
+
+### Handling GraphQL Errors
+
+The happy path response from `GraphQLQuery.execute/2` is `{:ok, %ShopifyAPI.GraphQL.GraphQLResponse{results: ..., errors?: false}`. In most cases you can pipe your response through `ShopifyAPI.GraphQL.GraphQLResponse.resolve/1` to get `{:ok, results} | {:error, ShopifyAPI.GraphQL.GraphQLResponse{errors?: true} | {:error, exception}`.
+
+Unfortuneately, GraphQL is not always that simple. GraphQL makes no promises of a transactional api and you can have partial success and partial failures. In that case you will need to dig deeper into the `GraphQLResponse`. In that case, you may need to stich together the `:results` and `:user_errors` from `%GraphQLResponse{}`.
+
+There are four main types of errors returned form GraphQL
+  - "errors" array in the response body. These can arrise from malformed queries or missing variables. This will return `{:ok, GraphQLResponse{errors?: false, errors: [_ | _]}}`
+  - "userErrors" array at the root of the query response. This is specific to Shopify's implementation of GraphQL. This will return `{:ok, GraphQLResponse{errors?: false, user_errors: [_ | _]}}`
+  - Non-200 responses - This will return `{:ok, GraphQLResponse{errors?: false, raw: %Req.Response{status: _}}}`
+  - Network errors - These will return a `{:error, Exception.t()}` from the `Req` request.
+
+### GraphQL version
 
 Configure the version to use in your config.exs, it will default to a stable version as ref'd in the [graphql module](lib/shopify_api/graphql.ex).
 
-
 ```elixir
-config :shopify_api, ShopifyAPI.GraphQL, graphql_version: "2019-07"
+config :shopify_api, ShopifyAPI.GraphQL, graphql_version: "2024-10"
 ```
 
-### GraphQL Response
+### Previous GraphQL version
 
-Because `GraphQL responses` can be a little complex we are parsing/wraping responses `%HTTPoison.response` to `%GraphQL.Response`.
-
-Successful response:
-
-```elixir
-{:ok, %ShopifyAPI.GraphQL.Response{response: %{}, metadata: %{}, status_code: code}}
-```
-
-Failed response:
-
-```elixir
-{:error, %HTTPoison.Response{}}
-```
+We are soft deprecating the old `ShopifyAPI.graphql_request/4`. It will not be marked as deprecated until people have had a chance to move over to the new method. The reasons for the move include 1) moving away from HTTPoison and towards Req. 2) Better handling of partial failures. 3) Overall cleaner implementations and more access to proper errors.
 
 ## Telemetry
 
@@ -185,8 +231,9 @@ The following telemetry events are generated:
 - `[:shopify_api, :rest_request, :failure]`
 - `[:shopify_api, :throttling, :over_limit]`
 - `[:shopify_api, :throttling, :within_limit]`
-- `[:shopify_api, :graphql_request, :success]`
-- `[:shopify_api, :graphql_request, :failure]`
+- `[:shopify_api, :graphql_request, :start]`
+- `[:shopify_api, :graphql_request, :stop]`
+- `[:shopify_api, :graphql_request, :exception]`
 - `[:shopify_api, :bulk_operation, :success]`
 - `[:shopify_api, :bulk_operation, :failure]`
 
