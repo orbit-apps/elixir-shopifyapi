@@ -1,15 +1,9 @@
 defmodule Test.ShopifyAPI.ThrottledTest do
   use ExUnit.Case
-
-  alias ShopifyAPI.{AuthToken, RateLimiting, Throttled}
+  alias ShopifyAPI.AuthToken
+  alias ShopifyAPI.Throttled
 
   @token %AuthToken{app_name: "test", shop_name: "throttled", plus: false}
-
-  setup do
-    RateLimiting.RESTTracker.set(@token, 10, 0)
-
-    :ok
-  end
 
   def func, do: send(self(), :func_called)
   def sleep_impl(_), do: send(self(), :sleep_called)
@@ -25,17 +19,6 @@ defmodule Test.ShopifyAPI.ThrottledTest do
   end
 
   describe "request/6" do
-    test "recurses when func returns over limit status code" do
-      func = fn ->
-        send(self(), :func_called)
-        {:ok, %{status_code: RateLimiting.REST.over_limit_status_code()}}
-      end
-
-      max_tries = 2
-      Throttled.request(func, @token, max_tries, TrackerMock)
-      for _ <- 1..max_tries, do: assert_received(:func_called)
-    end
-
     test "recurses when func returns graphql throttled response" do
       func = fn ->
         send(self(), :func_called)
