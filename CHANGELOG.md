@@ -1,5 +1,8 @@
 ## Unreleased
 
+- BREAKING: Moving REST client to its own repo. Check the new REST entry in the [README](./#REST)
+  If the REST client is used you must include the new REST client repo:
+  `{:shopify_api_rest, github: "orbit-apps/elixir-shopifyapi-rest", tag: "v0.1.0"}`
 - BREAKING: AppServer now defaults to a single app instance, this is a compile env if you want to use the old multi app config add `config :shopify_api, :app_server, :multi_app` to your `config/config.exs`
 - New: Single app mode for AppServer, is API compatible with the multi app setup. This greatly simplifies the most common setup, one app <> one phoenix setup.
 - New: Add handle and raw app config to the App struct

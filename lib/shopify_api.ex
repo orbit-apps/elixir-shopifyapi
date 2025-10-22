@@ -1,7 +1,6 @@
 defmodule ShopifyAPI do
   alias ShopifyAPI.GraphQL.GraphQLQuery
   alias ShopifyAPI.GraphQL.GraphQLResponse
-  alias ShopifyAPI.RateLimiting
   alias ShopifyAPI.Throttled
 
   @shopify_admin_uri URI.new!("https://admin.shopify.com")
@@ -40,7 +39,10 @@ defmodule ShopifyAPI do
   def execute_graphql(%GraphQLQuery{} = query, scope, opts \\ []),
     do: ShopifyAPI.GraphQL.execute(query, scope, opts)
 
-  def request(token, func), do: Throttled.request(func, token, RateLimiting.RESTTracker)
+  if function_exported?(ShopifyAPI.RateLiting.RESTTracker, :init, 0) do
+    def request(token, func),
+      do: ShopifyAPIThrottled.request(func, token, ShopifyAPI.RateLimiting.RESTTracker)
+  end
 
   @doc false
   # Accessor for API transport layer, defaults to `https://`.

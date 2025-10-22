@@ -26,6 +26,10 @@ defmodule ShopifyAPI.Throttled do
 
   @request_max_tries 10
 
+  @over_limit_status_code 429
+
+  def over_limit_status_code, do: @over_limit_status_code
+
   def graphql_request(func, token, estimated_cost, depth \\ 1, max_tries \\ @request_max_tries) do
     max_query_cost = RateLimiting.GraphQL.max_query_cost()
 
@@ -50,7 +54,7 @@ defmodule ShopifyAPI.Throttled do
 
   def request(func, token, max_tries, depth, estimated_cost, tracker_impl)
       when is_function(func) do
-    over_limit_status_code = RateLimiting.REST.over_limit_status_code()
+    over_limit_status_code = over_limit_status_code()
 
     token
     |> tracker_impl.get(estimated_cost)

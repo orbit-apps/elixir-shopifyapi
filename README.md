@@ -13,6 +13,7 @@
     - [AuthTokens](#AuthTokens)
   - [Webhooks](#Webhooks)
   - [GraphQL](#GraphQL)
+  - [REST](#REST)
   - [Telemetry](#Telemetry)
 
 ## Installation
@@ -222,6 +223,17 @@ config :shopify_api, ShopifyAPI.GraphQL, graphql_version: "2024-10"
 ### Previous GraphQL version
 
 We are soft deprecating the old `ShopifyAPI.graphql_request/4`. It will not be marked as deprecated until people have had a chance to move over to the new method. The reasons for the move include 1) moving away from HTTPoison and towards Req. 2) Better handling of partial failures. 3) Overall cleaner implementations and more access to proper errors.
+
+## REST
+
+The REST client has been moved to its [own repo](https://github.com/orbit-apps/elixir-shopifyapi-rest)
+
+Using:
+
+- include the new dependency `{:shopify_api, github: "pixelunion/elixir-shopifyapi-rest", tag: "v0.1.0"}`
+- make clean and compile `mix clean && mix compile`, as there is an optional endpoint `ShopifyAPI.request/2`
+  that is not compiled in unless the REST client is included.
+- make a REST call `iex> ShopifyAPI.REST.Product.all(token)`
 
 ## Telemetry
 
