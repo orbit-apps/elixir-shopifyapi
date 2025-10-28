@@ -35,6 +35,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   alias Plug.Conn
 
   alias ShopifyAPI.JWTSessionToken
+  alias ShopifyAPI.UserTokenServer
 
   @defaults [shopify_mount_path: "/shop"]
 
@@ -49,6 +50,8 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   end
 
   # User auth
+  # Optional params
+  #   - force_reauth: set to true if an upsert to offline user token is wanted, will delete existing token in UserTokenServer and re-request an upsert.
   defp do_authentication(%{params: %{"id_token" => token}} = conn, _options)
        when is_binary(token) do
     with {:ok, app} <- JWTSessionToken.app(token),
@@ -57,6 +60,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
          {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
          {:ok, shop} <- ShopifyAPI.ShopServer.get_or_create(myshopify_domain, true),
          {:ok, auth_token} <- JWTSessionToken.get_offline_token(jwt, token),
+         :ok <- force_reauth(conn, jwt),
          {:ok, user_token} <- JWTSessionToken.get_user_token(jwt, token) do
       conn
       |> assign_app(app)
@@ -131,4 +135,9 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       _ -> {:error, :invalid_hmac}
     end)
   end
+
+  defp force_reauth(%{params: %{"force_reauth" => "true"}}, jwt),
+    do: jwt |> JWTSessionToken.user_id() |> UserTokenServer.delete()
+
+  defp force_reauth(_, _), do: :ok
 end
