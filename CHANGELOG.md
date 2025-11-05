@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Refactor: adds a mutex around the offline shop token and online user token upsert calls.
+
 ## 0.16.4
 
 - Fix: Add support for larger webhook payload bodies (15MB vs. the previous 8MB)

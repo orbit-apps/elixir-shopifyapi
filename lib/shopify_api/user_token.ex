@@ -3,6 +3,7 @@ defmodule ShopifyAPI.UserToken do
   Represents the auth token for individual users, Shopify documentation for the auth process
   is here https://shopify.dev/docs/apps/auth/oauth/getting-started#online-access-mode
   """
+  require Logger
 
   @derive {Jason.Encoder,
            only: [
@@ -78,5 +79,38 @@ defmodule ShopifyAPI.UserToken do
       expires_in: attrs["expires_in"],
       scope: attrs["scope"]
     )
+  end
+
+  @spec get_user_token(App.t(), String.t(), integer(), String.t()) ::
+          {:ok, ShopifyAPI.UserToken.t()} | {:error, :failed_fetching_online_token}
+  def get_user_token(app, myshopify_domain, user_id, token) do
+    case ShopifyAPI.UserTokenServer.get_valid(myshopify_domain, app.name, user_id) do
+      {:ok, _} = resp -> resp
+      _ -> mutexed_get_user_token(app, myshopify_domain, user_id, token)
+    end
+  end
+
+  defp mutexed_get_user_token(app, myshopify_domain, user_id, token) do
+    mutex_key = {app.name, user_id}
+
+    Mutex.with_lock(ShopifyAPI.OfflineToken, mutex_key, fn ->
+      # Try fetching a valid token from cache, a new one may have been put in here since the
+      # get_user_token/4 call
+      case ShopifyAPI.UserTokenServer.get_valid(myshopify_domain, app.name, user_id) do
+        {:ok, _} = resp -> resp
+        _ -> request_offline_token(app, myshopify_domain, token)
+      end
+    end)
+  end
+
+  defp request_offline_token(app, myshopify_domain, token) do
+    case ShopifyAPI.AuthRequest.request_online_access_token(app, myshopify_domain, token) do
+      {:ok, user_token} ->
+        Task.async(fn -> ShopifyAPI.Shop.post_login(user_token) end)
+        {:ok, user_token}
+
+      error ->
+        error
+    end
   end
 end

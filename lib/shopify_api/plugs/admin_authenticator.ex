@@ -34,7 +34,9 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
   alias Plug.Conn
 
+  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.JWTSessionToken
+  alias ShopifyAPI.UserToken
 
   @defaults [shopify_mount_path: "/shop"]
 
@@ -56,8 +58,8 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
          :ok <- validate_hmac(app, conn.query_params),
          {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
          {:ok, shop} <- ShopifyAPI.ShopServer.get_or_create(myshopify_domain, true),
-         {:ok, auth_token} <- JWTSessionToken.get_offline_token(jwt, token),
-         {:ok, user_token} <- JWTSessionToken.get_user_token(jwt, token) do
+         {:ok, auth_token} <- get_offline_token(jwt, token),
+         {:ok, user_token} <- get_user_token(jwt, token) do
       conn
       |> assign_app(app)
       |> assign_shop(shop)
@@ -130,5 +132,28 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
       ^request_hmac -> :ok
       _ -> {:error, :invalid_hmac}
     end)
+  end
+
+  defp get_user_token(jwt, token) do
+    with {:ok, app} <- JWTSessionToken.app(jwt),
+         {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
+         {:ok, user_id} <- JWTSessionToken.user_id(jwt) do
+      UserToken.get_user_token(app, myshopify_domain, user_id, token)
+    else
+      error ->
+        Logger.warning("failed getting required information from the JWT #{inspect(error)}")
+        {:error, :invalid_session_token}
+    end
+  end
+
+  defp get_offline_token(jwt, token) do
+    with {:ok, app} <- JWTSessionToken.app(jwt),
+         {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt) do
+      AuthToken.get_offline_token(app, myshopify_domain, token)
+    else
+      error ->
+        Logger.warning("failed getting required information from the JWT #{inspect(error)}")
+        {:error, :invalid_session_token}
+    end
   end
 end

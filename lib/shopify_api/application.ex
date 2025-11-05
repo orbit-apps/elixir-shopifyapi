@@ -10,7 +10,9 @@ defmodule ShopifyAPI.Application do
     RateLimiting.GraphQLTracker.init()
 
     # Define workers and child supervisors to be supervised
-    children = []
+    children = [
+      {Mutex, name: ShopifyAPI.OfflineToken}
+    ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
