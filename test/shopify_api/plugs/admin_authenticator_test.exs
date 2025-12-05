@@ -6,9 +6,9 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   import ShopifyAPI.SessionTokenSetup
 
   alias Plug.Conn
+  alias ShopifyAPI.{AppServer, ShopServer}
   alias ShopifyAPI.Plugs.AdminAuthenticator
   alias ShopifyAPI.ShopifyValidationSetup
-  alias ShopifyAPI.{AppServer, ShopServer}
 
   @uninstalled_shop "uninstalled.myshopify.com"
 
