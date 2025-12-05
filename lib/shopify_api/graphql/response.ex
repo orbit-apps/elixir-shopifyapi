@@ -3,8 +3,8 @@ defmodule ShopifyAPI.GraphQL.Response do
   The Response module handles parsing and unwrapping responses from Shopify's GraphQL Admin API.
   """
 
-  alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.GraphQL.{JSONParseError, Response}
+  alias ShopifyAPI.JSONSerializer
 
   @type t :: %ShopifyAPI.GraphQL.Response{
           response: map(),
