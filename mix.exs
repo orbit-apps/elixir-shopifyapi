@@ -52,6 +52,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:httpoison, "~> 2.0"},
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
+      {:mutex, "~> 3.0"},
       {:plug, "~> 1.0"},
       {:telemetry, "~> 0.4 or ~> 1.0"}
     ]
