@@ -42,11 +42,13 @@ defmodule ShopifyAPI.REST.Theme do
     iex> ShopifyAPI.REST.Theme.update(auth, map)
     {:ok, %{} = theme}
   """
-  def update(%AuthToken{} = auth, %{"theme" => %{"id" => theme_id} = theme}),
-    do: update(auth, %{theme: Map.put(theme, :id, theme_id)})
+  def update(auth, theme, options \\ [])
 
-  def update(%AuthToken{} = auth, %{theme: %{id: theme_id}} = theme),
-    do: REST.put(auth, "themes/#{theme_id}.json", theme)
+  def update(%AuthToken{} = auth, %{"theme" => %{"id" => theme_id} = theme}, options),
+    do: update(auth, %{theme: Map.put(theme, :id, theme_id)}, options)
+
+  def update(%AuthToken{} = auth, %{theme: %{id: theme_id}} = theme, options),
+    do: REST.put(auth, "themes/#{theme_id}.json", theme, options)
 
   @doc """
   Delete a theme.
@@ -67,9 +69,11 @@ defmodule ShopifyAPI.REST.Theme do
       iex> ShopifyAPI.REST.Theme.create(auth, map)
       {:ok, %{} = theme}
   """
-  def create(%AuthToken{} = auth, %{"theme" => %{} = theme}),
-    do: create(auth, %{theme: theme})
+  def create(auth, theme, options \\ [])
 
-  def create(%AuthToken{} = auth, %{theme: %{}} = theme),
-    do: REST.post(auth, "themes.json", theme)
+  def create(%AuthToken{} = auth, %{"theme" => %{} = theme}, options),
+    do: create(auth, %{theme: theme}, options)
+
+  def create(%AuthToken{} = auth, %{theme: %{}} = theme, options),
+    do: REST.post(auth, "themes.json", theme, options)
 end

@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.16.5
+
+- New: Add support for passing options to `ShopifyAPI.REST.Theme.create/3` and
+  `ShopifyAPI.REST.Theme.update/3`.
+
 ## 0.16.4
 
 - Fix: Add support for larger webhook payload bodies (15MB vs. the previous 8MB)
