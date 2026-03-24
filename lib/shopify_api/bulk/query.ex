@@ -93,9 +93,18 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec async_exec!(AuthToken.t(), String.t()) :: {:ok, String.t()}
-  def async_exec!(%AuthToken{} = token, query) do
-    with bulk_query <- bulk_query_string(query),
+  @doc """
+  Performs the bulk query and returns a tuple `{:ok, bulk_query_id}` for polling. Use
+  `exec!/3` if you want to perform the bulk query and poll for the result in one step.
+
+  ## Options
+    - `:group_objects` boolean, WARNING only available in GraphQL API version 2026-01 and above
+                   Should Objects be grouped in the response, according to Shopify grouping can
+                   slow down the query.
+  """
+  @spec async_exec!(AuthToken.t(), String.t(), Keyword.t()) :: {:ok, String.t()}
+  def async_exec!(%AuthToken{} = token, query, opts \\ []) do
+    with bulk_query <- bulk_query_string(query, opts),
          {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
          :ok <- handle_errors(resp),
          bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]) do
@@ -106,9 +115,9 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  @spec exec!(AuthToken.t(), String.t(), list()) :: bulk_query_response()
+  @spec exec!(AuthToken.t(), String.t(), Keyword.t()) :: bulk_query_response()
   def exec!(%AuthToken{} = token, query, opts) do
-    with {:ok, bulk_query_id} <- async_exec!(token, query),
+    with {:ok, bulk_query_id} <- async_exec!(token, query, opts),
          {:ok, url} <- poll(token, bulk_query_id, opts[:polling_rate], opts[:max_poll_count]) do
       Telemetry.send(@log_module, token, {:success, :query})
       url
@@ -216,13 +225,15 @@ defmodule ShopifyAPI.Bulk.Query do
     end
   end
 
-  defp bulk_query_string(query) do
+  defp bulk_query_string(query, opts) do
     query_string = ShopifyAPI.JSONSerializer.encode!(query)
+    bulk_query_options = bulk_query_options(opts)
 
     """
     mutation {
       bulkOperationRunQuery(
         query: #{query_string}
+        #{bulk_query_options}
       ) {
         bulkOperation {
           id
@@ -328,6 +339,15 @@ defmodule ShopifyAPI.Bulk.Query do
       # No complete jsonl document yet
       true ->
         {[], element}
+    end
+  end
+
+  defp bulk_query_options(opts) do
+    opts
+    |> Keyword.get(:group_objects)
+    |> case do
+      nil -> ""
+      val -> "groupObjects: #{val}"
     end
   end
 end
