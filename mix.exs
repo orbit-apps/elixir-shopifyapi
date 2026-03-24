@@ -45,7 +45,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       {:ex_doc, "~> 0.40.0", only: [:dev], runtime: false},
       {:ex_machina, "~> 2.8.0", only: :test},
       {:faker, "~> 0.17", only: :test},
-      {:stream_data, "~> 1.2.0", only: :test},
+      {:stream_data, "~> 1.3.0", only: :test},
       # Everything else
       {:ecto_sql, "~> 3.6", optional: true},
       {:gen_stage, "~> 1.0"},
