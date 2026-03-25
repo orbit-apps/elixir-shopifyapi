@@ -1,5 +1,8 @@
 ## Unreleased
 
+- New: Add support for passing options to `ShopifyAPI.Bulk.Query.exec/3`, with `group_objects`
+  as a new option to group the returned objects by a specified key.
+
 ## 0.16.5
 
 - New: Add support for passing options to `ShopifyAPI.REST.Theme.create/3` and
