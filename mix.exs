@@ -49,7 +49,7 @@ defmodule Plug.ShopifyAPI.MixProject do
       # Everything else
       {:ecto_sql, "~> 3.6", optional: true},
       {:gen_stage, "~> 1.0"},
-      {:httpoison, "~> 2.0"},
+      {:httpoison, "~> 3.0"},
       {:jason, "~> 1.0"},
       {:jose, "~> 1.11.2"},
       {:plug, "~> 1.0"},
