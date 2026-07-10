@@ -66,10 +66,23 @@ defmodule ShopifyAPI.UserTokenServer do
     :ets.select(@table, match_spec)
   end
 
+  def get_for_id(user_id) when is_integer(user_id) do
+    match_spec = [{{{:_, :_, user_id}, :"$1"}, [], [:"$1"]}]
+    :ets.select(@table, match_spec)
+  end
+
   @spec delete(UserToken.t()) :: :ok
-  def delete(token) do
+  @spec delete(integer()) :: :ok
+  def delete(%UserToken{} = token) do
     :ets.delete(@table, {token.shop_name, token.app_name, token.associated_user_id})
     :ok
+  end
+
+  def delete(user_id) when is_integer(user_id) do
+    case get_for_id(user_id) do
+      %UserToken{} = token -> delete(token)
+      _ -> :ok
+    end
   end
 
   @spec delete_for_shop(String.t()) :: :ok

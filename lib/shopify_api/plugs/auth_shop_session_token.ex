@@ -21,6 +21,7 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JWTSessionToken
   alias ShopifyAPI.ShopServer
+  alias ShopifyAPI.UserTokenServer
 
   def init(opts), do: opts
 
@@ -32,6 +33,7 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
          {:ok, user_id} <- JWTSessionToken.user_id(jwt),
          {:ok, shop} <- ShopServer.get(myshopify_domain),
          {:ok, auth_token} <- AuthTokenServer.get(myshopify_domain, app.name),
+         :ok <- force_reauth(conn, jwt),
          {:ok, user_token} <- JWTSessionToken.get_user_token(jwt, token) do
       conn
       |> assign(:app, app)
@@ -48,4 +50,9 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
         |> halt()
     end
   end
+
+  defp force_reauth(%{params: %{"force_reauth" => "true"}}, jwt),
+    do: jwt |> JWTSessionToken.user_id() |> UserTokenServer.delete()
+
+  defp force_reauth(_, _), do: :ok
 end
