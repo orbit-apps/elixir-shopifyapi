@@ -9,7 +9,7 @@
     - [Background Runner](#Background-Runner)
     - [Shops](#Shops)
     - [Apps](#Apps)
-    - [AuthTokens](#AuthTokens)
+    - [Auth Tokens](#auth-tokens)
   - [Webhooks](#Webhooks)
   - [GraphQL](#GraphQL)
   - [Telemetry](#Telemetry)
@@ -43,7 +43,9 @@ plug ShopifyAPI.Plugs.Webhook,
   callback: {WebhookHandler, :handle_webhook, []}
 ```
 
-If you want persisted Apps, Shops, and Tokens add configuration to your functions.
+If you want Apps, Shops, and Tokens to survive a restart, give each cache an initializer and a
+persistence hook. See [Auth Tokens](#auth-tokens) for what those hooks are handed and when.
+
 ```elixir
 config :shopify_api, ShopifyAPI.AuthTokenServer,
   initializer: {MyApp.AuthToken, :init, []},
@@ -79,11 +81,12 @@ config :shopify_api, ShopifyAPI.REST, api_version: "2019-04"
 
 ### Supervisor
 
-The ShopifyAPI has three servers for caching commonly-used structs - `AppServer`, `ShopServer`, and `AuthTokenServer`.
-These act as a write-through caching layer for their corresponding data structure.
+The ShopifyAPI has four servers for caching commonly-used structs - `AppServer`,
+`ShopServer`, `AuthTokenServer`, and `UserTokenServer`. These act as a
+write-through caching layer for their corresponding data structure.
 
-A supervisor `ShopifyAPI.Supervisor` is provided to start up and supervise all three servers.
-Add it to your application's supervision tree, and define [hooks for preloading data](#Installation).
+A supervisor `ShopifyAPI.Supervisor` is provided to start up and supervise all four servers.
+Add it to your application's supervision tree, and define [hooks for preloading data](#installation).
 
 NOTE: Make sure you place the supervisor after any dependencies used in preloading the data. (ie Ecto)
 
@@ -99,6 +102,23 @@ def start(_type, _args) do
   Supervisor.start_link(children, strategy: :one_for_one)
 end
 ```
+
+### Auth Tokens
+
+`ShopifyAPI.AuthTokenServer` caches the
+[offline access tokens](https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens)
+that authenticate every REST and GraphQL call. A token is written when a shop
+installs your app and read on each request afterwards, so the cache needs to
+survive restarts: the `initializer` hook loads tokens back in at boot, and the
+`persistence` hook writes them out as they arrive.
+
+Both hooks are optional, and without them tokens live only in memory and are
+lost when the application stops.
+
+See the `ShopifyAPI.AuthTokenServer` documentation for the full contract - the
+arguments each hook receives, the traps around deleting tokens and handling app
+uninstalls, and a worked Ecto example. Per-user online tokens are handled
+separately by `ShopifyAPI.UserTokenServer`.
 
 ## Webhooks
 
@@ -137,7 +157,7 @@ Now once a shop is installed, you can create webhook subscriptions.
 This will automatically append your app's name to the generated webhook URL:
 
 ```elixir
-token = ShopifyAPI.AuthTokenServer.get("shop domain", "app name")
+{:ok, token} = ShopifyAPI.AuthTokenServer.get("shop domain", "app name")
 
 topic = "orders/create"
 server_address = ShopifyAPI.REST.Webhook.webhook_uri(token)

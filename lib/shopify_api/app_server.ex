@@ -1,6 +1,29 @@
 defmodule ShopifyAPI.AppServer do
   @moduledoc """
-  Write-through cache for App structs.
+  Write-through cache for `ShopifyAPI.App` structs, keyed by app name.
+
+  One deployment can serve several Shopify apps, and this cache is what makes that work. Each
+  entry carries its own client id, secret and scopes, so a companion app or a second listing
+  sharing your codebase is just another `ShopifyAPI.App` returned by the initializer. That is
+  also why so much of the library is app-aware: `ShopifyAPI.Router` takes the app name in the
+  path, `ShopifyAPI.AuthTokenServer` keys tokens by `{shop, app}` so one shop can install
+  several of yours, and `ShopifyAPI.Plugs.Webhook` needs the app name appended to its URL
+  because Shopify does not say which app a webhook is for.
+
+  Apps are looked up by name with `get/1`, and by client id with `get_by_client_id/1` — which
+  is how the `aud` claim of a session token is resolved back to the app that issued it.
+
+  Unlike the token caches this one is usually seeded entirely from configuration or your own
+  storage and then left alone; an app's credentials change far less often than its shops do.
+  `ShopifyAPI.AuthTokenServer` documents the caching design and the initializer/persistence
+  contract the four servers share. The differences here are:
+
+    - the cache key is the app's `:name`, and it is also what the persistence callback receives
+      as its first argument
+    - `set/1` and `set/2` always persist. There is no opt-out flag, which means the initializer
+      writes every app it loads straight back out again on boot — keep your persistence
+      callback idempotent
+    - lookups return a bare `:error` rather than an `{:error, reason}` tuple
   """
 
   use GenServer

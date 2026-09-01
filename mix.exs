@@ -19,10 +19,40 @@ defmodule Plug.ShopifyAPI.MixProject do
 
       # Ex_Doc configuration
       name: "Shopify API",
-      source_url: "https://github.com/pixelunion/elixir-shopifyapi",
-      docs: [
-        main: "ShopifyAPI.App",
-        extras: ["README.md"]
+      source_url: "https://github.com/orbit-apps/elixir-shopifyapi",
+      docs: docs()
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md", "guides/authentication.md", "CHANGELOG.md"],
+      groups_for_extras: [Guides: ~r/guides\//],
+      source_ref: "v#{@version}",
+      groups_for_modules: [
+        Authentication: [
+          ShopifyAPI.App,
+          ShopifyAPI.AuthRequest,
+          ShopifyAPI.AuthToken,
+          ShopifyAPI.AssociatedUser,
+          ShopifyAPI.JWTSessionToken,
+          ShopifyAPI.Router,
+          ShopifyAPI.Security,
+          ShopifyAPI.Shop,
+          ShopifyAPI.UserToken
+        ],
+        Caches: [
+          ShopifyAPI.AppServer,
+          ShopifyAPI.AuthTokenServer,
+          ShopifyAPI.ShopServer,
+          ShopifyAPI.UserTokenServer,
+          ShopifyAPI.Supervisor
+        ],
+        Plugs: [~r/^ShopifyAPI\.Plugs\./],
+        REST: [~r/^ShopifyAPI\.REST/],
+        GraphQL: [~r/^ShopifyAPI\.GraphQL/, ~r/^ShopifyAPI\.Bulk/],
+        "Rate Limiting": [~r/^ShopifyAPI\.RateLimiting/, ShopifyAPI.Throttled]
       ]
     ]
   end
