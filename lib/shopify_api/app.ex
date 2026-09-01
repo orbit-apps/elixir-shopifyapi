@@ -1,6 +1,25 @@
 defmodule ShopifyAPI.App do
   @moduledoc """
-  ShopifyAPI.App contains logic and a struct for representing a Shopify App.
+  A Shopify app's identity and OAuth credentials.
+
+  Apps are the root of most things in this library: a token belongs to a shop *and* an app, the
+  client secret verifies session tokens and webhook signatures, and the scopes decide what a
+  token may do. `ShopifyAPI.AppServer` caches these structs and is where they are loaded from
+  your own storage.
+
+  ## Fields
+
+    - `:name` — how this library refers to the app; the `app_name` on every token, and the name
+      appended to webhook URLs
+    - `:client_id` — the app's API key, which Shopify sends as the `aud` claim of a session
+      token and which `ShopifyAPI.AppServer.get_by_client_id/1` looks apps up by
+    - `:client_secret` — signs session tokens and webhook HMACs, and authenticates token
+      requests
+    - `:auth_redirect_uri` — where Shopify returns the merchant after they authorize; must match
+      one of the redirect URLs configured in the Partner dashboard
+    - `:nonce` — the `state` value round-tripped through OAuth and checked by
+      `ShopifyAPI.Router`
+    - `:scope` — the comma-separated access scopes requested at install
   """
   @derive {Jason.Encoder,
            only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
@@ -31,9 +50,17 @@ defmodule ShopifyAPI.App do
   alias ShopifyAPI.UserToken
 
   @doc """
-  After an App is installed and the Shop owner ends up back on ourside of the fence we
-  need to request an AuthToken. This function uses ShopifyAPI.AuthRequest.post/3 to
-  fetch and parse the AuthToken.
+  Exchanges an OAuth authorization code for a token struct.
+
+  Called once the merchant has authorized the app and Shopify has redirected back with a
+  `code`. Wraps `ShopifyAPI.AuthRequest.post/3` and parses the response into whichever token
+  Shopify issued: a `ShopifyAPI.UserToken` when the response carries an `associated_user`,
+  otherwise a `ShopifyAPI.AuthToken`. Which one you get is decided by the app's access mode,
+  not by this call.
+
+  Neither the token nor the shop is cached here — `ShopifyAPI.Router` does that with the
+  result. The returned token has no `timestamp`; the router fills it in from the OAuth
+  callback's query parameters.
   """
   @spec fetch_token(__MODULE__.t(), String.t(), String.t()) ::
           UserToken.ok_t() | AuthToken.ok_t() | {:error, String.t()}

@@ -1,6 +1,17 @@
 defmodule ShopifyAPI.ShopServer do
   @moduledoc """
-  Write-through cache for Shop structs.
+  Write-through cache for `ShopifyAPI.Shop` structs, keyed by myshopify domain.
+
+  `ShopifyAPI.AuthTokenServer` documents the caching design and the initializer/persistence
+  contract the four servers share. What differs here:
+
+    - `set/2` does **not** persist unless you ask it to, the opposite of the token caches. The
+      struct holds only a domain, so there is usually nothing worth writing out
+    - `get_or_create/2` returns a shop for any domain, caching a new struct on a miss — and it
+      *does* persist by default
+    - `get/1` returns a bare `:error` rather than an `{:error, reason}` tuple
+
+  `ShopifyAPI.Router` populates this during install, and `delete/1` clears a shop on uninstall.
   """
 
   use GenServer
