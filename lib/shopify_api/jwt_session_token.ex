@@ -22,10 +22,10 @@ defmodule ShopifyAPI.JWTSessionToken do
 
   ## Exchanging a session token
 
-  `get_offline_token/2` looks in `ShopifyAPI.AuthTokenServer` and exchanges on a miss.
-  `get_user_token/2` looks in `ShopifyAPI.UserTokenServer` with `get_valid/3`, so it also
-  exchanges when the cached token has expired. Both store what they receive, and neither
-  refreshes a token in place.
+  `get_offline_token/2` reads through `ShopifyAPI.AuthToken.fetch/2` and exchanges when no
+  usable token is found. `get_user_token/2` reads through
+  `ShopifyAPI.UserTokenServer.get_valid/3` and exchanges when the cached token has expired.
+  Both store what they receive.
 
   > #### The post-login hook runs unsupervised {: .warning}
   >
@@ -97,13 +97,16 @@ defmodule ShopifyAPI.JWTSessionToken do
     do: {:error, "Invalid user token or no id"}
 
   @doc """
-  Returns the shop's offline token, exchanging the session token for one if the cache has none.
+  Returns the shop's offline token, exchanging the session token for one if none is usable.
 
   Takes the decoded JWT and the raw token string it came from: the first names the shop and
-  app, the second is what Shopify wants as the subject of an exchange. A freshly exchanged
-  token is written to `ShopifyAPI.AuthTokenServer` by
-  `ShopifyAPI.AuthRequest.request_offline_access_token/3` before it is returned, and the
-  `post_login` hook fires.
+  app, the second is the subject of the exchange. A freshly exchanged token is written to
+  `ShopifyAPI.AuthTokenServer` before it is returned, and the `post_login` hook fires.
+
+  Reads through `ShopifyAPI.AuthToken.fetch/2`, so an expiring token is refreshed if needed.
+  When the refresh token itself is dead, the session token is exchanged for a new one — an
+  embedded app recovers without sending the merchant back through OAuth. Any other refresh
+  failure raises, as it does from `fetch/2`, rather than falling back to an exchange.
 
   This is the token-exchange equivalent of installing through `ShopifyAPI.Router`.
   """
@@ -114,12 +117,12 @@ defmodule ShopifyAPI.JWTSessionToken do
   def get_offline_token(%JOSE.JWT{} = jwt, token) do
     with {:ok, myshopify_domain} <- myshopify_domain(jwt),
          {:ok, app} <- app(jwt) do
-      case ShopifyAPI.AuthTokenServer.get(myshopify_domain, app.name) do
+      case ShopifyAPI.AuthToken.fetch(myshopify_domain, app.name) do
         {:ok, _} = resp ->
           resp
 
         {:error, _} ->
-          Logger.warning("No token found, exchanging for new")
+          Logger.warning("No usable token, exchanging session token for a new one")
 
           case ShopifyAPI.AuthRequest.request_offline_access_token(app, myshopify_domain, token) do
             {:ok, token} ->

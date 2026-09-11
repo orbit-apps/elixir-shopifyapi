@@ -147,6 +147,72 @@ same things.
 Either way your controllers read `conn.assigns.auth_token` and hand it to
 `ShopifyAPI.REST` or `ShopifyAPI.GraphQL`.
 
+Any time a module needs a token to call the Shopify API, read it with
+`ShopifyAPI.AuthToken.fetch/2`:
+
+```elixir
+case ShopifyAPI.AuthToken.fetch(shop.domain, MyApp.app_name()) do
+  {:ok, auth_token} -> do_the_work(auth_token)
+  {:error, :not_found} -> cancel("shop has no token")
+  {:error, :needs_reacquisition} -> cancel_and_flag(shop)
+end
+```
+
+Any other failure raises: `ShopifyAPI.TokenRefreshError` when Shopify fails
+the refresh, and `ShopifyAPI.TokenPersistenceError` when the new pair cannot
+be stored. A background job should let either propagate and be retried. In a
+request, Plug renders a failed refresh as a `503`, and neither plug above
+treats it as a missing token.
+
+`ShopifyAPI.AuthTokenServer.get/2` returns whatever the cache holds, expired or
+not. `fetch/2` checks the expiry and refreshes when needed.
+
+## Expiring tokens
+
+Shopify issues offline tokens in two shapes. A _permanent_ token never expires.
+An _expiring_ token lives for an hour and comes with a refresh token; refreshing
+replaces both the access token and the refresh token at once.
+
+Shopify has required expiring tokens of new public apps since April 2026 and
+stops accepting permanent ones on 1 January 2027.
+
+### Opting in
+
+```elixir
+config :shopify_api, expiring: true
+```
+
+This applies to new token requests — both the OAuth code grant and token
+exchange. A token that already carries a refresh token is refreshed regardless
+of this setting, so turning it off does not strand shops that already have one.
+
+### Scheduled refreshing
+
+`ShopifyAPI.AuthToken.fetch/2` refreshes tokens automatically, so shops with
+active API callers stay current. Your application is responsible for refreshing
+inactive shops — a refresh token that is never used lapses after ninety days.
+
+Shopify replays a refresh token for **thirty days** after its first use — if a
+refreshed pair reaches the cache but not your database, or you restore an older
+backup, the stale refresh token still works within that window. Schedule a sweep
+on a shorter cadence to keep every shop inside it.
+`ShopifyAPI.Refresh.shops_needing_refresh/1` selects the tokens due.
+
+### Persistence changes
+
+Your persistence callback needs three additional columns: `token_expires_at`,
+`refresh_token` and `refresh_token_expires_at`. All three must appear in the
+Ecto `:replace` list — omitting any of them silently preserves stale values, and
+the token stops working when the old refresh token expires.
+
+The callback must raise on write failure rather than logging and returning. See
+`ShopifyAPI.AuthTokenServer` for why and a worked Ecto example.
+
+### Testing
+
+`ShopifyAPI.Test` builds tokens in each expiry state: live, expired but
+refreshable, and dead.
+
 ## Uninstalling
 
 Shopify revokes the token and sends an `app/uninstalled` webhook. Nothing in

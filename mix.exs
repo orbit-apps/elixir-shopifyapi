@@ -49,6 +49,11 @@ defmodule Plug.ShopifyAPI.MixProject do
           ShopifyAPI.UserTokenServer,
           ShopifyAPI.Supervisor
         ],
+        "Token Refresh": [
+          ShopifyAPI.Refresh,
+          ShopifyAPI.RefreshSupervisor
+        ],
+        Testing: [ShopifyAPI.Test],
         Plugs: [~r/^ShopifyAPI\.Plugs\./],
         REST: [~r/^ShopifyAPI\.REST/],
         GraphQL: [~r/^ShopifyAPI\.GraphQL/, ~r/^ShopifyAPI\.Bulk/],

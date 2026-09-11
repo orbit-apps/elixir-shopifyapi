@@ -115,9 +115,27 @@ survive restarts: the `initializer` hook loads tokens back in at boot, and the
 Both hooks are optional, and without them tokens live only in memory and are
 lost when the application stops.
 
-See the `ShopifyAPI.AuthTokenServer` documentation for the full contract - the
-arguments each hook receives, the traps around deleting tokens and handling app
-uninstalls, and a worked Ecto example. Per-user online tokens are handled
+Read tokens back with `ShopifyAPI.AuthToken.fetch/2`, which checks expiry and
+refreshes when needed:
+
+```elixir
+case ShopifyAPI.AuthToken.fetch(myshopify_domain, "my-app") do
+  {:ok, auth_token} -> do_the_work(auth_token)
+  {:error, :not_found} -> cancel("shop has no token")
+  {:error, :needs_reacquisition} -> cancel_and_flag(shop)
+end
+```
+
+Any other failure, such as a Shopify outage or a failed write, raises; let your
+job's retry handle it.
+
+Shopify's expiring offline tokens last an hour. Set
+`config :shopify_api, expiring: true` to acquire them; see the
+[Authentication guide](guides/authentication.md) for the full picture.
+
+`ShopifyAPI.AuthTokenServer` documents the caching contract itself — the
+arguments each hook receives, the traps around deleting tokens and handling
+app uninstalls, and a worked Ecto example. Per-user online tokens are handled
 separately by `ShopifyAPI.UserTokenServer`.
 
 ## Webhooks
@@ -157,7 +175,7 @@ Now once a shop is installed, you can create webhook subscriptions.
 This will automatically append your app's name to the generated webhook URL:
 
 ```elixir
-{:ok, token} = ShopifyAPI.AuthTokenServer.get("shop domain", "app name")
+{:ok, token} = ShopifyAPI.AuthToken.fetch("shop domain", "app name")
 
 topic = "orders/create"
 server_address = ShopifyAPI.REST.Webhook.webhook_uri(token)
@@ -226,4 +244,5 @@ defmodule Instrumenter do
   def handle_event([:shopify_api, :rest_request, :success], measurements, metadata, _config) do
     # Ship success events
   end
-end```
+end
+```

@@ -2,6 +2,13 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
   @moduledoc """
   A Plug to handle authenticating the Shop Admin JWT from Shopify.
 
+  The shop's offline token and the staff member's online token are read through
+  `ShopifyAPI.JWTSessionToken.get_offline_token/2` and
+  `ShopifyAPI.JWTSessionToken.get_user_token/2`, so the session token is exchanged for either
+  one when nothing usable is cached. Any other failure responds `401` and halts, except a
+  refresh that fails for a transient reason: that raises `ShopifyAPI.TokenRefreshError`, which
+  Plug renders as a `503`, so the frontend is not told its session is invalid.
+
   ## Example Installations
 
   Add this plug in a pipeline for your Shop Admin API.
@@ -18,7 +25,6 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
 
   require Logger
 
-  alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JWTSessionToken
   alias ShopifyAPI.ShopServer
 
@@ -31,7 +37,7 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
          {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
          {:ok, user_id} <- JWTSessionToken.user_id(jwt),
          {:ok, shop} <- ShopServer.get(myshopify_domain),
-         {:ok, auth_token} <- AuthTokenServer.get(myshopify_domain, app.name),
+         {:ok, auth_token} <- JWTSessionToken.get_offline_token(jwt, token),
          {:ok, user_token} <- JWTSessionToken.get_user_token(jwt, token) do
       conn
       |> assign(:app, app)
