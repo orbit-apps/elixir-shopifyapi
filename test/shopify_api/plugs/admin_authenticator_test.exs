@@ -6,7 +6,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
   import ShopifyAPI.SessionTokenSetup
 
   alias Plug.Conn
-  alias ShopifyAPI.{AppServer, ShopServer}
+  alias ShopifyAPI.{AppServer, AuthTokenServer, ShopServer}
   alias ShopifyAPI.Plugs.AdminAuthenticator
   alias ShopifyAPI.ShopifyValidationSetup
 
@@ -82,6 +82,36 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
       assert conn.assigns.shop == shop
       assert conn.assigns.auth_token == offline_token
       assert conn.assigns.user_token == online_token
+    end
+  end
+
+  describe "with a valid hmac and no session token" do
+    test "raises rather than redirecting to OAuth when a refresh fails", %{app: app} do
+      # Shopify erroring on the refresh is transient. Treating it as a missing token would send
+      # the merchant back through install.
+      bypass = Bypass.open()
+      shop = "localhost:#{bypass.port}"
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 503, "")
+      end)
+
+      AuthTokenServer.set(
+        ShopifyAPI.Test.expired_token(shop_name: shop, app_name: app.name),
+        false
+      )
+
+      params = ShopifyValidationSetup.params_append_hmac(app, %{shop: shop})
+
+      conn =
+        :get
+        |> conn("/admin/#{app.name}?" <> URI.encode_query(params))
+        |> init_test_session(%{})
+        |> Conn.fetch_query_params()
+
+      assert_raise ShopifyAPI.TokenRefreshError, fn ->
+        AdminAuthenticator.call(conn, app_name: app.name)
+      end
     end
   end
 

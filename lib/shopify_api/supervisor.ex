@@ -20,6 +20,7 @@ defmodule ShopifyAPI.Supervisor do
 
   alias ShopifyAPI.AppServer
   alias ShopifyAPI.AuthTokenServer
+  alias ShopifyAPI.RefreshSupervisor
   alias ShopifyAPI.ShopServer
   alias ShopifyAPI.UserTokenServer
 
@@ -29,7 +30,14 @@ defmodule ShopifyAPI.Supervisor do
 
   @impl Supervisor
   def init(:ok) do
-    children = [AppServer, AuthTokenServer, ShopServer, UserTokenServer]
+    children = [
+      AppServer,
+      AuthTokenServer,
+      ShopServer,
+      UserTokenServer,
+      RefreshSupervisor
+    ]
+
     Supervisor.init(children, strategy: :one_for_one)
   end
 end

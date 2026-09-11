@@ -27,9 +27,10 @@ defmodule ShopifyAPI.AuthTokenServer do
   expire and are validated when read. `ShopifyAPI.App.fetch_token/3` decides which of the two
   an OAuth response produces.
 
-  This cache models Shopify's *non-expiring* offline tokens: the struct carries no expiry and
-  nothing here evicts or refreshes. Shopify also issues expiring offline tokens, which come
-  with a refresh token; those are not supported yet.
+  This cache holds both shapes of offline token — permanent and expiring — and treats them
+  alike. Nothing here inspects an expiry, evicts, or refreshes; `get/2` hands back whatever is
+  cached, live or not. `ShopifyAPI.AuthToken.fetch/2` is the accessor that checks and refreshes,
+  and is what application code should read through.
 
   Shopify documents the distinction under
   [Access tokens](https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens).
@@ -51,7 +52,9 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   It must return an enumerable of `ShopifyAPI.AuthToken` structs. Anything in that enumerable
   which is not a `ShopifyAPI.AuthToken` struct is silently discarded. Tokens loaded this way
-  are not written back out through the persistence callback.
+  are not written back out through the persistence callback, and are not checked: a token
+  missing part of its credentials is cached as is, where
+  `ShopifyAPI.AuthToken.validate_pair/1` would reject it.
 
   It runs synchronously inside `c:GenServer.init/1`, so the supervisor blocks until it
   returns. List `ShopifyAPI.Supervisor` after anything the initializer depends on, such as
@@ -61,7 +64,7 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   The persistence callback is invoked by `set/2` as
   `apply(module, function, [key, token | args])` — the cache key first, the token second, and
-  any configured arguments appended. Its return value is ignored.
+  any configured arguments appended.
 
   The `key` is the string built by `ShopifyAPI.AuthToken.create_key/1`,
   `"shop_name:app_name"`, and not the `{shop_name, app_name}` tuple the table is keyed by.
@@ -70,11 +73,22 @@ defmodule ShopifyAPI.AuthTokenServer do
   The callback runs synchronously, in the calling process — which during installation is
   Shopify's OAuth redirect.
 
-  > #### Persistence failures reach the caller {: .warning}
+  `set/2` persists *before* it writes to the cache, and treats a failure as fatal: an exception
+  from the callback propagates, and an `{:error, _}` return is raised as a
+  `ShopifyAPI.TokenPersistenceError`. Every other return value, `nil` included, is a success.
+
+  That error's message gives the reason's shape but not its contents — an atom as is, a struct
+  by its module name — because a reason such as a changeset holds the token being written.
+  Log the details from inside the callback if you need them.
+
+  > #### A callback that cannot write must raise {: .warning}
   >
-  > Exceptions raised by the callback are not rescued; they propagate out of `set/2`. Raising
-  > while a shop is installing fails the OAuth callback and leaves the install incomplete.
-  > Log the failure and return instead.
+  > An expiring token is a pair — access token and refresh token, replaced together. If the
+  > cache holds a pair that storage never received, the next refresh replaces both halves and
+  > the old pair in storage can no longer refresh. Persisting first means a failure leaves both
+  > sides on the old pair.
+  >
+  > Prefer `c:Ecto.Repo.insert!/2` over `c:Ecto.Repo.insert/2`.
 
   > #### Deletes are never persisted {: .warning}
   >
@@ -87,8 +101,6 @@ defmodule ShopifyAPI.AuthTokenServer do
   A persistence module backed by Ecto:
 
       defmodule MyApp.AuthToken do
-        require Logger
-
         alias ShopifyAPI.AuthToken
 
         def init do
@@ -97,7 +109,10 @@ defmodule ShopifyAPI.AuthTokenServer do
               shop_name: row.shop_name,
               app_name: row.app_name,
               token: row.token,
-              plus: row.plus
+              plus: row.plus,
+              token_expires_at: row.token_expires_at,
+              refresh_token: row.refresh_token,
+              refresh_token_expires_at: row.refresh_token_expires_at
             }
           end)
         end
@@ -105,23 +120,21 @@ defmodule ShopifyAPI.AuthTokenServer do
         def save(_key, %AuthToken{} = token) do
           %MyApp.Schema.AuthToken{}
           |> MyApp.Schema.AuthToken.changeset(Map.from_struct(token))
-          |> MyApp.Repo.insert(
-            on_conflict: {:replace, [:token, :plus]},
+          |> MyApp.Repo.insert!(
+            on_conflict:
+              {:replace,
+               [:token, :plus, :token_expires_at, :refresh_token, :refresh_token_expires_at]},
             conflict_target: [:shop_name, :app_name]
           )
-          |> case do
-            {:ok, _} ->
-              :ok
-
-            {:error, changeset} ->
-              Logger.error("Could not persist auth token: \#{inspect(changeset)}")
-          end
         end
       end
 
   `Map.from_struct/1` is enough here because the schema's field names match the struct's;
   `Ecto.Changeset.cast/4` discards the rest. Conflicting on `[:shop_name, :app_name]` rather
   than on `:shop_name` alone keeps a shop able to install more than one of your apps.
+
+  Every field of the pair is in the `:replace` list. Omitting any of them silently preserves
+  stale values, and the token stops working when the old refresh token expires.
 
   A callback does not have to persist everything it is handed. Matching on `app_name` routes
   several apps' tokens to different storage:
@@ -181,7 +194,11 @@ defmodule ShopifyAPI.AuthTokenServer do
   def count, do: :ets.info(@table, :size)
 
   @doc """
-  Stores a token in the cache and, by default, persists it.
+  Stores a token, persisting it before it reaches the cache.
+
+  Raises `ShopifyAPI.TokenPersistenceError` if the callback returns `{:error, _}`; an
+  exception raised inside the callback propagates untouched. In either case nothing is
+  written to the cache.
 
   Pass `false` as the second argument to update the cache alone, leaving the persistence
   callback uncalled. That is what the initializer does with the tokens it loads, since they
@@ -200,15 +217,16 @@ defmodule ShopifyAPI.AuthTokenServer do
   @spec set(AuthToken.t()) :: :ok
   @spec set(AuthToken.t(), boolean()) :: :ok
   def set(token, should_persist \\ true) when is_struct(token, AuthToken) do
+    if should_persist, do: persist!(token)
     :ets.insert(@table, {{token.shop_name, token.app_name}, token})
-    if should_persist, do: do_persist(token)
     :ok
   end
 
   @doc """
-  Fetches the token a shop issued for an app.
+  Fetches whatever token is cached for a shop and app, expired or not.
 
-  When no token is cached the error term carries a human-readable string rather than an atom.
+  A bare cache read — does not check expiry or refresh. Use `ShopifyAPI.AuthToken.fetch/2`
+  when you need a usable token.
 
   ## Examples
 
@@ -219,14 +237,14 @@ defmodule ShopifyAPI.AuthTokenServer do
 
       # Assuming nothing has been stored for the shop
       iex> ShopifyAPI.AuthTokenServer.get("unknown.myshopify.com", "my-app")
-      {:error, "Auth token for unknown.myshopify.com:my-app could not be found."}
+      {:error, :not_found}
 
   """
-  @spec get(String.t(), String.t()) :: {:ok, AuthToken.t()} | {:error, String.t()}
+  @spec get(String.t(), String.t()) :: AuthToken.ok_t() | AuthToken.not_found()
   def get(shop, app) when is_binary(shop) and is_binary(app) do
     case :ets.lookup(@table, {shop, app}) do
       [{_key, token}] -> {:ok, token}
-      [] -> {:error, "Auth token for #{shop}:#{app} could not be found."}
+      [] -> {:error, :not_found}
     end
   end
 
@@ -335,14 +353,32 @@ defmodule ShopifyAPI.AuthTokenServer do
     end
   end
 
-  # Attempts to persist an AuthToken if a persistence callback is configured
-  defp do_persist(token) when is_struct(token, AuthToken) do
+  # Persists an AuthToken via the configured callback, raising on failure.
+  defp persist!(token) when is_struct(token, AuthToken) do
     key = AuthToken.create_key(token)
 
-    case Config.lookup(__MODULE__, :persistence) do
-      {module, function, args} -> apply(module, function, [key, token | args])
-      {module, function} -> apply(module, function, [key, token])
-      _ -> nil
+    result =
+      case Config.lookup(__MODULE__, :persistence) do
+        {module, function, args} -> apply(module, function, [key, token | args])
+        {module, function} -> apply(module, function, [key, token])
+        _ -> :ok
+      end
+
+    case result do
+      {:error, reason} ->
+        raise ShopifyAPI.TokenPersistenceError,
+          message:
+            "Could not persist auth token for #{key}: " <>
+              "callback returned {:error, #{describe_reason(reason)}}"
+
+      _ ->
+        :ok
     end
   end
+
+  # Names the shape of a persistence failure but not its contents: a reason such as an Ecto
+  # changeset holds the token being written, and this message reaches logs and error trackers.
+  defp describe_reason(reason) when is_atom(reason), do: inspect(reason)
+  defp describe_reason(%module{}), do: "%#{inspect(module)}{}"
+  defp describe_reason(_reason), do: "_"
 end

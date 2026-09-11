@@ -1,5 +1,49 @@
 ## Unreleased
 
+Support for Shopify's expiring offline access tokens. Shopify has required them of new public
+apps since April 2026 and stops accepting permanent ones on 1 January 2027.
+
+- BREAKING: `ShopifyAPI.AuthTokenServer.get/2` now returns `{:error, :not_found}` instead of
+  `{:error, "Auth token for shop:app could not be found."}`. Guards matching a binary error
+  term will fall through.
+- BREAKING: `ShopifyAPI.AuthTokenServer.set/2` persists *before* writing to the cache, and
+  raises on failure — `ShopifyAPI.TokenPersistenceError` for an `{:error, _}` return, or the
+  callback's own exception. Callbacks that log and return on failure must now raise; prefer
+  `Repo.insert!/2`.
+- Changed: `ShopifyAPI.Plugs.AdminAuthenticator`, `ShopifyAPI.Plugs.AuthShopSessionToken` and
+  `ShopifyAPI.JWTSessionToken.get_offline_token/2` read offline tokens through
+  `ShopifyAPI.AuthToken.fetch/2`, so they refresh an expiring token when needed.
+  `AuthShopSessionToken` now exchanges the session token when no offline token is usable,
+  rather than responding `401`. A failed refresh raises `ShopifyAPI.TokenRefreshError` from
+  all three rather than being treated as a missing token.
+- New: `ShopifyAPI.AuthToken` fields `token_expires_at`, `refresh_token` and
+  `refresh_token_expires_at`. All default to `nil`, so existing `%AuthToken{}` fixtures
+  describe a permanent token.
+- New: `ShopifyAPI.AuthToken.fetch/2` — the accessor application code should read tokens
+  through. Checks expiry and refreshes when needed. `ShopifyAPI.AuthTokenServer.get/2`
+  remains the bare cache read.
+- New: `ShopifyAPI.AuthToken.status/2` — checks whether a shop's token is usable without
+  refreshing.
+- New: `ShopifyAPI.AuthToken.apply_refresh/5` — replaces the credential pair while keeping
+  non-credential fields (`plus`, `shop_name`, etc.) from the original token.
+- New: `ShopifyAPI.AuthToken.validate_pair/1` — checks that a token has an access token and
+  that its expiring fields are all set or all absent, with the refresh token outliving the
+  access token. Acquisition applies it before returning a token; tokens an initializer loads
+  are not checked.
+- New: `ShopifyAPI.AuthToken.refresh_outlives_access?/1` — whether a token's refresh token
+  expires after its access token; the rule both acquisition and refresh enforce.
+- New: `ShopifyAPI.Refresh` — runs, schedules and de-duplicates token refreshes.
+  `shops_needing_refresh/1` selects tokens for a scheduled sweep.
+- New: `ShopifyAPI.TokenRefreshError` — raised when a refresh fails for any reason other than
+  a dead refresh token. It carries `plug_status: 503`, so Plug renders it as a `503`.
+- New: `ShopifyAPI.RefreshSupervisor`, started by `ShopifyAPI.Supervisor`. Isolates refresh
+  failures from the restart budget shared by the caches.
+- New: `ShopifyAPI.Test` — builders for auth token states (live, expired, dead).
+- New: configuration — `:expiring` to acquire expiring tokens; `:refresh_threshold_seconds`,
+  `:refresh_wait_timeout_ms` and `:refresh_retry` to tune refreshing. `:expiring` controls
+  new token requests only; tokens that already carry a refresh token are refreshed regardless.
+- New: `ShopifyAPI.AuthToken` derives `Inspect` excluding `token`, `refresh_token` and `code`.
+
 ## 0.16.6
 
 - New: Add support for passing options to `ShopifyAPI.Bulk.Query.exec!/3`, with `group_objects`

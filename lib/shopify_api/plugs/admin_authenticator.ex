@@ -10,6 +10,11 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   The plug will assign the Shop, App and AuthToken to the Conn for easy access in your
   admin controller when the a valid hmac is provided.
 
+  The AuthToken is read through `ShopifyAPI.AuthToken.fetch/2`, so an expiring token is
+  refreshed if needed. A refresh that fails for a transient reason raises
+  `ShopifyAPI.TokenRefreshError`, which Plug renders as a `503`, rather than being treated as a
+  missing token.
+
   When no HMAC is provided, the plug passes through without assigning the Shop, App and AuthToken.
   Shopify expects this behaviour and has started rejecting new apps that do not behave this way.
 
@@ -84,7 +89,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
     with :ok <- validate_hmac(app, conn.query_params),
          {:ok, shop} <- ShopifyAPI.ShopServer.get_or_create(myshopify_domain, true),
-         {:ok, auth_token} <- ShopifyAPI.AuthTokenServer.get(myshopify_domain, app_name) do
+         {:ok, auth_token} <- ShopifyAPI.AuthToken.fetch(myshopify_domain, app_name) do
       conn
       |> assign_app(app)
       |> assign_shop(shop)

@@ -86,9 +86,18 @@ defmodule ShopifyAPI.App do
     {:ok, UserToken.from_auth_request(app, domain, auth_code, json)}
   end
 
-  defp create_token(%{"access_token" => token}, app, domain, auth_code) do
+  defp create_token(%{"access_token" => _} = json, app, domain, auth_code) do
     Logger.debug("offline token")
-    {:ok, AuthToken.new(app, domain, auth_code, token)}
+    token = AuthToken.from_auth_request(app, domain, auth_code, json)
+
+    case AuthToken.validate_pair(token) do
+      :ok ->
+        {:ok, token}
+
+      {:error, reason} ->
+        Logger.warning("#{__MODULE__} [#{domain}] unusable offline token: #{reason}")
+        {:error, "Unable to create token"}
+    end
   end
 
   defp create_token(_, _, _, _), do: {:error, "Unable to create token"}
