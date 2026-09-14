@@ -186,6 +186,48 @@ This applies to new token requests — both the OAuth code grant and token
 exchange. A token that already carries a refresh token is refreshed regardless
 of this setting, so turning it off does not strand shops that already have one.
 
+### Migrating existing shops
+
+Opting in only affects shops that install or reinstall afterwards. Shops that
+installed earlier keep their permanent token until you move them.
+`ShopifyAPI.AuthRequest.migrate_offline_access_token/2` performs the one-time
+exchange, and always requests an expiring pair whatever `:expiring` is set to.
+Sweep the permanent tokens still in your storage:
+
+```elixir
+ShopifyAPI.AuthTokenServer.all()
+|> Map.values()
+|> Enum.filter(&is_nil(&1.refresh_token))
+|> Enum.each(fn token ->
+  {:ok, app} = ShopifyAPI.AppServer.get(token.app_name)
+
+  case ShopifyAPI.AuthRequest.migrate_offline_access_token(app, token) do
+    {:ok, _migrated} -> :ok
+    {:error, :already_expiring} -> :ok
+    {:error, :invalid_subject_token} -> flag_for_reacquisition(token)
+    {:error, :failed_migrating_offline_token} -> retry_later(token)
+  end
+end)
+```
+
+The exchange has no safety net. Shopify revokes the permanent token in the same
+step that issues the expiring pair, and the spent token cannot be re-presented,
+so unlike a refresh there is no replay. Everything hinges on the moment it
+succeeds:
+
+- A refused or failed exchange leaves the permanent token intact — the shop is
+  safe to skip and the batch safe to re-run. These return `{:error, _}`.
+- A successful exchange whose pair never reaches storage leaves the shop with no
+  working credential, recoverable only by a merchant reinstall. This raises
+  `ShopifyAPI.TokenMigrationError` — page on it.
+
+So your persistence callback must raise on write failure rather than logging and
+returning (see the next section), and the migration should run in small
+committed batches so the window between exchange and commit stays short. Re-runs
+are safe: a shop already moved is skipped by the `refresh_token` filter, and one
+Shopify reports as already migrated comes back as
+`{:error, :invalid_subject_token}`.
+
 ### Scheduled refreshing
 
 `ShopifyAPI.AuthToken.fetch/2` refreshes tokens automatically, so shops with

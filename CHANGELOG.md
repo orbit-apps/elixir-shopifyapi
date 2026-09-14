@@ -34,8 +34,17 @@ apps since April 2026 and stops accepting permanent ones on 1 January 2027.
   expires after its access token; the rule both acquisition and refresh enforce.
 - New: `ShopifyAPI.Refresh` — runs, schedules and de-duplicates token refreshes.
   `shops_needing_refresh/1` selects tokens for a scheduled sweep.
+- New: `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` — one-time exchange of a shop's
+  permanent offline token for its first expiring pair, for migrating shops installed before
+  the app requested expiring tokens. Always requests an expiring pair regardless of `:expiring`,
+  refuses a token that already has a refresh token, and returns `{:error, :invalid_subject_token}`
+  when Shopify reports the subject token already spent. A failed write after a successful
+  exchange raises `ShopifyAPI.TokenMigrationError`, since the exchange cannot be replayed.
 - New: `ShopifyAPI.TokenRefreshError` — raised when a refresh fails for any reason other than
   a dead refresh token. It carries `plug_status: 503`, so Plug renders it as a `503`.
+- New: `ShopifyAPI.TokenMigrationError` — raised when a permanent-to-expiring migration exchange
+  succeeds at Shopify but its pair cannot be stored or is unusable. The exchange has no replay,
+  so this is the one unrecoverable case and it raises rather than returning an error.
 - New: `ShopifyAPI.RefreshSupervisor`, started by `ShopifyAPI.Supervisor`. Isolates refresh
   failures from the restart budget shared by the caches.
 - New: `ShopifyAPI.Test` — builders for auth token states (live, expired, dead).
