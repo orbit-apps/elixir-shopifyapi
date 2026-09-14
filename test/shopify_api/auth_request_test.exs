@@ -7,8 +7,10 @@ defmodule ShopifyAPI.AuthRequestTest do
   alias Plug.Conn
   alias ShopifyAPI.App
   alias ShopifyAPI.AuthRequest
+  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JSONSerializer
+  alias ShopifyAPI.TokenMigrationError
 
   # The app cache is shared across the suite and `AppServer.get_by_client_id/1` matches a single
   # app, so every test module needs a client id of its own.
@@ -17,6 +19,19 @@ defmodule ShopifyAPI.AuthRequestTest do
     client_id: "acquisition-client-id",
     client_secret: "client-secret"
   }
+
+  # A persistence callback whose write always fails, for the migration write-failure test.
+  defmodule FailingPersistence do
+    @moduledoc false
+    def save(_key, _token), do: {:error, :storage_unavailable}
+  end
+
+  # A persistence callback that raises with the token in its message, to prove the migration
+  # error names the failure without echoing the credentials it was writing.
+  defmodule LeakyPersistence do
+    @moduledoc false
+    def save(_key, token), do: raise("write failed for #{token.token}")
+  end
 
   setup do
     previous = Application.get_env(:shopify_api, :expiring)
@@ -51,6 +66,9 @@ defmodule ShopifyAPI.AuthRequestTest do
       Conn.resp(conn, 200, JSONSerializer.encode!(response))
     end)
   end
+
+  defp permanent_token(shop),
+    do: %AuthToken{shop_name: shop, app_name: @app.name, token: "shpat_permanent"}
 
   describe "expiring: 1 on acquisition" do
     test "the auth code grant asks for an expiring token when configured", %{
@@ -150,6 +168,154 @@ defmodule ShopifyAPI.AuthRequestTest do
       capture_log(fn ->
         assert {:error, _} = App.fetch_token(@app, shop, "auth-code")
       end)
+    end
+  end
+
+  describe "migrate_offline_access_token/2" do
+    test "exchanges the permanent token for an expiring pair, always asking for expiring", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      # Migration ignores the `:expiring` setting: an already-installed shop must move regardless.
+      Application.put_env(:shopify_api, :expiring, false)
+      capture_body(bypass)
+
+      assert {:ok, _token} = AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+
+      assert_receive {:body, body}
+      assert body["expiring"] == 1
+      assert body["subject_token"] == "shpat_permanent"
+      assert body["subject_token_type"] =~ "offline-access-token"
+      assert body["requested_token_type"] =~ "offline-access-token"
+      assert body["grant_type"] == "urn:ietf:params:oauth:grant-type:token-exchange"
+    end
+
+    test "stores the new pair, keeping the shop and app", %{bypass: bypass, shop: shop} do
+      capture_body(bypass)
+
+      assert {:ok, token} = AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+
+      assert token.token == "shpat_acquired"
+      assert token.refresh_token == "shprt_acquired"
+      assert token.shop_name == shop
+      assert token.app_name == @app.name
+      assert DateTime.after?(token.refresh_token_expires_at, token.token_expires_at)
+      assert {:ok, ^token} = AuthTokenServer.get(shop, @app.name)
+    end
+
+    test "refuses a token that already has a refresh token, without calling Shopify", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      # With Bypass down, any HTTP call would surface as a failure rather than :already_expiring.
+      Bypass.down(bypass)
+      token = %{permanent_token(shop) | refresh_token: "shprt_existing"}
+
+      assert {:error, :already_expiring} = AuthRequest.migrate_offline_access_token(@app, token)
+    end
+
+    test "returns :invalid_subject_token for an already-spent subject token", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        body = JSONSerializer.encode!(%{error: "invalid_subject_token"})
+        Conn.resp(conn, 400, body)
+      end)
+
+      log =
+        capture_log(fn ->
+          assert {:error, :invalid_subject_token} =
+                   AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+        end)
+
+      assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
+      assert log =~ "already migrated"
+    end
+
+    test "returns :failed_migrating_offline_token for other exchange failures", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 500, "")
+      end)
+
+      log =
+        capture_log(fn ->
+          assert {:error, :failed_migrating_offline_token} =
+                   AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+        end)
+
+      assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
+      assert log =~ "error migrating token"
+    end
+
+    test "raises when the exchange succeeds but the pair cannot be stored", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      # The old token is revoked the moment the exchange returns, so a lost write is unrecoverable.
+      Application.put_env(:shopify_api, AuthTokenServer,
+        persistence: {FailingPersistence, :save, []}
+      )
+
+      on_exit(fn -> Application.delete_env(:shopify_api, AuthTokenServer) end)
+
+      capture_body(bypass)
+
+      assert_raise TokenMigrationError, ~r/could not store the new pair/, fn ->
+        AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+      end
+    end
+
+    test "raises without echoing the credentials a leaking write failure exposes", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Application.put_env(:shopify_api, AuthTokenServer,
+        persistence: {LeakyPersistence, :save, []}
+      )
+
+      on_exit(fn -> Application.delete_env(:shopify_api, AuthTokenServer) end)
+
+      capture_body(bypass)
+
+      error =
+        assert_raise TokenMigrationError, fn ->
+          AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+        end
+
+      # The message names the failure's type, never the token the callback was mid-write on.
+      refute error.message =~ "shpat_acquired"
+    end
+
+    test "raises on a successful exchange whose body is not JSON", %{bypass: bypass, shop: shop} do
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 200, "<html>not json</html>")
+      end)
+
+      assert_raise TokenMigrationError, ~r/not JSON/, fn ->
+        AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+      end
+
+      assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
+    end
+
+    test "raises on a successful exchange that returns an incomplete pair", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      capture_body(bypass, Map.delete(@pair, :refresh_token))
+
+      error =
+        assert_raise TokenMigrationError, ~r/incomplete pair/, fn ->
+          AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+        end
+
+      # The 200 body carried the access token, but the raised error must not repeat it.
+      refute error.message =~ "shpat_acquired"
+      assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
     end
   end
 end
