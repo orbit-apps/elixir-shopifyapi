@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.17.0
+
 Support for Shopify's expiring offline access tokens. Shopify has required them of new public
 apps since April 2026 and stops accepting permanent ones on 1 January 2027.
 
