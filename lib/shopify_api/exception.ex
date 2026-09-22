@@ -19,6 +19,10 @@ defmodule ShopifyAPI.TokenRefreshError do
   Raised when refreshing an expiring offline token fails for any reason other than a dead
   refresh token, such as Shopify erroring, timing out, or answering with an unusable pair.
 
+  Also raised when `ShopifyAPI.AuthToken.fetch/2` exchanges a permanent token under
+  `offline_tokens: :exchange_permanent` and the exchange fails before Shopify revokes the
+  permanent token. Shopify has not revoked it, so the next fetch can safely try again.
+
   The library treats these failures as transient, so Plug renders this exception as a `503`.
   A dead refresh token does not raise: `ShopifyAPI.AuthToken.fetch/2` returns
   `{:error, :needs_reacquisition}` for it.

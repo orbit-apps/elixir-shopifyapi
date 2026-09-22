@@ -1,5 +1,17 @@
 ## Unreleased
 
+- New: configuration — `:offline_tokens`, one of `:permanent` (the default), `:expiring` or
+  `:exchange_permanent`. The first two match `expiring: false` and `expiring: true`. Under
+  `:exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2` exchanges a permanent token for an
+  expiring pair before returning it, one exchange per shop at a time, and returns
+  `{:error, :needs_reacquisition}` when Shopify reports the token already spent. An exchange
+  that fails before Shopify revokes the permanent token raises `ShopifyAPI.TokenRefreshError`.
+  Shopify does not document that the exchange keeps working after 1 January 2027; the mode relies
+  on observed behaviour.
+- New: `ShopifyAPI.Refresh.await_or_exchange/1` — the de-duplicated exchange `fetch/2` uses.
+- Deprecated: `:expiring` is superseded by `:offline_tokens`, which takes precedence when both
+  are set. It is still honoured.
+
 ## 0.17.0
 
 Support for Shopify's expiring offline access tokens. Shopify has required them of new public

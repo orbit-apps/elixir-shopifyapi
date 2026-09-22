@@ -6,19 +6,25 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
   interleaving is controlled by messages rather than by timing.
   """
 
-  # Not async: shares the registry, the token cache, and the :refresh_retry setting.
+  # Not async: shares the registry, the token cache, and the :refresh_retry and :offline_tokens
+  # settings.
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
+  import ShopifyAPI.TokenConfigSetup
 
   alias Plug.Conn
   alias ShopifyAPI.App
   alias ShopifyAPI.AppServer
+  alias ShopifyAPI.AuthToken
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.Refresh
+  alias ShopifyAPI.TokenRefreshError
 
   @app_name "refresh-concurrency-app"
+
+  setup :isolate_token_config
 
   setup do
     # A client id of its own: the app cache is shared across the suite and
@@ -195,6 +201,126 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
 
       # Let the held request finish, so no task outlives the Bypass server.
       release(first, shop)
+    end
+  end
+
+  describe "exchanging a permanent token" do
+    setup %{shop: shop} do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+
+      token = %AuthToken{shop_name: shop, app_name: @app_name, token: "shpat_permanent"}
+      AuthTokenServer.set(token, false)
+      {:ok, permanent: token}
+    end
+
+    # Counts requests, and holds each open until the test sends `{:respond, status, body}`.
+    defp held_exchange(bypass) do
+      test_pid = self()
+      counter = :counters.new(1, [])
+
+      Bypass.expect(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        :counters.add(counter, 1, 1)
+        send(test_pid, {:exchange_started, self()})
+
+        receive do
+          {:respond, status, body} -> Conn.resp(conn, status, body)
+        after
+          5_000 -> Conn.resp(conn, 500, "test never released the handler")
+        end
+      end)
+
+      counter
+    end
+
+    defp fetch_async(shop), do: Task.async(fn -> AuthToken.fetch(shop, @app_name) end)
+
+    # Captures an exception inside the task, so the test process survives it.
+    defp fetch_rescued(shop) do
+      Task.async(fn ->
+        try do
+          AuthToken.fetch(shop, @app_name)
+        rescue
+          error -> {:raised, error}
+        end
+      end)
+    end
+
+    test "concurrent fetches share a single exchange", %{bypass: bypass, shop: shop} do
+      counter = held_exchange(bypass)
+
+      first = fetch_async(shop)
+      assert_receive {:exchange_started, handler}, 2_000
+
+      waiters = for _ <- 1..4, do: fetch_async(shop)
+      # Give the waiters time to find the exchange in flight and start waiting on it.
+      Process.sleep(100)
+      send(handler, {:respond, 200, pair_json()})
+
+      for task <- [first | waiters] do
+        assert {:ok, %AuthToken{token: "shpat_refreshed"}} = Task.await(task)
+      end
+
+      assert :counters.get(counter, 1) == 1
+    end
+
+    test "waiters raise, without exchanging, when the exchange in flight fails", %{
+      bypass: bypass,
+      shop: shop,
+      permanent: permanent
+    } do
+      counter = held_exchange(bypass)
+
+      capture_log(fn ->
+        first = fetch_rescued(shop)
+        assert_receive {:exchange_started, handler}, 2_000
+
+        waiter = fetch_rescued(shop)
+        Process.sleep(100)
+        send(handler, {:respond, 503, ""})
+
+        assert {:raised, %TokenRefreshError{message: message}} = Task.await(first)
+        assert message =~ "not revoked"
+
+        assert {:raised, %TokenRefreshError{message: message}} = Task.await(waiter)
+        assert message =~ "did not produce an expiring token"
+      end)
+
+      assert :counters.get(counter, 1) == 1
+      assert {:ok, ^permanent} = AuthTokenServer.get(shop, @app_name)
+    end
+
+    test "an exchange finishes and stores its pair after its caller exits", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      # Shopify revokes the permanent token as it answers, so dropping the answer would lock the
+      # shop out.
+      held_exchange(bypass)
+
+      caller = spawn(fn -> AuthToken.fetch(shop, @app_name) end)
+      assert_receive {:exchange_started, handler}, 2_000
+
+      Process.exit(caller, :kill)
+      send(handler, {:respond, 200, pair_json()})
+
+      assert :ok = await_cached(shop, "shpat_refreshed")
+    end
+
+    test "uses a pair cached since the caller read the permanent token", %{
+      shop: shop,
+      permanent: permanent
+    } do
+      # No Bypass expectation: an exchange request would fail the test as unexpected.
+      # Stands in for an exchange that finished between the caller's read and its claim.
+      AuthTokenServer.set(
+        ShopifyAPI.Test.expiring_token(shop_name: shop, app_name: @app_name),
+        false
+      )
+
+      assert {:ok, %AuthToken{refresh_token: refresh_token}} =
+               Refresh.await_or_exchange(permanent)
+
+      assert is_binary(refresh_token)
     end
   end
 

@@ -1,9 +1,11 @@
 defmodule ShopifyAPI.Refresh do
   @moduledoc """
-  Runs, schedules and de-duplicates refreshes of expiring offline access tokens.
+  Runs, schedules and de-duplicates refreshes of expiring offline access tokens, and exchanges
+  of permanent ones.
 
   Wraps `ShopifyAPI.AuthRequest.refresh_offline_access_token/2` with scheduling,
-  de-duplication and retry. `ShopifyAPI.AuthToken.fetch/2` is the usual caller.
+  de-duplication and retry, and `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` with
+  de-duplication. `ShopifyAPI.AuthToken.fetch/2` is the usual caller.
 
   ## Entry points
 
@@ -12,14 +14,22 @@ defmodule ShopifyAPI.Refresh do
       Skipped if one is already in flight for this shop and app.
     - `await_or_run/1` — waits for a refresh already in flight, or runs one in the calling
       process. Used when the token has expired and the caller needs a fresh one.
+    - `await_or_exchange/1` — exchanges a permanent token for an expiring pair, or waits for the
+      exchange already in flight. Used when `:offline_tokens` is `:exchange_permanent`.
 
   ## De-duplication
 
   A per-node `Registry` tracks the background refresh in flight for each `{shop_name,
-  app_name}`. Only `run_in_background/1` registers; `await_or_run/1` checks the registry but
+  app_name}`. Of the refresh entry points, only `run_in_background/1` registers; `await_or_run/1` checks the registry but
   does not register when it falls through to refreshing itself, so multiple inline callers can
   refresh concurrently. Concurrent refreshes of the same token are safe — Shopify returns the
   same pair — so de-duplication is an optimisation, not a correctness requirement.
+
+  Exchanges are the opposite. Shopify revokes the permanent token as it issues the pair, so a
+  second exchange of the same token fails with a spent subject token. `await_or_exchange/1`
+  always registers, and callers that find an exchange in flight wait for it however long it
+  takes. A token is either permanent or expiring, so refreshes and exchanges share the registry
+  and its keys.
 
   > #### Concurrent refresh behaviour is observed, not documented {: .warning}
   >
@@ -28,9 +38,10 @@ defmodule ShopifyAPI.Refresh do
 
   ## Failure
 
-  `{:error, :needs_reacquisition}` is returned (never retried) when the refresh token is dead.
-  All other failures (assumed to be transient) raise. `run_in_background/1` retries inside its task; `await_or_run/1`
-  and `run/1` do not — the caller's own retry (Oban, Phoenix) handles that.
+  `{:error, :needs_reacquisition}` is returned (never retried) when the refresh token is dead,
+  or the permanent token was already spent. All other failures (assumed to be transient) raise.
+  `run_in_background/1` retries inside its task; `await_or_run/1`, `await_or_exchange/1` and
+  `run/1` do not — the caller's own retry (Oban, Phoenix) handles that.
 
   ## Configuration
 
@@ -77,14 +88,9 @@ defmodule ShopifyAPI.Refresh do
   end
 
   def run(%AuthToken{} = token) do
-    case AppServer.get(token.app_name) do
-      {:ok, app} ->
-        AuthRequest.refresh_offline_access_token(app, token)
-
-      :error ->
-        raise ArgumentError,
-              "#{token.app_name} is not a registered app, so #{token.shop_name} cannot refresh"
-    end
+    token
+    |> fetch_app!("refresh")
+    |> AuthRequest.refresh_offline_access_token(token)
   end
 
   @doc """
@@ -110,6 +116,45 @@ defmodule ShopifyAPI.Refresh do
     case Registry.lookup(@registry, key(token)) do
       [{pid, _value}] -> await(pid, token)
       [] -> use_replacement_or_run(token)
+    end
+  end
+
+  @doc """
+  Exchanges a permanent token for an expiring pair, or waits for the exchange already in flight.
+
+  Wraps `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` for
+  `ShopifyAPI.AuthToken.fetch/2`, which calls it when `:offline_tokens` is
+  `:exchange_permanent`. At most one exchange runs per shop and app; every other caller waits
+  for it and then reads the new pair from the cache. There is no timeout fallback, since a
+  second exchange of the same token would fail.
+
+  The exchange runs in a supervised task, so it finishes and stores its pair even if the caller
+  exits while waiting — abandoning it after Shopify revokes the permanent token would lock the
+  shop out.
+
+  Returns `{:error, :needs_reacquisition}` when Shopify reports the permanent token already
+  spent. Raises `ShopifyAPI.TokenRefreshError` when the exchange fails before Shopify revokes
+  the permanent token, which is safe to retry, and lets `ShopifyAPI.TokenMigrationError` from a
+  failure after it propagate.
+
+  > #### Exchange after the cutover is observed, not documented {: .warning}
+  >
+  > Shopify does not say whether a permanent token can still be exchanged once it stops
+  > accepting permanent tokens on 1 January 2027. In CR-2722, a public app created after April
+  > 2026 — whose permanent tokens the Admin API already refuses with a `403` — could still
+  > exchange one for an expiring pair. This relies on existing apps behaving the same way after
+  > the cutover. If they do not, the failure raises `ShopifyAPI.TokenRefreshError` on every fetch
+  > of that shop.
+  """
+  @spec await_or_exchange(AuthToken.t()) :: AuthToken.ok_t() | AuthToken.needs_reacquisition()
+  def await_or_exchange(%AuthToken{refresh_token: nil} = token) do
+    task = Task.Supervisor.async_nolink(@task_supervisor, fn -> claim_and_exchange(token) end)
+
+    case Task.yield(task, :infinity) do
+      {:ok, {:in_flight, pid}} -> await_exchange(pid, token)
+      {:ok, {:raised, exception, stacktrace}} -> reraise exception, stacktrace
+      {:ok, result} -> result
+      {:exit, reason} -> exit(reason)
     end
   end
 
@@ -170,6 +215,87 @@ defmodule ShopifyAPI.Refresh do
     do: DateTime.before?(token_expires_at, issued_before)
 
   defp key(%AuthToken{shop_name: shop_name, app_name: app_name}), do: {shop_name, app_name}
+
+  defp fetch_app!(token, action) do
+    case AppServer.get(token.app_name) do
+      {:ok, app} ->
+        app
+
+      :error ->
+        raise ArgumentError,
+              "#{token.app_name} is not a registered app, so #{token.shop_name} cannot #{action}"
+    end
+  end
+
+  # Registers as the in-flight exchange for this shop, then exchanges. Runs in its own task, and
+  # returns an exception rather than raising it so the caller can reraise it without a crash
+  # report.
+  defp claim_and_exchange(token) do
+    case Registry.register(@registry, key(token), :exchanging) do
+      {:ok, _pid} ->
+        exchange_unless_replaced(token)
+
+      {:error, {:already_registered, pid}} ->
+        Logger.debug(
+          "#{__MODULE__} exchange already in flight for #{AuthToken.create_key(token)}"
+        )
+
+        {:in_flight, pid}
+    end
+  rescue
+    exception -> {:raised, exception, __STACKTRACE__}
+  end
+
+  # Re-reads the cache first: an exchange that finished between the caller's read and this
+  # claim has already replaced the permanent token, which can no longer be exchanged.
+  defp exchange_unless_replaced(token) do
+    case AuthTokenServer.get(token.shop_name, token.app_name) do
+      {:ok, %AuthToken{refresh_token: nil} = cached} -> exchange(cached)
+      {:ok, cached} -> {:ok, cached}
+      {:error, :not_found} -> exchange(token)
+    end
+  end
+
+  defp exchange(token) do
+    Logger.debug("#{__MODULE__} exchanging permanent token for #{AuthToken.create_key(token)}")
+
+    case token |> fetch_app!("exchange") |> AuthRequest.migrate_offline_access_token(token) do
+      {:ok, _exchanged} = ok ->
+        ok
+
+      # Spent by an exchange outside this node, whose pair this cache has no way to load.
+      {:error, :invalid_subject_token} ->
+        {:error, :needs_reacquisition}
+
+      {:error, :failed_migrating_offline_token} ->
+        raise ShopifyAPI.TokenRefreshError,
+          message:
+            "Exchanging the permanent token for #{AuthToken.create_key(token)} failed; it was " <>
+              "not revoked, so a retry is safe"
+    end
+  end
+
+  # Waits for another caller's exchange to finish, then takes its pair from the cache. A cache
+  # still holding a permanent token means that exchange failed; its caller received the error.
+  defp await_exchange(pid, token) do
+    ref = Process.monitor(pid)
+    Logger.debug("#{__MODULE__} waiting on exchange in flight for #{AuthToken.create_key(token)}")
+
+    receive do
+      {:DOWN, ^ref, :process, ^pid, _reason} ->
+        case AuthTokenServer.get(token.shop_name, token.app_name) do
+          {:ok, %AuthToken{refresh_token: refresh_token} = cached}
+          when is_binary(refresh_token) ->
+            {:ok, cached}
+
+          _other ->
+            raise ShopifyAPI.TokenRefreshError,
+              message:
+                "The exchange in flight for #{AuthToken.create_key(token)} did not produce an " <>
+                  "expiring token"
+        end
+    end
+  end
 
   # Registers as the in-flight refresh for this shop, then refreshes with retry.
   defp claim_and_refresh(token) do

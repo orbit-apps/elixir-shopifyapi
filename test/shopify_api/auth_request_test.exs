@@ -1,8 +1,9 @@
 defmodule ShopifyAPI.AuthRequestTest do
-  # Not async: swaps the top-level :expiring setting, which is global.
+  # Not async: swaps the top-level :offline_tokens and :expiring settings, which are global.
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
+  import ShopifyAPI.TokenConfigSetup
 
   alias Plug.Conn
   alias ShopifyAPI.App
@@ -33,17 +34,9 @@ defmodule ShopifyAPI.AuthRequestTest do
     def save(_key, token), do: raise("write failed for #{token.token}")
   end
 
+  setup :isolate_token_config
+
   setup do
-    previous = Application.get_env(:shopify_api, :expiring)
-
-    on_exit(fn ->
-      if previous do
-        Application.put_env(:shopify_api, :expiring, previous)
-      else
-        Application.delete_env(:shopify_api, :expiring)
-      end
-    end)
-
     bypass = Bypass.open()
     {:ok, bypass: bypass, shop: "localhost:#{bypass.port}"}
   end
@@ -127,6 +120,42 @@ defmodule ShopifyAPI.AuthRequestTest do
       assert DateTime.after?(token.refresh_token_expires_at, token.token_expires_at)
     end
 
+    for mode <- [:expiring, :exchange_permanent] do
+      test "offline_tokens: #{inspect(mode)} asks for an expiring token on both grants", %{
+        bypass: bypass,
+        shop: shop
+      } do
+        Application.put_env(:shopify_api, :offline_tokens, unquote(mode))
+
+        capture_body(bypass)
+        AuthRequest.post(@app, shop, "auth-code")
+        assert_receive {:body, %{"expiring" => 1}}
+
+        capture_body(bypass)
+        AuthRequest.request_offline_access_token(@app, shop, "session-token")
+        assert_receive {:body, %{"expiring" => 1}}
+      end
+    end
+
+    test "offline_tokens: :permanent asks for a permanent token on both grants", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      # Wins over the legacy flag, so a leftover `expiring: true` cannot override it.
+      Application.put_env(:shopify_api, :expiring, true)
+      Application.put_env(:shopify_api, :offline_tokens, :permanent)
+
+      capture_body(bypass, Map.take(@pair, [:access_token]))
+      AuthRequest.post(@app, shop, "auth-code")
+      assert_receive {:body, body}
+      refute Map.has_key?(body, "expiring")
+
+      capture_body(bypass, Map.take(@pair, [:access_token]))
+      AuthRequest.request_offline_access_token(@app, shop, "session-token")
+      assert_receive {:body, body}
+      refute Map.has_key?(body, "expiring")
+    end
+
     test "a refresh never asks, whatever the setting", %{bypass: bypass, shop: shop} do
       # Shopify does not accept `expiring` on a refresh grant.
       Application.put_env(:shopify_api, :expiring, true)
@@ -176,8 +205,8 @@ defmodule ShopifyAPI.AuthRequestTest do
       bypass: bypass,
       shop: shop
     } do
-      # Migration ignores the `:expiring` setting: an already-installed shop must move regardless.
-      Application.put_env(:shopify_api, :expiring, false)
+      # Migration ignores the setting: an already-installed shop must move regardless.
+      Application.put_env(:shopify_api, :offline_tokens, :permanent)
       capture_body(bypass)
 
       assert {:ok, _token} = AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
