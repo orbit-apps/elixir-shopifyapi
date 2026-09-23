@@ -212,6 +212,7 @@ defmodule ShopifyAPI.AuthTokenServer do
   alias ShopifyAPI.Config
 
   @table __MODULE__
+  @reload_attempts 3
 
   @doc """
   Returns every cached token, keyed by `{shop_name, app_name}`.
@@ -295,9 +296,10 @@ defmodule ShopifyAPI.AuthTokenServer do
   persisting it, since it came out of storage. When storage has no token, the cache is left as
   it is and whatever it holds is returned, `{:error, :not_found}` included.
 
-  A token written to the cache by `set/2` while storage was being read is kept over the stored
-  one, and returned in its place. `set/2` persists before it caches, so that token is never
-  older than the one storage returned.
+  The stored token is only cached if the cache is unchanged since storage was read. If
+  something else wrote to it meanwhile — `set/2`, or another reload holding an older read —
+  storage is read again, so a slow read never replaces a newer pair. After
+  #{@reload_attempts} reads without a quiet moment, whatever the cache holds is returned.
 
   With no `get` callback configured this is `get/2`, a cache read. See the module documentation
   on persistence for who calls it and why.
@@ -322,8 +324,23 @@ defmodule ShopifyAPI.AuthTokenServer do
         get(shop, app)
 
       get_callback ->
-        cached = get(shop, app)
-        get_callback |> invoke([shop, app]) |> cache_loaded(shop, app, cached)
+        reload_attempt(get_callback, shop, app, @reload_attempts)
+    end
+  end
+
+  defp reload_attempt(_get_callback, shop, app, 0), do: get(shop, app)
+
+  defp reload_attempt(get_callback, shop, app, attempts_left) do
+    cached = get(shop, app)
+
+    case get_callback |> invoke([shop, app]) |> check_loaded!(shop, app) do
+      {:ok, loaded} ->
+        if replace_unchanged(shop, app, cached, loaded),
+          do: {:ok, loaded},
+          else: reload_attempt(get_callback, shop, app, attempts_left - 1)
+
+      :not_found ->
+        get(shop, app)
     end
   end
 
@@ -445,14 +462,10 @@ defmodule ShopifyAPI.AuthTokenServer do
   defp invoke({module, function, args}, leading), do: apply(module, function, leading ++ args)
   defp invoke({module, function}, leading), do: apply(module, function, leading)
 
-  # `cached` is what the cache held before storage was read.
-  defp cache_loaded({:ok, %AuthToken{shop_name: shop, app_name: app} = loaded}, shop, app, cached) do
-    if replace_unchanged(shop, app, cached, loaded), do: {:ok, loaded}, else: get(shop, app)
-  end
+  defp check_loaded!({:ok, %AuthToken{shop_name: shop, app_name: app}} = ok, shop, app), do: ok
+  defp check_loaded!({:error, :not_found}, _shop, _app), do: :not_found
 
-  defp cache_loaded({:error, :not_found}, shop, app, _cached), do: get(shop, app)
-
-  defp cache_loaded({:error, reason}, shop, app, _cached) do
+  defp check_loaded!({:error, reason}, shop, app) do
     raise ShopifyAPI.TokenPersistenceError,
       message:
         "Could not load auth token for #{AuthToken.create_key(shop, app)}: " <>
@@ -460,7 +473,7 @@ defmodule ShopifyAPI.AuthTokenServer do
   end
 
   # The return is not quoted: a token for the wrong shop carries its credentials.
-  defp cache_loaded(_other, shop, app, _cached) do
+  defp check_loaded!(_other, shop, app) do
     raise ShopifyAPI.TokenPersistenceError,
       message:
         "Could not load auth token for #{AuthToken.create_key(shop, app)}: callback returned " <>

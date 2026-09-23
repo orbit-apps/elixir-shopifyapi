@@ -51,14 +51,19 @@ defmodule ShopifyAPI.AuthTokenServerTest do
     def get("unwrapped.myshopify.com" = shop_name, app_name, _tag),
       do: %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_secret"}
 
-    # Another process caches a newer token while storage is being read.
+    # Another writer changes the cache during the first read, and storage has moved on by the
+    # next. Reads are counted per shop in the process dictionary; reload runs in the test.
     def get("raced" <> _ = shop_name, app_name, _tag) do
-      ShopifyAPI.AuthTokenServer.set(
-        %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_newer"},
-        false
-      )
+      reads = count_read(shop_name)
+      if reads == 1, do: cache_interim(shop_name, app_name, "shpat_interim")
+      {:ok, %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_read_#{reads}"}}
+    end
 
-      {:ok, %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_stored"}}
+    # Another writer changes the cache during every read, so it never holds still.
+    def get("contended.myshopify.com" = shop_name, app_name, _tag) do
+      reads = count_read(shop_name)
+      cache_interim(shop_name, app_name, "shpat_interim_#{reads}")
+      {:ok, %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_read_#{reads}"}}
     end
 
     def get("misfiled.myshopify.com", app_name, _tag),
@@ -74,6 +79,19 @@ defmodule ShopifyAPI.AuthTokenServerTest do
     def set(key, token) do
       send(self(), {:persisted, key, token})
       :ok
+    end
+
+    defp count_read(shop_name) do
+      reads = Process.get({:reads, shop_name}, 0) + 1
+      Process.put({:reads, shop_name}, reads)
+      reads
+    end
+
+    defp cache_interim(shop_name, app_name, value) do
+      ShopifyAPI.AuthTokenServer.set(
+        %AuthToken{shop_name: shop_name, app_name: app_name, token: value},
+        false
+      )
     end
   end
 
@@ -222,20 +240,27 @@ defmodule ShopifyAPI.AuthTokenServerTest do
                AuthTokenServer.reload("absent.myshopify.com", "reload-uncached-app")
     end
 
-    test "keeps a token cached while storage was being read over the stored one" do
+    test "reads storage again when the cache changed during the read" do
       AuthTokenServer.set(token("raced.myshopify.com", token: "shpat_original"), false)
 
-      assert {:ok, %AuthToken{token: "shpat_newer"}} =
+      assert {:ok, %AuthToken{token: "shpat_read_2"}} =
                AuthTokenServer.reload("raced.myshopify.com", "persistence-test-app")
 
-      assert {:ok, %AuthToken{token: "shpat_newer"}} = cached("raced.myshopify.com")
+      assert {:ok, %AuthToken{token: "shpat_read_2"}} = cached("raced.myshopify.com")
     end
 
-    test "keeps a token first cached while storage was being read over the stored one" do
-      assert {:ok, %AuthToken{token: "shpat_newer"}} =
+    test "reads storage again when a token was first cached during the read" do
+      assert {:ok, %AuthToken{token: "shpat_read_2"}} =
                AuthTokenServer.reload("raced-uncached.myshopify.com", "persistence-test-app")
 
-      assert {:ok, %AuthToken{token: "shpat_newer"}} = cached("raced-uncached.myshopify.com")
+      assert {:ok, %AuthToken{token: "shpat_read_2"}} = cached("raced-uncached.myshopify.com")
+    end
+
+    test "returns the cached token after three reads that each raced a write" do
+      assert {:ok, %AuthToken{token: "shpat_interim_3"}} =
+               AuthTokenServer.reload("contended.myshopify.com", "persistence-test-app")
+
+      assert Process.get({:reads, "contended.myshopify.com"}) == 3
     end
 
     test "raises on an error tuple, keeping the reason's contents out of the message" do

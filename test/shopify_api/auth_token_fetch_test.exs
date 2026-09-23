@@ -134,8 +134,61 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
     end
   end
 
-  describe "reacquisition with shared storage" do
+  describe "a pair stored by another application" do
     setup :use_shared_storage
+
+    # Access token expired, refresh token live, and the request that refreshes it captured.
+    defp store_expired_pair(bypass, shop, storage) do
+      test_pid = self()
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        {:ok, body, conn} = Conn.read_body(conn)
+        send(test_pid, {:body, JSONSerializer.decode!(body)})
+        Conn.resp(conn, 200, JSONSerializer.encode!(fresh_pair()))
+      end)
+
+      SharedStorage.put(
+        storage,
+        ShopifyAPI.Test.expired_token(
+          shop_name: shop,
+          app_name: @app_name,
+          token: "shpat_stored",
+          refresh_token: "shprt_stored"
+        )
+      )
+    end
+
+    test "is refreshed when it has expired itself", %{
+      bypass: bypass,
+      shop: shop,
+      storage: storage
+    } do
+      store_expired_pair(bypass, shop, storage)
+
+      cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_current",
+        refresh_token_expires_at: from_now(:timer.hours(24 * 90))
+      )
+
+      assert {:ok, %AuthToken{token: "shpat_refreshed"}} = AuthToken.fetch(shop, @app_name)
+      assert_receive {:body, %{"refresh_token" => "shprt_stored"}}
+    end
+
+    test "is refreshed rather than exchanged over when it has expired itself", %{
+      bypass: bypass,
+      shop: shop,
+      storage: storage
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+      store_expired_pair(bypass, shop, storage)
+      cache(shop, token: "shpat_permanent", refresh_token: nil)
+
+      assert {:ok, %AuthToken{token: "shpat_refreshed"}} = AuthToken.fetch(shop, @app_name)
+
+      assert_receive {:body,
+                      %{"grant_type" => "refresh_token", "refresh_token" => "shprt_stored"}}
+    end
 
     defp dead_pair(shop) do
       cache(shop,

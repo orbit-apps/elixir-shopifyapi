@@ -142,7 +142,7 @@ defmodule ShopifyAPI.AuthToken do
   # it.
   defp resolve(%__MODULE__{refresh_token: nil} = token) do
     case Config.offline_tokens() do
-      :exchange_permanent -> Refresh.await_or_exchange(token)
+      :exchange_permanent -> token |> Refresh.await_or_exchange() |> resolve_replacement()
       _mode -> {:ok, token}
     end
   end
@@ -165,9 +165,17 @@ defmodule ShopifyAPI.AuthToken do
         reload_or_reacquire(token)
 
       true ->
-        Refresh.await_or_run(token)
+        token |> Refresh.await_or_run() |> resolve_replacement()
     end
   end
+
+  # `Refresh` can hand back a pair another application stored rather than one Shopify just
+  # issued, and a stored pair can be close to or past expiry itself. Resolving it again refreshes
+  # it when needed; a pair fresh from Shopify passes straight through. This runs here, in the
+  # caller, because inside `Refresh` the exchange still holds the registry claim a refresh
+  # would wait on.
+  defp resolve_replacement({:ok, %__MODULE__{} = replacement}), do: resolve(replacement)
+  defp resolve_replacement(error), do: error
 
   # Both halves of the cached pair have expired, but another application sharing storage may
   # have renewed it since. A second reload returns the same token, so this recurses at most once.

@@ -46,8 +46,9 @@ defmodule ShopifyAPI.Refresh do
   exchanging a permanent token it already exchanged fails as spent.
 
   Every entry point except `run/1` therefore calls `ShopifyAPI.AuthTokenServer.reload/2`
-  immediately before refreshing or exchanging, and uses the stored token instead when it has
-  moved on from the one it was handed. That needs the `get` persistence callback; without it
+  immediately before refreshing or exchanging, and returns the stored token instead when it has
+  moved on from the one it was handed. It returns it as stored, possibly near or past expiry
+  itself; `ShopifyAPI.AuthToken.fetch/2` resolves it again. That needs the `get` persistence callback; without it
   the reload is a cache read, and a token changed elsewhere ends in
   `{:error, :needs_reacquisition}`. A change landing between the reload and the request does
   too.

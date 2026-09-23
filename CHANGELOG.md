@@ -5,11 +5,12 @@
   is called as `get(shop_name, app_name)` and returns `{:ok, token}` or `{:error, :not_found}`.
   A bare `{module, function, args}` tuple is still accepted as `set`.
 - New: `ShopifyAPI.AuthTokenServer.reload/2` — reads a token back through `get` and caches it,
-  unless the cache was written while storage was being read. Falls back to the cache when
+  reading storage again if the cache changed during the read. Falls back to the cache when
   storage has no token, and without a `get` callback it is a cache read.
 - Changed: `ShopifyAPI.Refresh` reloads the token from storage before every refresh and
   exchange, and uses the stored one when it has moved on. `ShopifyAPI.AuthToken.fetch/2` also
-  reloads before reporting a pair whose refresh token has expired. A shop whose token another
+  reloads before reporting a pair whose refresh token has expired, and refreshes a stored pair
+  that has expired itself. A shop whose token another
   application refreshed or exchanged no longer ends in `{:error, :needs_reacquisition}`.
   `Refresh.run/1` is unchanged.
 
