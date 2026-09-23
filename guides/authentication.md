@@ -158,11 +158,17 @@ case ShopifyAPI.AuthToken.fetch(shop.domain, MyApp.app_name()) do
 end
 ```
 
-Any other failure raises: `ShopifyAPI.TokenRefreshError` when Shopify fails
-the refresh (or the exchange of a permanent token, see below), and
-`ShopifyAPI.TokenPersistenceError` when the new pair cannot be stored. A background job should let either propagate and be retried. In a
-request, Plug renders a failed refresh as a `503`, and neither plug above
-treats it as a missing token.
+Any other failure raises. `ShopifyAPI.TokenRefreshError` means Shopify failed
+the refresh, or the exchange of a permanent token under `:exchange_permanent`
+(see below). `ShopifyAPI.TokenPersistenceError` means the new pair could not be
+stored. Both are transient: a background job should let them propagate and be
+retried, and Plug renders them as a `503`. Neither plug above treats either as
+a missing token.
+
+`ShopifyAPI.TokenMigrationError` is the exception to that. Only
+`:exchange_permanent` raises it, and only once Shopify has already revoked the
+permanent token, so retrying cannot help — the shop has no working credential
+until it reinstalls. Page on it rather than retrying it.
 
 `ShopifyAPI.AuthTokenServer.get/2` returns whatever the cache holds, expired or
 not. `fetch/2` checks the expiry and refreshes when needed.

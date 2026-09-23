@@ -263,29 +263,64 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
       assert :counters.get(counter, 1) == 1
     end
 
-    test "waiters raise, without exchanging, when the exchange in flight fails", %{
+    test "a waiter exchanges the token itself when the exchange ahead of it failed", %{
       bypass: bypass,
-      shop: shop,
-      permanent: permanent
+      shop: shop
     } do
       counter = held_exchange(bypass)
 
       capture_log(fn ->
         first = fetch_rescued(shop)
-        assert_receive {:exchange_started, handler}, 2_000
+        assert_receive {:exchange_started, first_handler}, 2_000
 
-        waiter = fetch_rescued(shop)
+        waiters = for _ <- 1..2, do: fetch_async(shop)
         Process.sleep(100)
-        send(handler, {:respond, 503, ""})
+
+        # Shopify never got as far as revoking the permanent token, so it is still exchangeable.
+        send(first_handler, {:respond, 503, ""})
 
         assert {:raised, %TokenRefreshError{message: message}} = Task.await(first)
         assert message =~ "not revoked"
 
-        assert {:raised, %TokenRefreshError{message: message}} = Task.await(waiter)
-        assert message =~ "did not produce an expiring token"
+        # One waiter takes the claim and exchanges; the other waits on it rather than piling on.
+        assert_receive {:exchange_started, second_handler}, 2_000
+        send(second_handler, {:respond, 200, pair_json()})
+
+        for waiter <- waiters do
+          assert {:ok, %AuthToken{token: "shpat_refreshed"}} = Task.await(waiter)
+        end
       end)
 
-      assert :counters.get(counter, 1) == 1
+      assert :counters.get(counter, 1) == 2
+    end
+
+    test "a waiter reports a spent token rather than a retryable failure", %{
+      bypass: bypass,
+      shop: shop,
+      permanent: permanent
+    } do
+      # The waiter cannot tell a spent token from a transient failure by the cache alone: both
+      # leave the permanent token in place. Asking Shopify is what separates them.
+      counter = held_exchange(bypass)
+      spent = ~s({"error":"invalid_subject_token"})
+
+      capture_log(fn ->
+        first = fetch_async(shop)
+        assert_receive {:exchange_started, first_handler}, 2_000
+
+        waiter = fetch_async(shop)
+        Process.sleep(100)
+        send(first_handler, {:respond, 400, spent})
+
+        assert {:error, :needs_reacquisition} = Task.await(first)
+
+        assert_receive {:exchange_started, second_handler}, 2_000
+        send(second_handler, {:respond, 400, spent})
+
+        assert {:error, :needs_reacquisition} = Task.await(waiter)
+      end)
+
+      assert :counters.get(counter, 1) == 2
       assert {:ok, ^permanent} = AuthTokenServer.get(shop, @app_name)
     end
 
