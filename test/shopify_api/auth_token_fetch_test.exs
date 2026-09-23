@@ -3,6 +3,7 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
+  import ShopifyAPI.SharedStorage, only: [use_shared_storage: 1]
   import ShopifyAPI.TokenConfigSetup
 
   alias Plug.Conn
@@ -11,6 +12,7 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JSONSerializer
+  alias ShopifyAPI.SharedStorage
   alias ShopifyAPI.TokenMigrationError
   alias ShopifyAPI.TokenRefreshError
 
@@ -129,6 +131,46 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
 
       assert {:error, :needs_reacquisition} = AuthToken.fetch(shop, @app_name)
       refute_receive :refresh_requested, 100
+    end
+  end
+
+  describe "reacquisition with shared storage" do
+    setup :use_shared_storage
+
+    defp dead_pair(shop) do
+      cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_dead",
+        refresh_token_expires_at: from_now(-@hour)
+      )
+    end
+
+    test "returns a pair another application stored since the cached one died", %{
+      shop: shop,
+      storage: storage
+    } do
+      dead_pair(shop)
+
+      stored =
+        ShopifyAPI.Test.expiring_token(
+          shop_name: shop,
+          app_name: @app_name,
+          token: "shpat_stored"
+        )
+
+      SharedStorage.put(storage, stored)
+
+      assert {:ok, ^stored} = AuthToken.fetch(shop, @app_name)
+      refute_receive :refresh_requested, 100
+    end
+
+    test "reports reacquisition when storage holds the same dead pair", %{
+      shop: shop,
+      storage: storage
+    } do
+      SharedStorage.put(storage, dead_pair(shop))
+
+      assert {:error, :needs_reacquisition} = AuthToken.fetch(shop, @app_name)
     end
   end
 

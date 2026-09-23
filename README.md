@@ -114,8 +114,9 @@ that authenticate every REST and GraphQL call. A token is written when a shop
 installs your app and read on each request afterwards, so the cache needs to
 survive restarts: the `initializer` hook loads tokens back in at boot, and the
 `persistence` hook's `set` writes them out as they arrive. Its `get` reads a
-single token back before each refresh, for when another application shares
-the same storage and may have refreshed it first.
+single token back whenever `ShopifyAPI.AuthToken.fetch/2` is about to refresh
+it, for when another application shares the same storage and may have
+refreshed it first.
 
 All hooks are optional, and without them tokens live only in memory and are
 lost when the application stops.

@@ -51,6 +51,16 @@ defmodule ShopifyAPI.AuthTokenServerTest do
     def get("unwrapped.myshopify.com" = shop_name, app_name, _tag),
       do: %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_secret"}
 
+    # Another process caches a newer token while storage is being read.
+    def get("raced" <> _ = shop_name, app_name, _tag) do
+      ShopifyAPI.AuthTokenServer.set(
+        %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_newer"},
+        false
+      )
+
+      {:ok, %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_stored"}}
+    end
+
     def get("misfiled.myshopify.com", app_name, _tag),
       do:
         {:ok,
@@ -197,14 +207,35 @@ defmodule ShopifyAPI.AuthTokenServerTest do
       assert_received {:loaded, "no-args.myshopify.com", "persistence-test-app", :no_args}
     end
 
-    test "leaves the cache alone when storage has no token" do
+    test "returns the cached token, untouched, when storage has none" do
       token = token("absent.myshopify.com")
       AuthTokenServer.set(token, false)
 
-      assert {:error, :not_found} =
+      assert {:ok, ^token} =
                AuthTokenServer.reload("absent.myshopify.com", "persistence-test-app")
 
       assert {:ok, ^token} = cached("absent.myshopify.com")
+    end
+
+    test "returns not found when neither storage nor the cache has a token" do
+      assert {:error, :not_found} =
+               AuthTokenServer.reload("absent.myshopify.com", "reload-uncached-app")
+    end
+
+    test "keeps a token cached while storage was being read over the stored one" do
+      AuthTokenServer.set(token("raced.myshopify.com", token: "shpat_original"), false)
+
+      assert {:ok, %AuthToken{token: "shpat_newer"}} =
+               AuthTokenServer.reload("raced.myshopify.com", "persistence-test-app")
+
+      assert {:ok, %AuthToken{token: "shpat_newer"}} = cached("raced.myshopify.com")
+    end
+
+    test "keeps a token first cached while storage was being read over the stored one" do
+      assert {:ok, %AuthToken{token: "shpat_newer"}} =
+               AuthTokenServer.reload("raced-uncached.myshopify.com", "persistence-test-app")
+
+      assert {:ok, %AuthToken{token: "shpat_newer"}} = cached("raced-uncached.myshopify.com")
     end
 
     test "raises on an error tuple, keeping the reason's contents out of the message" do

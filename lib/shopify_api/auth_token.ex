@@ -112,8 +112,9 @@ defmodule ShopifyAPI.AuthToken do
   storage holds nothing newer. A new token must then be obtained via OAuth or token exchange.
   All other failures (assumed to be transient) raise.
 
-  Storage is consulted through the `get` persistence callback of `ShopifyAPI.AuthTokenServer`,
-  before any refresh or exchange; see `ShopifyAPI.Refresh`.
+  Storage is consulted through the `get` persistence callback of `ShopifyAPI.AuthTokenServer`
+  before any refresh or exchange, and before reporting a pair whose refresh token has expired;
+  see `ShopifyAPI.Refresh`.
 
   ## Examples
 
@@ -161,15 +162,27 @@ defmodule ShopifyAPI.AuthToken do
         {:ok, token}
 
       refresh_dead? ->
+        reload_or_reacquire(token)
+
+      true ->
+        Refresh.await_or_run(token)
+    end
+  end
+
+  # Both halves of the cached pair have expired, but another application sharing storage may
+  # have renewed it since. A second reload returns the same token, so this recurses at most once.
+  defp reload_or_reacquire(%__MODULE__{} = token) do
+    case AuthTokenServer.reload(token.shop_name, token.app_name) do
+      {:ok, %__MODULE__{token: value} = reloaded} when value != token.token ->
+        resolve(reloaded)
+
+      _unchanged ->
         Logger.debug(
           "#{__MODULE__} refresh token for #{create_key(token)} expired " <>
             "#{token.refresh_token_expires_at}, needs new token"
         )
 
         {:error, :needs_reacquisition}
-
-      true ->
-        Refresh.await_or_run(token)
     end
   end
 

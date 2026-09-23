@@ -11,6 +11,7 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
+  import ShopifyAPI.SharedStorage, only: [use_shared_storage: 1]
   import ShopifyAPI.TokenConfigSetup
 
   alias Plug.Conn
@@ -20,6 +21,7 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.Refresh
+  alias ShopifyAPI.SharedStorage
   alias ShopifyAPI.TokenRefreshError
 
   @app_name "refresh-concurrency-app"
@@ -359,39 +361,10 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
     end
   end
 
-  # Storage shared with another application, held in an Agent passed as the `get` callback's
-  # configured argument so that background tasks can reach it.
-  defmodule SharedStorage do
-    @moduledoc false
-
-    def get(shop_name, app_name, agent) do
-      case Agent.get(agent, &Map.get(&1, {shop_name, app_name})) do
-        nil -> {:error, :not_found}
-        token -> {:ok, token}
-      end
-    end
-
-    def put(agent, token),
-      do: Agent.update(agent, &Map.put(&1, {token.shop_name, token.app_name}, token))
-  end
-
   describe "a token changed in storage by another application" do
+    setup :use_shared_storage
+
     setup %{shop: shop} do
-      storage = start_supervised!({Agent, fn -> %{} end})
-      previous = Application.get_env(:shopify_api, AuthTokenServer)
-
-      Application.put_env(:shopify_api, AuthTokenServer,
-        persistence: [get: {SharedStorage, :get, [storage]}]
-      )
-
-      on_exit(fn ->
-        if previous do
-          Application.put_env(:shopify_api, AuthTokenServer, previous)
-        else
-          Application.delete_env(:shopify_api, AuthTokenServer)
-        end
-      end)
-
       stored =
         ShopifyAPI.Test.expiring_token(
           shop_name: shop,
@@ -399,7 +372,7 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
           token: "shpat_stored"
         )
 
-      {:ok, storage: storage, stored: stored}
+      {:ok, stored: stored}
     end
 
     # No Bypass expectation in these tests unless stated: any request to Shopify fails the test.
