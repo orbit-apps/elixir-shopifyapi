@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.17.1
+
 - New: configuration — `:offline_tokens`, one of `:permanent` (the default), `:expiring` or
   `:exchange_permanent`. The first two match `expiring: false` and `expiring: true`. Under
   `:exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2` exchanges a permanent token for an
