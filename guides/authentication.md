@@ -158,11 +158,17 @@ case ShopifyAPI.AuthToken.fetch(shop.domain, MyApp.app_name()) do
 end
 ```
 
-Any other failure raises: `ShopifyAPI.TokenRefreshError` when Shopify fails
-the refresh, and `ShopifyAPI.TokenPersistenceError` when the new pair cannot
-be stored. A background job should let either propagate and be retried. In a
-request, Plug renders a failed refresh as a `503`, and neither plug above
-treats it as a missing token.
+Any other failure raises. `ShopifyAPI.TokenRefreshError` means Shopify failed
+the refresh, or the exchange of a permanent token under `:exchange_permanent`
+(see below). `ShopifyAPI.TokenPersistenceError` means the new pair could not be
+stored. Both are transient: a background job should let them propagate and be
+retried, and Plug renders them as a `503`. Neither plug above treats either as
+a missing token.
+
+`ShopifyAPI.TokenMigrationError` is the exception to that. Only
+`:exchange_permanent` raises it, and only once Shopify has already revoked the
+permanent token, so retrying cannot help — the shop has no working credential
+until it reinstalls. Page on it rather than retrying it.
 
 `ShopifyAPI.AuthTokenServer.get/2` returns whatever the cache holds, expired or
 not. `fetch/2` checks the expiry and refreshes when needed.
@@ -179,20 +185,62 @@ stops accepting permanent ones on 1 January 2027.
 ### Opting in
 
 ```elixir
-config :shopify_api, expiring: true
+config :shopify_api, offline_tokens: :expiring
 ```
 
-This applies to new token requests — both the OAuth code grant and token
-exchange. A token that already carries a refresh token is refreshed regardless
-of this setting, so turning it off does not strand shops that already have one.
+`:offline_tokens` takes one of three values:
+
+| Value                  | New token requests | A permanent token read by `fetch/2`  |
+| ---------------------- | ------------------ | ------------------------------------ |
+| `:permanent` (default) | permanent          | returned as is                       |
+| `:expiring`            | expiring           | returned as is                       |
+| `:exchange_permanent`  | expiring           | exchanged for an expiring pair first |
+
+New token requests are both the OAuth code grant and token exchange. A token
+that already carries a refresh token is refreshed whatever the setting, so
+turning it back to `:permanent` does not strand shops that already have one.
+
+The older `expiring: true` and `expiring: false` still work, as `:expiring` and
+`:permanent`. `:offline_tokens` wins when both are set.
 
 ### Migrating existing shops
 
-Opting in only affects shops that install or reinstall afterwards. Shops that
-installed earlier keep their permanent token until you move them.
+`:expiring` only affects shops that install or reinstall afterwards. Shops that
+installed earlier keep their permanent token until you move them, either as
+they are used or in a sweep.
 `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` performs the one-time
-exchange, and always requests an expiring pair whatever `:expiring` is set to.
-Sweep the permanent tokens still in your storage:
+exchange in both cases, and always requests an expiring pair whatever
+`:offline_tokens` is set to.
+
+With `offline_tokens: :exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2`
+exchanges a shop's permanent token the first time it reads it, and returns the
+new pair. Concurrent callers wait on a single exchange. A spent token comes back
+as `{:error, :needs_reacquisition}`, and an exchange that fails before Shopify
+revokes the permanent token raises `ShopifyAPI.TokenRefreshError`, so the next
+fetch tries again.
+
+> #### Exchange after the cutover is observed, not documented {: .warning}
+>
+> Shopify does not say whether a permanent token can still be exchanged after
+> 1 January 2027. The one data point is a public app created after April 2026:
+> the Admin API already refuses its permanent tokens with a `403`, yet one could
+> still be exchanged for an expiring pair. `:exchange_permanent` assumes existing
+> apps will behave the same way after the cutover. If they do not, fetching a
+> shop still on a permanent token raises `ShopifyAPI.TokenRefreshError` every
+> time, so migrate what you can before then.
+
+> #### Only one exchanger per token {: .warning}
+>
+> The exchange is de-duplicated within this node only. If another application
+> holds the same permanent tokens and exchanges them too, whichever goes second
+> gets a spent token. This library then returns
+> `{:error, :needs_reacquisition}`, because it has no way to load the other
+> application's pair from storage. Enable `:exchange_permanent` only where
+> nothing else exchanges the same tokens.
+
+Shops that make no API calls are never fetched, so they are never exchanged
+that way. Sweep the permanent tokens still in your storage to reach them before
+1 January 2027:
 
 ```elixir
 ShopifyAPI.AuthTokenServer.all()

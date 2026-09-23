@@ -1,18 +1,20 @@
 defmodule ShopifyAPI.RefreshSupervisor do
   @moduledoc """
-  Supervises the processes that refresh expiring offline access tokens.
+  Supervises the processes that refresh expiring offline access tokens and exchange permanent
+  ones.
 
   A separate subtree so that refresh failures (which come in bursts when Shopify is unwell)
   do not exhaust the restart budget shared by the cache servers.
 
-  Two children, both idle until a refresh is requested:
+  Two children, both idle until a refresh or exchange is requested:
 
-    - `ShopifyAPI.RefreshRegistry` — tracks the in-flight refresh per `{shop_name, app_name}`
-    - `ShopifyAPI.RefreshTaskSupervisor` — runs background refresh tasks (`:temporary`, never
-      restarted)
+    - `ShopifyAPI.RefreshRegistry` — tracks the in-flight refresh or exchange per
+      `{shop_name, app_name}`
+    - `ShopifyAPI.RefreshTaskSupervisor` — runs background refresh and exchange tasks
+      (`:temporary`, never restarted)
 
-  Starts unconditionally. The `:expiring` flag controls new token requests; whether a token
-  is refreshed depends on it carrying a refresh token.
+  Starts unconditionally. Whether a token is refreshed depends on it carrying a refresh token,
+  whatever `:offline_tokens` is set to.
   """
 
   use Supervisor

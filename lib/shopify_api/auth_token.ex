@@ -15,7 +15,8 @@ defmodule ShopifyAPI.AuthToken do
   once.
 
   A `nil` `refresh_token` distinguishes the two throughout this library. `fetch/2` returns a
-  token ready to use — refreshing an expiring one if needed, returning a permanent one as is.
+  token ready to use — refreshing an expiring one if needed, and either returning a permanent
+  one as is or exchanging it for an expiring pair, depending on `:offline_tokens`.
 
   Shopify has required expiring tokens of new public apps since April 2026 and stops
   accepting permanent ones on 1 January 2027. See
@@ -89,21 +90,26 @@ defmodule ShopifyAPI.AuthToken do
 
   alias ShopifyAPI.App
   alias ShopifyAPI.AuthTokenServer
+  alias ShopifyAPI.Config
   alias ShopifyAPI.Refresh
 
   @doc """
   Returns a usable token for a shop and app, refreshing if needed.
 
-  A permanent token is returned as is. An expiring token is checked against
-  `ShopifyAPI.Refresh.threshold/0`:
+  An expiring token is checked against `ShopifyAPI.Refresh.threshold/0`:
 
     - **Above the threshold** — returned immediately, no refresh.
     - **Below the threshold** — returned immediately, background refresh starts.
     - **Expired** — caller waits for a refresh before receiving the new token.
 
+  A permanent token is returned as is, unless `:offline_tokens` is `:exchange_permanent`. Then
+  the caller waits while it is exchanged for an expiring pair, and receives the pair — see
+  `ShopifyAPI.Refresh.await_or_exchange/1`.
+
   Returns `{:error, :not_found}` when nothing is cached, and
-  `{:error, :needs_reacquisition}` when the token's refresh token has expired — a new token
-  must be obtained via OAuth or token exchange. All other failures (assumed to be transient)
+  `{:error, :needs_reacquisition}` when the token can no longer be renewed — its refresh token
+  has expired, or a permanent token was already spent by another exchange. A new token must
+  then be obtained via OAuth or token exchange. All other failures (assumed to be transient)
   raise.
 
   ## Examples
@@ -126,13 +132,16 @@ defmodule ShopifyAPI.AuthToken do
     end
   end
 
-  # A permanent token: nothing to check and nothing that could refresh it.
-  #
-  # TODO(2026-12-01): return `{:error, :needs_reacquisition}` here once every shop is migrated.
-  # Shopify stops accepting permanent tokens on 2027-01-01, after which this hands back a token
-  # the Admin API answers 403. Change the branch rather than deleting it — without it a permanent
-  # token falls through to the expiring path and raises on a refresh it has no token for.
-  defp resolve(%__MODULE__{refresh_token: nil} = token), do: {:ok, token}
+  # A permanent token has no expiry to check and no refresh token to renew it with. Under
+  # `:exchange_permanent` it is traded for an expiring pair before returning; otherwise it is
+  # handed back as is. It must not fall through to the clause below, which would try to refresh
+  # it.
+  defp resolve(%__MODULE__{refresh_token: nil} = token) do
+    case Config.offline_tokens() do
+      :exchange_permanent -> Refresh.await_or_exchange(token)
+      _mode -> {:ok, token}
+    end
+  end
 
   defp resolve(%__MODULE__{} = token) do
     now = DateTime.utc_now()

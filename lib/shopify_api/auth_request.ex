@@ -181,11 +181,13 @@ defmodule ShopifyAPI.AuthRequest do
   Exchanges a shop's permanent offline token for its first expiring pair.
 
   This is the one-time migration of a shop that installed before your app began requesting
-  expiring tokens. It always requests an expiring pair, whatever `:expiring` is configured to,
+  expiring tokens. It always requests an expiring pair, whatever `:offline_tokens` is set to,
   and writes the new pair to `ShopifyAPI.AuthTokenServer` — and so through your persistence
   callback — before returning.
 
-  Run it once per shop from a sweep over the permanent tokens still in your storage:
+  With `offline_tokens: :exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2` calls it for you
+  the first time it reads a shop's permanent token. To move shops that make no API calls, run
+  it once per shop from a sweep over the permanent tokens still in your storage:
 
       ShopifyAPI.AuthTokenServer.all()
       |> Map.values()
@@ -435,7 +437,8 @@ defmodule ShopifyAPI.AuthRequest do
   defp sanitize_for_logging({:error, %HTTPoison.Error{reason: reason}}), do: %{reason: reason}
   defp sanitize_for_logging(other), do: other
 
-  # Adds the `expiring` flag to new token requests. Refresh grants do not accept it.
+  # Adds the `expiring` flag to new token requests unless `:offline_tokens` is `:permanent`.
+  # Refresh grants do not accept it.
   defp request_expiring(http_body) do
     if Config.expiring?(), do: Map.put(http_body, :expiring, 1), else: http_body
   end

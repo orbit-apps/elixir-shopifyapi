@@ -21,7 +21,7 @@ The package can be installed by adding `shopify_api` to your list of dependencie
 ```elixir
 def deps do
   [
-    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "v0.17.0"}
+    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "v0.17.1"}
   ]
 end
 ```
@@ -130,8 +130,10 @@ Any other failure, such as a Shopify outage or a failed write, raises; let your
 job's retry handle it.
 
 Shopify's expiring offline tokens last an hour. Set
-`config :shopify_api, expiring: true` to acquire them; see the
-[Authentication guide](guides/authentication.md) for the full picture.
+`config :shopify_api, offline_tokens: :expiring` to acquire them, or
+`:exchange_permanent` to also exchange existing shops' permanent tokens as they
+are fetched; see the [Authentication guide](guides/authentication.md) for the
+full picture.
 
 `ShopifyAPI.AuthTokenServer` documents the caching contract itself — the
 arguments each hook receives, the traps around deleting tokens and handling

@@ -1,6 +1,9 @@
 defmodule ShopifyAPI.AuthTokenFetchTest do
-  # Not async: shares the public token cache and a Bypass port with no other test.
+  # Not async: shares the public token cache and the global :offline_tokens setting.
   use ExUnit.Case, async: false
+
+  import ExUnit.CaptureLog
+  import ShopifyAPI.TokenConfigSetup
 
   alias Plug.Conn
   alias ShopifyAPI.App
@@ -8,11 +11,14 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.JSONSerializer
+  alias ShopifyAPI.TokenMigrationError
   alias ShopifyAPI.TokenRefreshError
 
   @app_name "fetch-test-app"
   @hour :timer.hours(1)
   @ninety_days 7_775_999
+
+  setup :isolate_token_config
 
   setup do
     AppServer.set(%App{name: @app_name, client_id: "client-id", client_secret: "client-secret"})
@@ -273,6 +279,144 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
 
       refute error.message =~ "shpat_refreshed"
       assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
+    end
+  end
+
+  describe "exchanging permanent tokens" do
+    defp permanent(shop), do: cache(shop, token: "shpat_permanent", refresh_token: nil)
+
+    for mode <- [:permanent, :expiring] do
+      test "offline_tokens: #{inspect(mode)} returns a permanent token without exchanging", %{
+        shop: shop
+      } do
+        Application.put_env(:shopify_api, :offline_tokens, unquote(mode))
+        token = permanent(shop)
+
+        assert {:ok, ^token} = AuthToken.fetch(shop, @app_name)
+        refute_receive :refresh_requested, 100
+      end
+    end
+
+    test "exchanges a permanent token and returns the stored pair", %{bypass: bypass, shop: shop} do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+      test_pid = self()
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        {:ok, body, conn} = Conn.read_body(conn)
+        send(test_pid, {:body, JSONSerializer.decode!(body)})
+        Conn.resp(conn, 200, JSONSerializer.encode!(fresh_pair()))
+      end)
+
+      permanent(shop)
+
+      assert {:ok, exchanged} = AuthToken.fetch(shop, @app_name)
+      assert exchanged.token == "shpat_refreshed"
+      assert exchanged.refresh_token == "shprt_refreshed"
+      assert {:ok, ^exchanged} = AuthTokenServer.get(shop, @app_name)
+
+      assert_receive {:body, body}
+      assert body["subject_token"] == "shpat_permanent"
+      assert body["subject_token_type"] =~ "offline-access-token"
+      assert body["expiring"] == 1
+    end
+
+    test "legacy expiring: true does not exchange", %{shop: shop} do
+      Application.put_env(:shopify_api, :expiring, true)
+      token = permanent(shop)
+
+      assert {:ok, ^token} = AuthToken.fetch(shop, @app_name)
+    end
+
+    test "reports reacquisition when the permanent token was already spent", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 400, ~s({"error":"invalid_subject_token"}))
+      end)
+
+      original = permanent(shop)
+
+      capture_log(fn ->
+        assert {:error, :needs_reacquisition} = AuthToken.fetch(shop, @app_name)
+      end)
+
+      assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
+    end
+
+    test "raises a retryable error when the exchange fails before revoking", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 503, "")
+      end)
+
+      original = permanent(shop)
+
+      capture_log(fn ->
+        assert_raise TokenRefreshError, ~r/not revoked/, fn ->
+          AuthToken.fetch(shop, @app_name)
+        end
+      end)
+
+      assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
+    end
+
+    test "raises the unrecoverable error when the exchange returns an unusable pair", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+      respond_with_pair(bypass, Map.delete(fresh_pair(), :refresh_token))
+      permanent(shop)
+
+      assert_raise TokenMigrationError, ~r/incomplete pair/, fn ->
+        AuthToken.fetch(shop, @app_name)
+      end
+    end
+
+    test "raises when the token names an app that is not registered", %{shop: shop} do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+
+      token = %AuthToken{shop_name: shop, app_name: "never-registered", token: "shpat_permanent"}
+      AuthTokenServer.set(token, false)
+
+      assert_raise ArgumentError, ~r/cannot exchange/, fn ->
+        AuthToken.fetch(shop, "never-registered")
+      end
+    end
+
+    test "refreshes an expiring token rather than exchanging it", %{bypass: bypass, shop: shop} do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+      test_pid = self()
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        {:ok, body, conn} = Conn.read_body(conn)
+        send(test_pid, {:body, JSONSerializer.decode!(body)})
+        Conn.resp(conn, 200, JSONSerializer.encode!(fresh_pair()))
+      end)
+
+      cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_current",
+        refresh_token_expires_at: from_now(:timer.hours(24 * 90))
+      )
+
+      assert {:ok, %AuthToken{token: "shpat_refreshed"}} = AuthToken.fetch(shop, @app_name)
+      assert_receive {:body, %{"grant_type" => "refresh_token"}}
+    end
+
+    test "status/2 calls a permanent token usable without exchanging it", %{shop: shop} do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+      permanent(shop)
+
+      assert :ok = AuthToken.status(shop, @app_name)
+      refute_receive :refresh_requested, 100
     end
   end
 
