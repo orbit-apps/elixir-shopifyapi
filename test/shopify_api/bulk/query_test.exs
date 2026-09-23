@@ -1,6 +1,10 @@
 defmodule ShopifyAPI.Bulk.QueryTest do
-  use ExUnit.Case
+  # Not async: shares the public token cache and the global :offline_tokens setting.
+  use ExUnit.Case, async: false
 
+  import ShopifyAPI.TokenConfigSetup
+
+  alias ShopifyAPI.AuthTokenServer
   alias ShopifyAPI.Bulk.Query
 
   @valid_graphql_response %{
@@ -13,6 +17,9 @@ defmodule ShopifyAPI.Bulk.QueryTest do
   @valid_jsonl_response %{val: :foo}
   @graphql_ver "10"
   @graphql_path "/admin/api/#{@graphql_ver}/graphql.json"
+  @app_name "bulk-query-test-app"
+
+  setup :isolate_token_config
 
   setup _context do
     bypass = Bypass.open()
@@ -21,8 +28,12 @@ defmodule ShopifyAPI.Bulk.QueryTest do
 
     token = %ShopifyAPI.AuthToken{
       token: "token",
-      shop_name: "localhost:#{bypass.port}"
+      shop_name: "localhost:#{bypass.port}",
+      app_name: @app_name
     }
+
+    AuthTokenServer.set(token, false)
+    on_exit(fn -> AuthTokenServer.delete(token.shop_name, token.app_name) end)
 
     shop = %ShopifyAPI.Shop{domain: "localhost:#{bypass.port}"}
 
@@ -153,6 +164,90 @@ defmodule ShopifyAPI.Bulk.QueryTest do
 
     assert_raise ShopifyAPI.ShopUnavailableError, fn ->
       Query.exec!(token, "fake_query", options)
+    end
+  end
+
+  describe "token resolution" do
+    # Answers the GraphQL requests with `statuses` in turn, reporting the access token each one
+    # carried to the test process. The cached token is refreshed while answering the first poll,
+    # the second request.
+    defp refresh_during_first_poll(bypass, token, statuses) do
+      test_pid = self()
+      {:ok, counter} = Agent.start_link(fn -> 0 end)
+
+      Bypass.expect(bypass, "POST", @graphql_path, fn conn ->
+        [access_token] = Plug.Conn.get_req_header(conn, "x-shopify-access-token")
+        send(test_pid, {:request, access_token})
+        index = Agent.get_and_update(counter, &{&1, &1 + 1})
+        if index == 1, do: AuthTokenServer.set(%{token | token: "refreshed"}, false)
+
+        body =
+          @valid_graphql_response
+          |> put_in(["data", "currentBulkOperation", "status"], Enum.at(statuses, index))
+          |> put_in(
+            ["data", "bulkOperationCancel"],
+            %{"bulkOperation" => %{"status" => "CANCELED"}, "userErrors" => []}
+          )
+          |> Jason.encode!()
+
+        Plug.Conn.resp(conn, 200, body)
+      end)
+    end
+
+    defp sent_tokens do
+      receive do
+        {:request, access_token} -> [access_token | sent_tokens()]
+      after
+        0 -> []
+      end
+    end
+
+    test "polling sends the token cached at the time of each request", %{
+      bypass: bypass,
+      auth_token: token,
+      options: options
+    } do
+      refresh_during_first_poll(bypass, token, ["CREATED", "RUNNING", "COMPLETED"])
+      options = Keyword.put(options, :max_poll_count, 2)
+
+      assert "here_stuff" = Query.exec!(token, "fake_query", options)
+      assert sent_tokens() == ["token", "token", "refreshed"]
+    end
+
+    test "auto-cancel sends the token cached at the time of each request", %{
+      bypass: bypass,
+      auth_token: token,
+      options: options
+    } do
+      refresh_during_first_poll(bypass, token, ["CREATED", "RUNNING"])
+      options = Keyword.put(options, :auto_cancel, true)
+
+      assert_raise ShopifyAPI.Bulk.TimeoutError, fn ->
+        Query.exec!(token, "fake_query", options)
+      end
+
+      assert sent_tokens() == ["token", "token", "refreshed"]
+    end
+
+    test "raises ShopAuthError when no token is cached", %{auth_token: token, options: options} do
+      AuthTokenServer.delete(token.shop_name, token.app_name)
+
+      assert_raise ShopifyAPI.ShopAuthError, ~r/not_found/, fn ->
+        Query.exec!(token, "fake_query", options)
+      end
+    end
+
+    test "raises ShopAuthError when the cached token needs reacquisition", %{
+      auth_token: token,
+      options: options
+    } do
+      [shop_name: token.shop_name, app_name: token.app_name]
+      |> ShopifyAPI.Test.dead_token()
+      |> AuthTokenServer.set(false)
+
+      assert_raise ShopifyAPI.ShopAuthError, ~r/needs_reacquisition/, fn ->
+        Query.exec!(token, "fake_query", options)
+      end
     end
   end
 
