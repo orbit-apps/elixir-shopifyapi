@@ -38,6 +38,20 @@ defmodule ShopifyAPI.Refresh do
   > Shopify does not document that concurrent refreshes return the same pair. This was measured
   > in CR-2679. Re-verify before the January 2027 cutover.
 
+  ## Other writers
+
+  De-duplication covers this node only. Another application sharing your token storage can
+  refresh or exchange a shop's token too, and its pair never reaches this cache. Refreshing
+  from the stale pair fails once that application has presented its new refresh token, and
+  exchanging a permanent token it already exchanged fails as spent.
+
+  Every entry point except `run/1` therefore calls `ShopifyAPI.AuthTokenServer.reload/2`
+  immediately before refreshing or exchanging, and uses the stored token instead when it has
+  moved on from the one it was handed. That needs the `get` persistence callback; without it
+  the reload is a cache read, and a token changed elsewhere ends in
+  `{:error, :needs_reacquisition}`. A change landing between the reload and the request does
+  too.
+
   ## Failure
 
   `{:error, :needs_reacquisition}` is returned (never retried) when the refresh token is dead,
@@ -79,6 +93,8 @@ defmodule ShopifyAPI.Refresh do
 
   @doc """
   Refreshes a token synchronously, without retrying.
+
+  Refreshes the token it is handed, without first checking storage for a newer one.
 
   Raises `ShopifyAPI.TokenRefreshError` on failure (assumed to be transient) and
   `ShopifyAPI.TokenPersistenceError` if the new pair could not be stored.
@@ -250,10 +266,11 @@ defmodule ShopifyAPI.Refresh do
     exception -> {:raised, exception, __STACKTRACE__}
   end
 
-  # Re-reads the cache first: an exchange that finished between the caller's read and this
-  # claim has already replaced the permanent token, which can no longer be exchanged.
+  # Reloads first: an exchange that finished between the caller's read and this claim, here or
+  # in another application, has already replaced the permanent token, which can no longer be
+  # exchanged.
   defp exchange_unless_replaced(token) do
-    case AuthTokenServer.get(token.shop_name, token.app_name) do
+    case AuthTokenServer.reload(token.shop_name, token.app_name) do
       {:ok, %AuthToken{refresh_token: nil} = cached} -> exchange(cached)
       {:ok, cached} -> {:ok, cached}
       {:error, :not_found} -> exchange(token)
@@ -267,7 +284,7 @@ defmodule ShopifyAPI.Refresh do
       {:ok, _exchanged} = ok ->
         ok
 
-      # Spent by an exchange outside this node, whose pair this cache has no way to load.
+      # Spent by another application, whose pair the reload before this exchange did not find.
       {:error, :invalid_subject_token} ->
         {:error, :needs_reacquisition}
 
@@ -294,12 +311,24 @@ defmodule ShopifyAPI.Refresh do
     end
   end
 
-  # Registers as the in-flight refresh for this shop, then refreshes with retry.
+  # Registers as the in-flight refresh for this shop, then refreshes with retry unless storage
+  # already holds a newer pair.
   defp claim_and_refresh(token) do
     case Registry.register(@registry, key(token), :refreshing) do
       {:ok, _pid} ->
-        Logger.debug("#{__MODULE__} refreshing #{AuthToken.create_key(token)} in the background")
-        with_retry(token, 1)
+        if superseded?(token) do
+          Logger.debug(
+            "#{__MODULE__} #{AuthToken.create_key(token)} was refreshed elsewhere, skipping"
+          )
+
+          :ok
+        else
+          Logger.debug(
+            "#{__MODULE__} refreshing #{AuthToken.create_key(token)} in the background"
+          )
+
+          with_retry(token, 1)
+        end
 
       {:error, {:already_registered, _pid}} ->
         Logger.debug("#{__MODULE__} refresh already in flight for #{AuthToken.create_key(token)}")
@@ -350,7 +379,7 @@ defmodule ShopifyAPI.Refresh do
   end
 
   defp superseded?(token) do
-    case AuthTokenServer.get(token.shop_name, token.app_name) do
+    case AuthTokenServer.reload(token.shop_name, token.app_name) do
       {:ok, cached} -> cached.token != token.token
       {:error, :not_found} -> false
     end
@@ -384,9 +413,10 @@ defmodule ShopifyAPI.Refresh do
     end
   end
 
-  # Re-reads the cache before refreshing, in case another caller already refreshed this token.
+  # Reloads before refreshing, in case another caller or application already refreshed this
+  # token.
   defp use_replacement_or_run(token) do
-    case AuthTokenServer.get(token.shop_name, token.app_name) do
+    case AuthTokenServer.reload(token.shop_name, token.app_name) do
       {:ok, cached} ->
         if cached.token == token.token do
           run(cached)

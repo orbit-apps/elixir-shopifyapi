@@ -108,9 +108,12 @@ defmodule ShopifyAPI.AuthToken do
 
   Returns `{:error, :not_found}` when nothing is cached, and
   `{:error, :needs_reacquisition}` when the token can no longer be renewed — its refresh token
-  has expired, or a permanent token was already spent by another exchange. A new token must
-  then be obtained via OAuth or token exchange. All other failures (assumed to be transient)
-  raise.
+  has expired or been retired, or a permanent token was already spent by another exchange, and
+  storage holds nothing newer. A new token must then be obtained via OAuth or token exchange.
+  All other failures (assumed to be transient) raise.
+
+  Storage is consulted through the `get` persistence callback of `ShopifyAPI.AuthTokenServer`,
+  before any refresh or exchange; see `ShopifyAPI.Refresh`.
 
   ## Examples
 

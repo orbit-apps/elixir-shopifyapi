@@ -359,6 +359,122 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
     end
   end
 
+  # Storage shared with another application, held in an Agent passed as the `get` callback's
+  # configured argument so that background tasks can reach it.
+  defmodule SharedStorage do
+    @moduledoc false
+
+    def get(shop_name, app_name, agent) do
+      case Agent.get(agent, &Map.get(&1, {shop_name, app_name})) do
+        nil -> {:error, :not_found}
+        token -> {:ok, token}
+      end
+    end
+
+    def put(agent, token),
+      do: Agent.update(agent, &Map.put(&1, {token.shop_name, token.app_name}, token))
+  end
+
+  describe "a token changed in storage by another application" do
+    setup %{shop: shop} do
+      storage = start_supervised!({Agent, fn -> %{} end})
+      previous = Application.get_env(:shopify_api, AuthTokenServer)
+
+      Application.put_env(:shopify_api, AuthTokenServer,
+        persistence: [get: {SharedStorage, :get, [storage]}]
+      )
+
+      on_exit(fn ->
+        if previous do
+          Application.put_env(:shopify_api, AuthTokenServer, previous)
+        else
+          Application.delete_env(:shopify_api, AuthTokenServer)
+        end
+      end)
+
+      stored =
+        ShopifyAPI.Test.expiring_token(
+          shop_name: shop,
+          app_name: @app_name,
+          token: "shpat_stored"
+        )
+
+      {:ok, storage: storage, stored: stored}
+    end
+
+    # No Bypass expectation in these tests unless stated: any request to Shopify fails the test.
+
+    test "await_or_exchange/1 uses a stored pair rather than exchanging", %{
+      shop: shop,
+      storage: storage,
+      stored: stored
+    } do
+      permanent = %AuthToken{shop_name: shop, app_name: @app_name, token: "shpat_permanent"}
+      AuthTokenServer.set(permanent, false)
+      SharedStorage.put(storage, stored)
+
+      assert {:ok, ^stored} = Refresh.await_or_exchange(permanent)
+      assert {:ok, ^stored} = AuthTokenServer.get(shop, @app_name)
+    end
+
+    test "await_or_run/1 uses a stored pair rather than refreshing", %{
+      shop: shop,
+      storage: storage,
+      stored: stored
+    } do
+      token = cache(shop)
+      SharedStorage.put(storage, stored)
+
+      assert {:ok, ^stored} = Refresh.await_or_run(token)
+      assert {:ok, ^stored} = AuthTokenServer.get(shop, @app_name)
+    end
+
+    test "await_or_run/1 refreshes when storage has no token", %{bypass: bypass, shop: shop} do
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 200, pair_json())
+      end)
+
+      assert {:ok, %AuthToken{token: "shpat_refreshed"}} = Refresh.await_or_run(cache(shop))
+    end
+
+    test "run_in_background/1 caches a stored pair rather than refreshing", %{
+      shop: shop,
+      storage: storage,
+      stored: stored
+    } do
+      token = cache(shop)
+      SharedStorage.put(storage, stored)
+
+      Refresh.run_in_background(token)
+
+      assert :ok = await_cached(shop, "shpat_stored")
+    end
+
+    test "a background refresh abandons its retry once storage holds a newer pair", %{
+      bypass: bypass,
+      shop: shop,
+      storage: storage,
+      stored: stored
+    } do
+      Application.put_env(:shopify_api, :refresh_retry, attempts: 3, backoff_ms: 1)
+      counter = :counters.new(1, [])
+
+      # The other application refreshes while this one's first attempt fails.
+      Bypass.expect(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        :counters.add(counter, 1, 1)
+        SharedStorage.put(storage, stored)
+        Conn.resp(conn, 503, "")
+      end)
+
+      capture_log(fn ->
+        Refresh.run_in_background(cache(shop))
+        assert :ok = await_cached(shop, "shpat_stored")
+      end)
+
+      assert :counters.get(counter, 1) == 1
+    end
+  end
+
   describe "retry and backoff" do
     test "retries a transient failure and succeeds", %{bypass: bypass, shop: shop} do
       Application.put_env(:shopify_api, :refresh_retry, attempts: 3, backoff_ms: 1)

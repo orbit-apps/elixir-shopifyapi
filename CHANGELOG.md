@@ -1,5 +1,16 @@
 ## Unreleased
 
+- New: `ShopifyAPI.AuthTokenServer`'s `:persistence` takes `get` and `set` callbacks,
+  `persistence: [get: {MyApp.AuthToken, :get, []}, set: {MyApp.AuthToken, :set, []}]`. `get`
+  is called as `get(shop_name, app_name)` and returns `{:ok, token}` or `{:error, :not_found}`.
+  A bare `{module, function, args}` tuple is still accepted as `set`.
+- New: `ShopifyAPI.AuthTokenServer.reload/2` — reads a token back through `get` and caches it.
+  Without a `get` callback it is a cache read.
+- Changed: `ShopifyAPI.Refresh` reloads the token from storage before every refresh and
+  exchange, and uses the stored one when it has moved on. A shop whose token another application
+  refreshed or exchanged no longer ends in `{:error, :needs_reacquisition}`. `Refresh.run/1` is
+  unchanged.
+
 ## 0.17.1
 
 - New: configuration — `:offline_tokens`, one of `:permanent` (the default), `:expiring` or

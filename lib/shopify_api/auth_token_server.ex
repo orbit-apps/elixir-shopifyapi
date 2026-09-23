@@ -4,9 +4,9 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   An offline auth token is written here once, when a shop installs the app, and is read on
   every authenticated request afterwards. This cache sits in front of whatever storage your
-  application uses: configure an `:initializer` to load tokens back at boot and a
-  `:persistence` callback to write them out. Without them the cache is purely in-memory and
-  every token is lost when the application stops.
+  application uses: configure an `:initializer` to load tokens back at boot, and `:persistence`
+  callbacks to write them out and read them back. Without them the cache is purely in-memory
+  and every token is lost when the application stops.
 
   ## Storage model
 
@@ -39,10 +39,13 @@ defmodule ShopifyAPI.AuthTokenServer do
 
       config :shopify_api, ShopifyAPI.AuthTokenServer,
         initializer: {MyApp.AuthToken, :init, []},
-        persistence: {MyApp.AuthToken, :save, []}
+        persistence: [
+          get: {MyApp.AuthToken, :get, []},
+          set: {MyApp.AuthToken, :set, []}
+        ]
 
-  Both keys are optional. Configuration is read on each call rather than cached, so omitting
-  the block entirely — or setting either key to `nil` — disables that half of the behaviour.
+  Every key is optional. Configuration is read on each call rather than cached, so omitting
+  the block entirely — or setting any key to `nil` — disables that part of the behaviour.
 
   ## Initializer
 
@@ -52,7 +55,7 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   It must return an enumerable of `ShopifyAPI.AuthToken` structs. Anything in that enumerable
   which is not a `ShopifyAPI.AuthToken` struct is silently discarded. Tokens loaded this way
-  are not written back out through the persistence callback, and are not checked: a token
+  are not written back out through the `set` callback, and are not checked: a token
   missing part of its credentials is cached as is, where
   `ShopifyAPI.AuthToken.validate_pair/1` would reject it.
 
@@ -62,16 +65,23 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   ## Persistence
 
-  The persistence callback is invoked by `set/2` as
-  `apply(module, function, [key, token | args])` — the cache key first, the token second, and
-  any configured arguments appended.
+  `:persistence` takes two callbacks: `set` writes a token out to your storage, and `get` reads
+  one back. Each is a `{module, function, args}` tuple, with the configured arguments appended
+  after the ones listed below, or a `{module, function}` tuple, called without extras. Both
+  run synchronously, in the calling process.
+
+  A bare tuple in place of the keyword list is taken as `set` alone.
+
+  ### `set`
+
+  Invoked by `set/2` as `apply(module, function, [key, token | args])` — the cache key first,
+  the token second.
 
   The `key` is the string built by `ShopifyAPI.AuthToken.create_key/1`,
   `"shop_name:app_name"`, and not the `{shop_name, app_name}` tuple the table is keyed by.
   Implementations typically ignore it and read `shop_name` and `app_name` off the token.
 
-  The callback runs synchronously, in the calling process — which during installation is
-  Shopify's OAuth redirect.
+  During installation the calling process is Shopify's OAuth redirect.
 
   `set/2` persists *before* it writes to the cache, and treats a failure as fatal: an exception
   from the callback propagates, and an `{:error, _}` return is raised as a
@@ -92,9 +102,28 @@ defmodule ShopifyAPI.AuthTokenServer do
 
   > #### Deletes are never persisted {: .warning}
   >
-  > `delete/2` and `drop_all/0` only clear the cache. Neither calls the persistence callback,
-  > so a token left in your own storage is loaded straight back in by the initializer on the
-  > next restart. Delete it from both.
+  > `delete/2` and `drop_all/0` only clear the cache. Neither calls the `set` callback, so a
+  > token left in your own storage is loaded straight back in by the initializer on the next
+  > restart. Delete it from both.
+
+  ### `get`
+
+  Invoked by `reload/2` as `apply(module, function, [shop_name, app_name | args])`. It returns
+  `{:ok, token}` with the stored `ShopifyAPI.AuthToken` for that shop and app, or
+  `{:error, :not_found}`.
+
+  It exists for storage shared with another writer — typically a second application holding
+  the same shops' tokens, which refreshes or exchanges them itself. Its pairs never pass
+  through this cache, so the cached pair falls behind: its refresh token may already be
+  retired, or its permanent token already exchanged. `ShopifyAPI.Refresh` calls `reload/2`
+  before every refresh and exchange, and uses the stored token when it has moved on.
+
+  An `{:error, _}` return is raised as a `ShopifyAPI.TokenPersistenceError`, with its reason
+  described as for `set`. So is any other return, a token for a different shop or app
+  included. An exception from the callback propagates.
+
+  When this cache is the only writer, storage holds nothing it has not already seen, and `get`
+  costs one read per refresh without changing the outcome.
 
   ### Example
 
@@ -103,21 +132,18 @@ defmodule ShopifyAPI.AuthTokenServer do
       defmodule MyApp.AuthToken do
         alias ShopifyAPI.AuthToken
 
-        def init do
-          Enum.map(MyApp.Repo.all(MyApp.Schema.AuthToken), fn row ->
-            %AuthToken{
-              shop_name: row.shop_name,
-              app_name: row.app_name,
-              token: row.token,
-              plus: row.plus,
-              token_expires_at: row.token_expires_at,
-              refresh_token: row.refresh_token,
-              refresh_token_expires_at: row.refresh_token_expires_at
-            }
-          end)
+        def init, do: Enum.map(MyApp.Repo.all(MyApp.Schema.AuthToken), &to_token/1)
+
+        def get(shop_name, app_name) do
+          clauses = [shop_name: shop_name, app_name: app_name]
+
+          case MyApp.Repo.get_by(MyApp.Schema.AuthToken, clauses) do
+            nil -> {:error, :not_found}
+            row -> {:ok, to_token(row)}
+          end
         end
 
-        def save(_key, %AuthToken{} = token) do
+        def set(_key, %AuthToken{} = token) do
           %MyApp.Schema.AuthToken{}
           |> MyApp.Schema.AuthToken.changeset(Map.from_struct(token))
           |> MyApp.Repo.insert!(
@@ -126,6 +152,18 @@ defmodule ShopifyAPI.AuthTokenServer do
                [:token, :plus, :token_expires_at, :refresh_token, :refresh_token_expires_at]},
             conflict_target: [:shop_name, :app_name]
           )
+        end
+
+        defp to_token(row) do
+          %AuthToken{
+            shop_name: row.shop_name,
+            app_name: row.app_name,
+            token: row.token,
+            plus: row.plus,
+            token_expires_at: row.token_expires_at,
+            refresh_token: row.refresh_token,
+            refresh_token_expires_at: row.refresh_token_expires_at
+          }
         end
       end
 
@@ -139,8 +177,8 @@ defmodule ShopifyAPI.AuthTokenServer do
   A callback does not have to persist everything it is handed. Matching on `app_name` routes
   several apps' tokens to different storage:
 
-      def save(_key, %AuthToken{app_name: "my-companion-app"} = token), do: store_companion(token)
-      def save(_key, token), do: Logger.info("Not persisting a token for \#{token.app_name}")
+      def set(_key, %AuthToken{app_name: "my-companion-app"} = token), do: store_companion(token)
+      def set(_key, token), do: Logger.info("Not persisting a token for \#{token.app_name}")
 
   ## Handling app uninstalls
 
@@ -249,6 +287,38 @@ defmodule ShopifyAPI.AuthTokenServer do
   end
 
   @doc """
+  Reads a shop's token for an app back from storage, and caches it.
+
+  Calls the `get` persistence callback, and writes the token it returns to the cache without
+  persisting it, since it came out of storage. When storage has no token, the cache is left as
+  it is and `{:error, :not_found}` is returned.
+
+  With no `get` callback configured this is `get/2`, a cache read. `ShopifyAPI.Refresh` calls
+  it before every refresh and exchange, so a pair written to storage by another application is
+  used rather than refreshed over. See the module documentation on persistence.
+
+  Raises `ShopifyAPI.TokenPersistenceError` when the callback returns anything other than a
+  token for this shop and app or `{:error, :not_found}`. An exception raised inside the callback
+  propagates untouched.
+
+  ## Examples
+
+      # Assuming no `get` callback is configured
+      iex> token = %ShopifyAPI.AuthToken{shop_name: "reload.myshopify.com", app_name: "my-app"}
+      iex> ShopifyAPI.AuthTokenServer.set(token, false)
+      iex> ShopifyAPI.AuthTokenServer.reload("reload.myshopify.com", "my-app")
+      {:ok, token}
+
+  """
+  @spec reload(String.t(), String.t()) :: AuthToken.ok_t() | AuthToken.not_found()
+  def reload(shop, app) when is_binary(shop) and is_binary(app) do
+    case callback(:get) do
+      nil -> get(shop, app)
+      get_callback -> get_callback |> invoke([shop, app]) |> cache_loaded(shop, app)
+    end
+  end
+
+  @doc """
   Returns every cached token belonging to a shop, across all apps.
 
   The result is a bare list rather than an ok tuple, and is empty when the shop has no cached
@@ -353,15 +423,49 @@ defmodule ShopifyAPI.AuthTokenServer do
     end
   end
 
+  # The `:get` or `:set` persistence callback, or nil when it is not configured. A bare tuple in
+  # place of the keyword list is the `:set` callback.
+  defp callback(kind) do
+    case Config.lookup(__MODULE__, :persistence) do
+      callbacks when is_list(callbacks) -> Keyword.get(callbacks, kind)
+      callback when is_tuple(callback) and kind == :set -> callback
+      _ -> nil
+    end
+  end
+
+  defp invoke({module, function, args}, leading), do: apply(module, function, leading ++ args)
+  defp invoke({module, function}, leading), do: apply(module, function, leading)
+
+  defp cache_loaded({:ok, %AuthToken{shop_name: shop, app_name: app} = token}, shop, app) do
+    set(token, false)
+    {:ok, token}
+  end
+
+  defp cache_loaded({:error, :not_found} = not_found, _shop, _app), do: not_found
+
+  defp cache_loaded({:error, reason}, shop, app) do
+    raise ShopifyAPI.TokenPersistenceError,
+      message:
+        "Could not load auth token for #{AuthToken.create_key(shop, app)}: " <>
+          "callback returned {:error, #{describe_reason(reason)}}"
+  end
+
+  # The return is not quoted: a token for the wrong shop carries its credentials.
+  defp cache_loaded(_other, shop, app) do
+    raise ShopifyAPI.TokenPersistenceError,
+      message:
+        "Could not load auth token for #{AuthToken.create_key(shop, app)}: callback returned " <>
+          "neither {:ok, token} for this shop and app nor {:error, :not_found}"
+  end
+
   # Persists an AuthToken via the configured callback, raising on failure.
   defp persist!(token) when is_struct(token, AuthToken) do
     key = AuthToken.create_key(token)
 
     result =
-      case Config.lookup(__MODULE__, :persistence) do
-        {module, function, args} -> apply(module, function, [key, token | args])
-        {module, function} -> apply(module, function, [key, token])
-        _ -> :ok
+      case callback(:set) do
+        nil -> :ok
+        set_callback -> invoke(set_callback, [key, token])
       end
 
     case result do

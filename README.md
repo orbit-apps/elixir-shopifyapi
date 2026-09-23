@@ -49,7 +49,10 @@ persistence hook. See [Auth Tokens](#auth-tokens) for what those hooks are hande
 ```elixir
 config :shopify_api, ShopifyAPI.AuthTokenServer,
   initializer: {MyApp.AuthToken, :init, []},
-  persistence: {MyApp.AuthToken, :save, []}
+  persistence: [
+    get: {MyApp.AuthToken, :get, []},
+    set: {MyApp.AuthToken, :set, []}
+  ]
 config :shopify_api, ShopifyAPI.AppServer,
   initializer: {MyApp.ShopifyApp, :init, []},
   persistence: {MyApp.ShopifyApp, :save, []}
@@ -110,9 +113,11 @@ end
 that authenticate every REST and GraphQL call. A token is written when a shop
 installs your app and read on each request afterwards, so the cache needs to
 survive restarts: the `initializer` hook loads tokens back in at boot, and the
-`persistence` hook writes them out as they arrive.
+`persistence` hook's `set` writes them out as they arrive. Its `get` reads a
+single token back before each refresh, for when another application shares
+the same storage and may have refreshed it first.
 
-Both hooks are optional, and without them tokens live only in memory and are
+All hooks are optional, and without them tokens live only in memory and are
 lost when the application stops.
 
 Read tokens back with `ShopifyAPI.AuthToken.fetch/2`, which checks expiry and
