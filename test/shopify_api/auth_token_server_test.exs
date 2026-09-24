@@ -58,6 +58,134 @@ defmodule ShopifyAPI.AuthTokenServerTest do
     )
   end
 
+  defmodule LoadDouble do
+    @moduledoc false
+
+    alias ShopifyAPI.AuthToken
+
+    def get("raising.myshopify.com", _app_name), do: raise(ArgumentError, "storage is down")
+    def get("absent.myshopify.com", _app_name), do: {:error, :not_found}
+
+    def get(shop_name, app_name) do
+      send(self(), {:loaded, shop_name, app_name})
+      {:ok, %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_stored"}}
+    end
+
+    def get_with_arg(shop_name, app_name, tag) do
+      send(self(), {:loaded, shop_name, app_name, tag})
+      {:ok, %AuthToken{shop_name: shop_name, app_name: app_name, token: "shpat_stored"}}
+    end
+  end
+
+  defp persistence(callbacks),
+    do: Application.put_env(:shopify_api, AuthTokenServer, persistence: callbacks)
+
+  describe "persistence configuration" do
+    test "bare tuple works as the save callback" do
+      persistence({PersistenceDouble, :save, []})
+
+      assert :ok = AuthTokenServer.set(token("bare-mfa.myshopify.com"))
+      assert_received {:persisted, "bare-mfa.myshopify.com:persistence-test-app", _}
+    end
+
+    test "bare 2-tuple works as the save callback" do
+      persistence({PersistenceDouble, :save})
+
+      assert :ok = AuthTokenServer.set(token("bare-mf.myshopify.com"))
+      assert_received {:persisted, "bare-mf.myshopify.com:persistence-test-app", _}
+    end
+
+    test "bare tuple is not used as the load callback" do
+      persistence({LoadDouble, :get, []})
+
+      assert {:error, :not_found} = AuthTokenServer.reload("bare-get.myshopify.com", "any-app")
+      refute_received {:loaded, _, _}
+    end
+
+    test "keyword list uses save callback" do
+      persistence(save: {PersistenceDouble, :save, []})
+
+      assert :ok = AuthTokenServer.set(token("keyword-save.myshopify.com"))
+      assert_received {:persisted, "keyword-save.myshopify.com:persistence-test-app", _}
+    end
+
+    test "keyword list uses load callback" do
+      persistence(load: {LoadDouble, :get})
+
+      assert {:ok, %AuthToken{token: "shpat_stored"}} =
+               AuthTokenServer.reload("keyword-load.myshopify.com", "persistence-test-app")
+
+      assert_received {:loaded, "keyword-load.myshopify.com", "persistence-test-app"}
+    end
+
+    test "nil persistence disables both callbacks" do
+      persistence(nil)
+
+      assert :ok = AuthTokenServer.set(token("unconfigured.myshopify.com"))
+      refute_received {:persisted, _, _}
+    end
+  end
+
+  describe "reload/2 without a load callback" do
+    test "returns the cached token" do
+      token = token("reload-cached.myshopify.com")
+      AuthTokenServer.set(token, false)
+
+      assert {:ok, ^token} =
+               AuthTokenServer.reload("reload-cached.myshopify.com", "persistence-test-app")
+    end
+
+    test "returns not found when nothing is cached" do
+      assert {:error, :not_found} =
+               AuthTokenServer.reload("reload-uncached.myshopify.com", "persistence-test-app")
+    end
+  end
+
+  describe "reload/2 with a load callback" do
+    setup do
+      persistence(load: {LoadDouble, :get}, save: {PersistenceDouble, :save})
+      :ok
+    end
+
+    test "returns the stored token and caches it without persisting" do
+      AuthTokenServer.set(token("stored.myshopify.com", token: "shpat_cached"), false)
+
+      assert {:ok, %AuthToken{token: "shpat_stored"}} =
+               AuthTokenServer.reload("stored.myshopify.com", "persistence-test-app")
+
+      assert {:ok, %AuthToken{token: "shpat_stored"}} =
+               AuthTokenServer.get("stored.myshopify.com", "persistence-test-app")
+
+      refute_received {:persisted, _, _}
+    end
+
+    test "caches the stored token when nothing was cached" do
+      assert {:ok, %AuthToken{token: "shpat_stored"}} =
+               AuthTokenServer.reload("fresh.myshopify.com", "persistence-test-app")
+
+      assert {:ok, %AuthToken{token: "shpat_stored"}} =
+               AuthTokenServer.get("fresh.myshopify.com", "persistence-test-app")
+    end
+
+    test "appends configured arguments to the callback" do
+      persistence(load: {LoadDouble, :get_with_arg, [:tagged]})
+
+      AuthTokenServer.reload("args.myshopify.com", "persistence-test-app")
+      assert_received {:loaded, "args.myshopify.com", "persistence-test-app", :tagged}
+    end
+
+    test "returns not found when storage has no token" do
+      assert {:error, :not_found} =
+               AuthTokenServer.reload("absent.myshopify.com", "persistence-test-app")
+    end
+
+    test "lets an exception from the callback propagate" do
+      assert_raise ArgumentError, "storage is down", fn ->
+        AuthTokenServer.reload("raising.myshopify.com", "persistence-test-app")
+      end
+    end
+  end
+
   describe "set/2 persistence" do
     test "calls the callback with the string key and the token" do
       token = token("persists.myshopify.com")
