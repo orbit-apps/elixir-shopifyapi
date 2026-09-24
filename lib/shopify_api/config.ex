@@ -30,6 +30,19 @@ defmodule ShopifyAPI.Config do
   @spec expiring?() :: boolean()
   def expiring?, do: offline_tokens() != :permanent
 
+  @spec auth_token_persistence(:load | :save) :: {module(), atom(), list()} | nil
+  def auth_token_persistence(key) when key in [:load, :save] do
+    case lookup(ShopifyAPI.AuthTokenServer, :persistence) do
+      callbacks when is_list(callbacks) -> normalize_mfa(callbacks[key])
+      mfa when is_tuple(mfa) and key == :save -> normalize_mfa(mfa)
+      _ -> nil
+    end
+  end
+
+  defp normalize_mfa({module, function, args}), do: {module, function, args}
+  defp normalize_mfa({module, function}), do: {module, function, []}
+  defp normalize_mfa(_), do: nil
+
   @spec app_name() :: String.t() | nil
   @spec app_name(Plug.Conn.t(), keyword()) :: String.t() | nil
   def app_name, do: lookup(:app_name)

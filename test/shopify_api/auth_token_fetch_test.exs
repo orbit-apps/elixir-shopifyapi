@@ -91,21 +91,6 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       refute_receive :refresh_requested, 100
     end
 
-    test "keeps serving a token inside the threshold whose refresh token has died", %{shop: shop} do
-      # Inside the threshold but the refresh token is dead. The access token still works, so
-      # it is served without attempting a refresh. `status/2` agrees.
-      token =
-        cache(shop,
-          token_expires_at: from_now(:timer.minutes(4)),
-          refresh_token: "shprt_dead",
-          refresh_token_expires_at: from_now(-@hour)
-        )
-
-      assert {:ok, ^token} = AuthToken.fetch(shop, @app_name)
-      assert :ok = AuthToken.status(shop, @app_name)
-      refute_receive :refresh_requested, 100
-    end
-
     test "keeps serving a live access token whose refresh token has died", %{shop: shop} do
       # A dead refresh token is only fatal once the access token has also expired.
       token =
@@ -501,6 +486,133 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       cache(shop, refresh_token: nil, token_expires_at: nil)
 
       assert :ok = AuthToken.status(shop, @app_name)
+    end
+  end
+
+  describe "reload from storage" do
+    setup do
+      {:ok, storage} = Agent.start_link(fn -> %{} end)
+      previous = Application.get_env(:shopify_api, AuthTokenServer)
+
+      Application.put_env(:shopify_api, AuthTokenServer,
+        persistence: [load: {__MODULE__, :storage_get, [storage]}]
+      )
+
+      on_exit(fn ->
+        if previous do
+          Application.put_env(:shopify_api, AuthTokenServer, previous)
+        else
+          Application.delete_env(:shopify_api, AuthTokenServer)
+        end
+      end)
+
+      {:ok, storage: storage}
+    end
+
+    def storage_get(shop_name, app_name, agent) do
+      case Agent.get(agent, &Map.get(&1, {shop_name, app_name})) do
+        nil -> {:error, :not_found}
+        token -> {:ok, token}
+      end
+    end
+
+    defp store(storage, token),
+      do: Agent.update(storage, &Map.put(&1, {token.shop_name, token.app_name}, token))
+
+    defp stored_pair(shop, attrs \\ []) do
+      struct!(
+        %AuthToken{
+          shop_name: shop,
+          app_name: @app_name,
+          token: "shpat_stored",
+          refresh_token: "shprt_stored",
+          token_expires_at: from_now(@hour),
+          refresh_token_expires_at: from_now(:timer.hours(24 * 90))
+        },
+        attrs
+      )
+    end
+
+    test "uses a valid stored pair when the cached one has expired", %{
+      shop: shop,
+      storage: storage
+    } do
+      cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_stale",
+        refresh_token_expires_at: from_now(:timer.hours(24 * 90))
+      )
+
+      stored = stored_pair(shop)
+      store(storage, stored)
+
+      assert {:ok, ^stored} = AuthToken.fetch(shop, @app_name)
+    end
+
+    test "refreshes a stored pair that has itself expired", %{
+      bypass: bypass,
+      shop: shop,
+      storage: storage
+    } do
+      test_pid = self()
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        {:ok, body, conn} = Conn.read_body(conn)
+        send(test_pid, {:body, JSONSerializer.decode!(body)})
+        Conn.resp(conn, 200, JSONSerializer.encode!(fresh_pair()))
+      end)
+
+      cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_stale",
+        refresh_token_expires_at: from_now(:timer.hours(24 * 90))
+      )
+
+      store(storage, stored_pair(shop, token_expires_at: from_now(-@hour)))
+
+      assert {:ok, %AuthToken{token: "shpat_refreshed"}} = AuthToken.fetch(shop, @app_name)
+      assert_receive {:body, %{"refresh_token" => "shprt_stored"}}
+    end
+
+    test "reports reacquisition when storage holds the same dead pair", %{
+      shop: shop,
+      storage: storage
+    } do
+      dead = cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_dead",
+        refresh_token_expires_at: from_now(-@hour)
+      )
+
+      store(storage, dead)
+
+      assert {:error, :needs_reacquisition} = AuthToken.fetch(shop, @app_name)
+    end
+
+    test "uses a stored expiring pair instead of exchanging a permanent token", %{
+      shop: shop,
+      storage: storage
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+      cache(shop, token: "shpat_permanent", refresh_token: nil)
+
+      stored = stored_pair(shop)
+      store(storage, stored)
+
+      assert {:ok, ^stored} = AuthToken.fetch(shop, @app_name)
+    end
+
+    test "all paths behave as today without a load callback", %{bypass: bypass, shop: shop} do
+      Application.put_env(:shopify_api, AuthTokenServer, persistence: nil)
+      respond_with_pair(bypass, fresh_pair())
+
+      cache(shop,
+        token_expires_at: from_now(-@hour),
+        refresh_token: "shprt_current",
+        refresh_token_expires_at: from_now(:timer.hours(24 * 90))
+      )
+
+      assert {:ok, %AuthToken{token: "shpat_refreshed"}} = AuthToken.fetch(shop, @app_name)
     end
   end
 

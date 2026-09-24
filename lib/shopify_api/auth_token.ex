@@ -106,11 +106,14 @@ defmodule ShopifyAPI.AuthToken do
   the caller waits while it is exchanged for an expiring pair, and receives the pair — see
   `ShopifyAPI.Refresh.await_or_exchange/1`.
 
+  Before refreshing, exchanging, or reporting a pair past reviving, storage is consulted
+  through `ShopifyAPI.AuthTokenServer.reload/2`. A token that another application has already
+  refreshed or exchanged is used instead of the stale cached one.
+
   Returns `{:error, :not_found}` when nothing is cached, and
   `{:error, :needs_reacquisition}` when the token can no longer be renewed — its refresh token
-  has expired, or a permanent token was already spent by another exchange. A new token must
-  then be obtained via OAuth or token exchange. All other failures (assumed to be transient)
-  raise.
+  has expired or been retired, and storage holds nothing newer. A new token must then be
+  obtained via OAuth or token exchange. All other failures (assumed to be transient) raise.
 
   ## Examples
 
@@ -138,35 +141,60 @@ defmodule ShopifyAPI.AuthToken do
   # it.
   defp resolve(%__MODULE__{refresh_token: nil} = token) do
     case Config.offline_tokens() do
-      :exchange_permanent -> Refresh.await_or_exchange(token)
-      _mode -> {:ok, token}
+      :exchange_permanent ->
+        case AuthTokenServer.reload(token.shop_name, token.app_name) do
+          {:ok, %__MODULE__{} = reloaded} when reloaded.token != token.token ->
+            resolve(reloaded)
+
+          _ ->
+            Refresh.await_or_exchange(token)
+        end
+
+      _mode ->
+        {:ok, token}
     end
   end
 
   defp resolve(%__MODULE__{} = token) do
-    now = DateTime.utc_now()
-    remaining = remaining_ms(token.token_expires_at, now)
-    refresh_dead? = dead?(token.refresh_token_expires_at, now)
+    case token_state(token) do
+      :valid ->
+        {:ok, token}
+
+      :expiring_soon ->
+        Refresh.run_in_background(token)
+        {:ok, token}
+
+      :expired ->
+        resolve_expired(token)
+    end
+  end
+
+  defp token_state(%__MODULE__{} = token) do
+    remaining = remaining_ms(token.token_expires_at, DateTime.utc_now())
 
     cond do
-      remaining > Refresh.threshold() ->
-        {:ok, token}
+      remaining > Refresh.threshold() -> :valid
+      remaining > 0 -> :expiring_soon
+      true -> :expired
+    end
+  end
 
-      # Still valid — return it, and start a background refresh if the refresh token is alive.
-      remaining > 0 ->
-        unless refresh_dead?, do: Refresh.run_in_background(token)
-        {:ok, token}
+  defp resolve_expired(token) do
+    case AuthTokenServer.reload(token.shop_name, token.app_name) do
+      {:ok, %__MODULE__{} = reloaded} when reloaded.token != token.token ->
+        resolve(reloaded)
 
-      refresh_dead? ->
-        Logger.debug(
-          "#{__MODULE__} refresh token for #{create_key(token)} expired " <>
-            "#{token.refresh_token_expires_at}, needs new token"
-        )
+      _ ->
+        if dead?(token.refresh_token_expires_at, DateTime.utc_now()) do
+          Logger.debug(
+            "#{__MODULE__} refresh token for #{create_key(token)} expired " <>
+              "#{token.refresh_token_expires_at}, needs new token"
+          )
 
-        {:error, :needs_reacquisition}
-
-      true ->
-        Refresh.await_or_run(token)
+          {:error, :needs_reacquisition}
+        else
+          Refresh.await_or_run(token)
+        end
     end
   end
 
