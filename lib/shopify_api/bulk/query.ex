@@ -69,9 +69,25 @@ defmodule ShopifyAPI.Bulk.Query do
     #   }
     # }
 
-    case ShopifyAPI.graphql_request(token, query, 1) do
+    case graphql_request(token, query, 1) do
       {:ok, %{response: %{"bulkOperationCancel" => resp}}} -> {:ok, resp}
       error -> error
+    end
+  end
+
+  @doc false
+  # Returns the cached token for the shop and app, refreshing it if needed. Raises
+  # `ShopifyAPI.ShopAuthError` when there is no token to use.
+  @spec current_token!(String.t(), String.t()) :: AuthToken.t()
+  def current_token!(myshopify_domain, app_name) do
+    case AuthToken.fetch(myshopify_domain, app_name) do
+      {:ok, token} ->
+        token
+
+      {:error, reason} ->
+        identifier = %{shop_name: myshopify_domain, app_name: app_name}
+        Telemetry.send(@log_module, identifier, {:error, :shop_auth, reason})
+        raise(ShopifyAPI.ShopAuthError, "Shop: #{myshopify_domain}, #{reason}")
     end
   end
 
@@ -87,7 +103,7 @@ defmodule ShopifyAPI.Bulk.Query do
       }
     """
 
-    case ShopifyAPI.graphql_request(token, query, 1) do
+    case graphql_request(token, query, 1) do
       {:ok, %{response: %{"node" => %{"url" => url}}}} -> url
       error -> raise_error!(error, token)
     end
@@ -105,7 +121,7 @@ defmodule ShopifyAPI.Bulk.Query do
   @spec async_exec!(AuthToken.t(), String.t(), Keyword.t()) :: {:ok, String.t()}
   def async_exec!(%AuthToken{} = token, query, opts \\ []) do
     with bulk_query <- bulk_query_string(query, opts),
-         {:ok, resp} <- ShopifyAPI.graphql_request(token, bulk_query, 10),
+         {:ok, resp} <- graphql_request(token, bulk_query, 10),
          :ok <- handle_errors(resp),
          bulk_query_id <- get_in(resp.response, ["bulkOperationRunQuery", "bulkOperation", "id"]) do
       {:ok, bulk_query_id}
@@ -206,7 +222,7 @@ defmodule ShopifyAPI.Bulk.Query do
   @spec status(AuthToken.t()) :: {:ok, status_response()} | {:error, any()}
   def status(%AuthToken{} = token) do
     token
-    |> ShopifyAPI.graphql_request(@bulk_status_query, 1)
+    |> graphql_request(@bulk_status_query, 1)
     |> case do
       {:ok, %{response: %{"currentBulkOperation" => response}}} ->
         {:ok, response}
@@ -214,6 +230,14 @@ defmodule ShopifyAPI.Bulk.Query do
       {:error, _} = error ->
         error
     end
+  end
+
+  # A bulk operation can outlive the token it started with, so every request sends the token
+  # currently cached for the shop and app rather than the one passed in.
+  defp graphql_request(%AuthToken{} = token, query, estimated_cost) do
+    token.shop_name
+    |> current_token!(token.app_name)
+    |> ShopifyAPI.graphql_request(query, estimated_cost)
   end
 
   defp handle_errors(resp) do

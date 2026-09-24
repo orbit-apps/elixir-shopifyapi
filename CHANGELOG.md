@@ -1,5 +1,15 @@
 ## Unreleased
 
+- BREAKING: `ShopifyAPI.Bulk` and `ShopifyAPI.Bulk.Query` look up the cached token with
+  `ShopifyAPI.AuthToken.fetch/2` before every request, rather than sending the token they were
+  given. A bulk operation can now outlive an expiring token, and a refresh partway through is
+  picked up by the next poll. A passed `%AuthToken{}` only identifies the shop and app, so its
+  pair must be cached: when `fetch/2` returns `{:error, :not_found}` or
+  `{:error, :needs_reacquisition}`, bulk raises `ShopifyAPI.ShopAuthError`.
+- New: `ShopifyAPI.Bulk.process!/4`, `process_stream!/4` and `process_stream_from_id!/3` take a
+  myshopify domain and app name instead of a token. `process!/3` and `process_stream!/3` also
+  accept `(myshopify_domain, app_name, query)`.
+
 ## 0.17.1
 
 - New: configuration — `:offline_tokens`, one of `:permanent` (the default), `:expiring` or
