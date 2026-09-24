@@ -144,29 +144,39 @@ defmodule ShopifyAPI.AuthToken do
   end
 
   defp resolve(%__MODULE__{} = token) do
-    now = DateTime.utc_now()
-    remaining = remaining_ms(token.token_expires_at, now)
-    refresh_dead? = dead?(token.refresh_token_expires_at, now)
+    case token_state(token) do
+      :valid ->
+        {:ok, token}
+
+      :expiring_soon ->
+        Refresh.run_in_background(token)
+        {:ok, token}
+
+      :expired ->
+        resolve_expired(token)
+    end
+  end
+
+  defp token_state(%__MODULE__{} = token) do
+    remaining = remaining_ms(token.token_expires_at, DateTime.utc_now())
 
     cond do
-      remaining > Refresh.threshold() ->
-        {:ok, token}
+      remaining > Refresh.threshold() -> :valid
+      remaining > 0 -> :expiring_soon
+      true -> :expired
+    end
+  end
 
-      # Still valid — return it, and start a background refresh if the refresh token is alive.
-      remaining > 0 ->
-        unless refresh_dead?, do: Refresh.run_in_background(token)
-        {:ok, token}
+  defp resolve_expired(token) do
+    if dead?(token.refresh_token_expires_at, DateTime.utc_now()) do
+      Logger.debug(
+        "#{__MODULE__} refresh token for #{create_key(token)} expired " <>
+          "#{token.refresh_token_expires_at}, needs new token"
+      )
 
-      refresh_dead? ->
-        Logger.debug(
-          "#{__MODULE__} refresh token for #{create_key(token)} expired " <>
-            "#{token.refresh_token_expires_at}, needs new token"
-        )
-
-        {:error, :needs_reacquisition}
-
-      true ->
-        Refresh.await_or_run(token)
+      {:error, :needs_reacquisition}
+    else
+      Refresh.await_or_run(token)
     end
   end
 

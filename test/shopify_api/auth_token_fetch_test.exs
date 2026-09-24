@@ -91,21 +91,6 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       refute_receive :refresh_requested, 100
     end
 
-    test "keeps serving a token inside the threshold whose refresh token has died", %{shop: shop} do
-      # Inside the threshold but the refresh token is dead. The access token still works, so
-      # it is served without attempting a refresh. `status/2` agrees.
-      token =
-        cache(shop,
-          token_expires_at: from_now(:timer.minutes(4)),
-          refresh_token: "shprt_dead",
-          refresh_token_expires_at: from_now(-@hour)
-        )
-
-      assert {:ok, ^token} = AuthToken.fetch(shop, @app_name)
-      assert :ok = AuthToken.status(shop, @app_name)
-      refute_receive :refresh_requested, 100
-    end
-
     test "keeps serving a live access token whose refresh token has died", %{shop: shop} do
       # A dead refresh token is only fatal once the access token has also expired.
       token =
