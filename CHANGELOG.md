@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.18.0
+
 - BREAKING: `ShopifyAPI.Bulk` and `ShopifyAPI.Bulk.Query` look up the cached token with
   `ShopifyAPI.AuthToken.fetch/2` before every request, rather than sending the token they were
   given. A bulk operation can now outlive an expiring token, and a refresh partway through is
@@ -9,6 +11,14 @@
 - New: `ShopifyAPI.Bulk.process!/4`, `process_stream!/4` and `process_stream_from_id!/3` take a
   myshopify domain and app name instead of a token. `process!/3` and `process_stream!/3` also
   accept `(myshopify_domain, app_name, query)`.
+- New: configuration — `ShopifyAPI.AuthTokenServer`'s `:persistence` also accepts
+  `[load: mfa, save: mfa]`. The existing single `{module, function, args}` is still the `save`
+  callback. `load` is called as `apply(module, function, [shop_name, app_name | args])` and
+  returns `{:ok, token}` or `{:error, :not_found}`.
+- New: `ShopifyAPI.AuthTokenServer.reload/2` reads a token back through `load` and caches it,
+  falling back to the cache when no `load` is configured. `ShopifyAPI.AuthToken.fetch/2` calls
+  it before every refresh, exchange and reacquisition decision, so a pair refreshed by another
+  application sharing the same storage is picked up rather than overwritten.
 
 ## 0.17.1
 
