@@ -253,7 +253,7 @@ ShopifyAPI.AuthTokenServer.all()
     {:ok, _migrated} -> :ok
     {:error, :already_expiring} -> :ok
     {:error, :invalid_subject_token} -> flag_for_reacquisition(token)
-    {:error, :failed_migrating_offline_token} -> retry_later(token)
+    {:error, {:failed_migrating_offline_token, failure}} -> retry_later(token, failure)
   end
 end)
 ```
