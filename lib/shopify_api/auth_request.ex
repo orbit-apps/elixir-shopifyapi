@@ -42,6 +42,12 @@ defmodule ShopifyAPI.AuthRequest do
 
   @headers [{"Content-Type", "application/json"}, {"Accept", "application/json"}]
 
+  @typedoc """
+  Why a migration exchange failed before Shopify revoked the permanent token: the status and
+  body of Shopify's response, or the `HTTPoison.Error` reason when no response arrived.
+  """
+  @type migration_failure :: %{status: non_neg_integer(), body: String.t()} | %{reason: term()}
+
   @doc """
   Exchanges an OAuth authorization code for an access token.
 
@@ -218,8 +224,10 @@ defmodule ShopifyAPI.AuthRequest do
     - `{:error, :invalid_subject_token}` — Shopify rejected the subject token as already spent
       (`400 invalid_subject_token`). The shop was migrated already, by an earlier run or another
       writer, so a re-run skips it cleanly.
-    - `{:error, :failed_migrating_offline_token}` — the exchange failed for another reason
-      before the old token was revoked. Safe to retry.
+    - `{:error, {:failed_migrating_offline_token, failure}}` — the exchange failed for another
+      reason before the old token was revoked. Safe to retry. `failure` is a
+      `t:migration_failure/0`: Shopify's status and body, or the connection error when Shopify
+      never answered.
 
   Raises `ShopifyAPI.TokenMigrationError` when the exchange succeeds but its pair cannot be
   stored or is unusable — see above.
@@ -230,7 +238,8 @@ defmodule ShopifyAPI.AuthRequest do
   """
   @spec migrate_offline_access_token(App.t(), AuthToken.t()) ::
           AuthToken.ok_t()
-          | {:error, :already_expiring | :invalid_subject_token | :failed_migrating_offline_token}
+          | {:error, :already_expiring | :invalid_subject_token}
+          | {:error, {:failed_migrating_offline_token, migration_failure()}}
   def migrate_offline_access_token(_app, %AuthToken{refresh_token: refresh_token})
       when not is_nil(refresh_token),
       do: {:error, :already_expiring}
@@ -278,13 +287,11 @@ defmodule ShopifyAPI.AuthRequest do
 
           {:error, :invalid_subject_token}
         else
-          Logger.error("error migrating token #{inspect(sanitize_for_logging(err))}")
-          {:error, :failed_migrating_offline_token}
+          migration_failed(err)
         end
 
       err ->
-        Logger.error("error migrating token #{inspect(sanitize_for_logging(err))}")
-        {:error, :failed_migrating_offline_token}
+        migration_failed(err)
     end
   end
 
@@ -421,6 +428,14 @@ defmodule ShopifyAPI.AuthRequest do
                     "locked out until it reinstalls"
               ),
               __STACKTRACE__
+  end
+
+  # A failure before the exchange succeeded, so the permanent token is intact. The sanitized
+  # result is returned as well as logged, so a caller can tell a refused exchange from an outage.
+  defp migration_failed(err) do
+    failure = sanitize_for_logging(err)
+    Logger.error("error migrating token #{inspect(failure)}")
+    {:error, {:failed_migrating_offline_token, failure}}
   end
 
   # Whether a token-endpoint error body is a spent subject token, the signal that a shop has

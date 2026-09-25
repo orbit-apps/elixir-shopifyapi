@@ -271,11 +271,11 @@ defmodule ShopifyAPI.Refresh do
       {:error, :invalid_subject_token} ->
         {:error, :needs_reacquisition}
 
-      {:error, :failed_migrating_offline_token} ->
+      {:error, {:failed_migrating_offline_token, failure}} ->
         raise ShopifyAPI.TokenRefreshError,
           message:
-            "Exchanging the permanent token for #{AuthToken.create_key(token)} failed; it was " <>
-              "not revoked, so a retry is safe"
+            "Exchanging the permanent token for #{AuthToken.create_key(token)} failed " <>
+              "(#{inspect(failure)}); it was not revoked, so a retry is safe"
     end
   end
 

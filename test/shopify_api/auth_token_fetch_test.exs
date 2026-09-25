@@ -338,15 +338,19 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
 
       Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
-        Conn.resp(conn, 503, "")
+        Conn.resp(conn, 503, "upstream unavailable")
       end)
 
       original = permanent(shop)
 
       capture_log(fn ->
-        assert_raise TokenRefreshError, ~r/not revoked/, fn ->
-          AuthToken.fetch(shop, @app_name)
-        end
+        error =
+          assert_raise TokenRefreshError, ~r/not revoked/, fn ->
+            AuthToken.fetch(shop, @app_name)
+          end
+
+        assert error.message =~ "status: 503"
+        assert error.message =~ "upstream unavailable"
       end)
 
       assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)

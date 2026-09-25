@@ -262,22 +262,36 @@ defmodule ShopifyAPI.AuthRequestTest do
       assert log =~ "already migrated"
     end
 
-    test "returns :failed_migrating_offline_token for other exchange failures", %{
+    test "returns Shopify's status and body for other exchange failures", %{
       bypass: bypass,
       shop: shop
     } do
       Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
-        Conn.resp(conn, 500, "")
+        Conn.resp(conn, 500, ~s({"errors":"Internal Server Error"}))
       end)
 
       log =
         capture_log(fn ->
-          assert {:error, :failed_migrating_offline_token} =
+          assert {:error,
+                  {:failed_migrating_offline_token,
+                   %{status: 500, body: ~s({"errors":"Internal Server Error"})}}} =
                    AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
         end)
 
       assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
       assert log =~ "error migrating token"
+    end
+
+    test "returns the connection error when Shopify never answers", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Bypass.down(bypass)
+
+      capture_log(fn ->
+        assert {:error, {:failed_migrating_offline_token, %{reason: :econnrefused}}} =
+                 AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+      end)
     end
 
     test "raises when the exchange succeeds but the pair cannot be stored", %{

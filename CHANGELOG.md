@@ -1,5 +1,15 @@
 ## Unreleased
 
+## 0.19.0
+
+- BREAKING: `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` returns
+  `{:error, {:failed_migrating_offline_token, failure}}` instead of
+  `{:error, :failed_migrating_offline_token}`. `failure` is Shopify's
+  `%{status: status, body: body}`, or `%{reason: reason}` when the request got no response, so
+  a sweep can report why each shop failed without reading the logs. The
+  `ShopifyAPI.TokenRefreshError` that `ShopifyAPI.AuthToken.fetch/2` raises for a failed
+  exchange includes it too.
+
 ## 0.18.0
 
 - BREAKING: `ShopifyAPI.Bulk` and `ShopifyAPI.Bulk.Query` look up the cached token with
