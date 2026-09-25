@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.19.0
+
 - BREAKING: `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` returns
   `{:error, {:failed_migrating_offline_token, failure}}` instead of
   `{:error, :failed_migrating_offline_token}`. `failure` is Shopify's
