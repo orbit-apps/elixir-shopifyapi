@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.19.1
+
 - Fix: under `offline_tokens: :exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2` no longer
   reports a closed shop as `{:error, :needs_reacquisition}`. Shopify refuses those
   shops' exchange with `invalid_subject_token`, as it does a token already spent, and `fetch/2`
