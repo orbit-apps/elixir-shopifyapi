@@ -26,9 +26,9 @@ defmodule ShopifyAPI.Refresh do
   safe — Shopify returns the same pair — so de-duplication is an optimisation, not a correctness
   requirement.
 
-  Exchanges are the opposite. Shopify revokes the permanent token as it issues the pair, so a
-  second exchange of the same token fails with a spent subject token. `await_or_exchange/1`
-  always registers, and callers that find an exchange in flight wait for it however long it
+  Exchanges are stricter. Shopify returns the same pair to a second exchange of the same token,
+  but only until that pair is refreshed, after which the token is refused as spent.
+  `await_or_exchange/1` always registers, and callers that find an exchange in flight wait for it however long it
   takes, then start over under a fresh claim. Only the caller holding the claim talks to
   Shopify. A token is either permanent or expiring, so refreshes and exchanges share the
   registry and its keys.
@@ -129,14 +129,14 @@ defmodule ShopifyAPI.Refresh do
   Wraps `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` for
   `ShopifyAPI.AuthToken.fetch/2`, which calls it when `:offline_tokens` is
   `:exchange_permanent`. At most one exchange runs per shop and app; every other caller waits
-  for it, then takes the pair it stored. There is no timeout fallback, since a second exchange
-  of the same token would fail. When the exchange ahead of a caller stores no pair, that caller
+  for it, then takes the pair it stored. There is no timeout fallback, so only one exchange per
+  token reaches Shopify. When the exchange ahead of a caller stores no pair, that caller
   exchanges the token itself rather than assuming why, so it gets Shopify's own answer — and it
   does so under the same claim, so the callers behind it still wait rather than pile on.
 
   The exchange runs in a supervised task, so it finishes and stores its pair even if the caller
-  exits while waiting — abandoning it after Shopify revokes the permanent token would lock the
-  shop out.
+  exits while waiting — abandoning it once Shopify has issued the pair would leave that pair
+  unstored until the token is exchanged again.
 
   Returns `{:error, :invalid_subject_token}` when Shopify refuses the permanent token — it was
   already spent, or the shop is closed. The permanent token stays cached, so the next call asks

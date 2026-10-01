@@ -167,9 +167,10 @@ retried, and Plug renders them as a `503`. Neither plug above treats either as
 a missing token.
 
 `ShopifyAPI.TokenMigrationError` is the exception to that. Only
-`:exchange_permanent` raises it, and only once Shopify has already revoked the
-permanent token, so retrying cannot help — the shop has no working credential
-until it reinstalls. Page on it rather than retrying it.
+`:exchange_permanent` raises it, when Shopify issued a pair that could not be
+stored. A retry within seven days recovers the pair (see below); past that, the
+shop has no working credential until it reinstalls. Alert on it as well as
+retrying it.
 
 `ShopifyAPI.AuthTokenServer.get/2` returns whatever the cache holds, expired or
 not. `fetch/2` checks the expiry and refreshes when needed.
@@ -235,7 +236,8 @@ the permanent token stays cached, so the next fetch tries again.
 >
 > The exchange is de-duplicated within this node only. If another application
 > holds the same permanent tokens and exchanges them too, whichever goes second
-> gets a spent token. This library then returns
+> gets a spent token once the first has refreshed its pair. This library then
+> returns
 > `{:error, :invalid_subject_token}`, because it has no way to load the other
 > application's pair from storage. Enable `:exchange_permanent` only where
 > nothing else exchanges the same tokens.
@@ -260,16 +262,18 @@ ShopifyAPI.AuthTokenServer.all()
 end)
 ```
 
-The exchange has no safety net. Shopify revokes the permanent token in the same
-step that issues the expiring pair, and the spent token cannot be re-presented,
-so unlike a refresh there is no replay. Everything hinges on the moment it
-succeeds:
+The exchange has a short safety net. For
+[seven days](https://shopify.dev/changelog/posts/more-resilient-token-exchanges-when-migrating-tokens-without-a-user-session)
+after it, presenting the same permanent token again returns the same pair —
+until that pair is refreshed or the shop acquires another token. Everything
+hinges on the moment it succeeds:
 
 - A refused or failed exchange leaves the permanent token intact — the shop is
   safe to skip and the batch safe to re-run. These return `{:error, _}`.
-- A successful exchange whose pair never reaches storage leaves the shop with no
-  working credential, recoverable only by a merchant reinstall. This raises
-  `ShopifyAPI.TokenMigrationError` — page on it.
+- A successful exchange whose pair never reaches storage raises
+  `ShopifyAPI.TokenMigrationError`. The permanent token is still in storage, so
+  re-running within seven days recovers the pair; past that, only a merchant
+  reinstall does.
 
 So your persistence callback must raise on write failure rather than logging and
 returning (see the next section), and the migration should run in small

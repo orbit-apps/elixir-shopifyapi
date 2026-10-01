@@ -42,6 +42,10 @@ defmodule ShopifyAPI.AuthRequest do
 
   @headers [{"Content-Type", "application/json"}, {"Accept", "application/json"}]
 
+  # How to recover from a `TokenMigrationError`, appended to each one's message.
+  @recover_migration "exchange the permanent token again within seven days to recover the pair, " <>
+                       "or the shop must reinstall"
+
   @typedoc """
   Why a migration exchange failed before Shopify revoked the permanent token: the status and
   body of Shopify's response, or the `HTTPoison.Error` reason when no response arrived.
@@ -203,17 +207,19 @@ defmodule ShopifyAPI.AuthRequest do
         ShopifyAPI.AuthRequest.migrate_offline_access_token(app, token)
       end)
 
-  ## No second chance
+  ## A seven-day second chance
 
-  Shopify revokes the permanent token in the same step that issues the expiring pair, and the
-  spent token cannot be re-presented, so unlike a refresh there is no replay. The failure modes
-  split around the moment the exchange succeeds:
+  For seven days after an exchange, presenting the same permanent token again returns the same
+  pair, with a fresh access-token expiry. The window closes early once that pair is refreshed or
+  the shop acquires another token. The failure modes split around the moment the exchange
+  succeeds:
 
     - **Before it succeeds** — a refused or failed exchange leaves the permanent token intact,
       so the shop is safe to skip and the batch safe to retry. These return `{:error, _}`.
-    - **After it succeeds** — an unusable response or a failed write leaves the shop with no
-      working credential, recoverable only by a merchant reinstall. These raise
-      `ShopifyAPI.TokenMigrationError`, which is worth paging on.
+    - **After it succeeds** — an unusable response or a failed write stores nothing, so the
+      permanent token is still in storage. Exchanging it again within the window recovers the
+      pair; past it, only a merchant reinstall does. These raise
+      `ShopifyAPI.TokenMigrationError`, which is worth alerting on.
 
   ## Returns
 
@@ -222,9 +228,9 @@ defmodule ShopifyAPI.AuthRequest do
       nothing to migrate. No request is made, which lets a sweep run over every token and skip
       the ones already moved.
     - `{:error, :invalid_subject_token}` — Shopify refused the subject token
-      (`400 invalid_subject_token`). Either the shop was migrated already, by an earlier run or
-      another writer, or it is closed (the Admin API answers it with a `403` or `404`). Nothing
-      is stored, so a sweep can skip the shop and carry on.
+      (`400 invalid_subject_token`). Either the shop was migrated already and its window has
+      closed, or it is closed (the Admin API answers it with a `403` or `404`). Nothing is
+      stored, so a sweep can skip the shop and carry on.
     - `{:error, {:failed_migrating_offline_token, failure}}` — the exchange failed for another
       reason before the old token was revoked. Safe to retry. `failure` is a
       `t:migration_failure/0`: Shopify's status and body, or the connection error when Shopify
@@ -236,6 +242,7 @@ defmodule ShopifyAPI.AuthRequest do
   Shopify docs:
     - [Migrate to expiring offline access tokens](https://shopify.dev/docs/apps/build/authentication-authorization/migrate-to-expiring-offline-access-tokens) — the exchange parameters, under "Cycle existing tokens without waiting for a merchant"
     - [Token exchange](https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/token-exchange)
+    - [More resilient token exchanges when migrating tokens without a user session](https://shopify.dev/changelog/posts/more-resilient-token-exchanges-when-migrating-tokens-without-a-user-session) — the seven-day window
   """
   @spec migrate_offline_access_token(App.t(), AuthToken.t()) ::
           AuthToken.ok_t()
@@ -263,8 +270,8 @@ defmodule ShopifyAPI.AuthRequest do
     Logger.debug("#{__MODULE__} migrating #{AuthToken.create_key(token)} to an expiring token")
 
     case HTTPoison.post(access_token_url, encoded_body, @headers) do
-      # The exchange succeeded, so Shopify has revoked the permanent token: from here a bad body
-      # or a failed write is unrecoverable and raises, rather than returning a skippable error.
+      # The exchange succeeded: from here a bad body or a failed write raises rather than
+      # returning a skippable error, since only exchanging again within the window recovers it.
       {:ok, %{status_code: 200, body: body}} ->
         migrated = body |> decode_migrated!(token) |> migrated_token!(token)
         store_migrated!(migrated)
@@ -277,9 +284,9 @@ defmodule ShopifyAPI.AuthRequest do
         {:ok, migrated}
 
       # A refused subject token: this shop was migrated already, or is closed, so the caller can
-      # skip it. A migrated shop may be a harmless re-run, or one stranded by an earlier lost
-      # write; a closed shop may reopen, and its exchange then succeed. The library cannot tell
-      # these apart, so it surfaces the fact and leaves the decision to the caller.
+      # skip it. A migrated shop may be a harmless re-run, or one stranded by a lost write whose
+      # window has closed; a closed shop may reopen, and its exchange then succeed. The library
+      # cannot tell these apart, so it surfaces the fact and leaves the decision to the caller.
       {:ok, %{status_code: 400, body: body}} = err ->
         if invalid_subject_token?(body) do
           Logger.warning(
@@ -356,8 +363,8 @@ defmodule ShopifyAPI.AuthRequest do
       message: "Refresh for #{token.shop_name}:#{token.app_name} returned an incomplete pair"
   end
 
-  # Decodes a migration response body. Past a 200 the permanent token is already revoked, so an
-  # unusable body is unrecoverable and raises `TokenMigrationError` rather than returning.
+  # Decodes a migration response body. Past a 200 an unusable body raises `TokenMigrationError`
+  # rather than returning, since only exchanging again within the window recovers the pair.
   @spec decode_migrated!(String.t(), AuthToken.t()) :: term()
   defp decode_migrated!(body, token) do
     case JSONSerializer.decode(body) do
@@ -367,14 +374,14 @@ defmodule ShopifyAPI.AuthRequest do
       _error ->
         raise ShopifyAPI.TokenMigrationError,
           message:
-            "Migration of #{AuthToken.create_key(token)} returned a body that is not JSON; the " <>
-              "old token is revoked and the shop must reinstall"
+            "Migration of #{AuthToken.create_key(token)} returned a body that is not JSON; " <>
+              @recover_migration
     end
   end
 
   # Builds the migrated token from the exchange response. Like a refresh, a migration must return
-  # a complete rotating pair; unlike a refresh, an incomplete one strands the shop rather than
-  # merely failing, so this raises `TokenMigrationError`.
+  # a complete rotating pair; unlike a refresh, an incomplete one can only be recovered by
+  # exchanging again within the window, so this raises `TokenMigrationError`.
   @spec migrated_token!(map(), AuthToken.t()) :: AuthToken.t()
   defp migrated_token!(
          %{
@@ -402,21 +409,21 @@ defmodule ShopifyAPI.AuthRequest do
       raise ShopifyAPI.TokenMigrationError,
         message:
           "Migration of #{AuthToken.create_key(token)} returned a refresh token expiring no " <>
-            "later than its access token; the old token is revoked and the shop must reinstall"
+            "later than its access token; " <> @recover_migration
     end
   end
 
   defp migrated_token!(_attrs, token) do
     raise ShopifyAPI.TokenMigrationError,
       message:
-        "Migration of #{AuthToken.create_key(token)} returned an incomplete pair; the old token " <>
-          "is revoked and the shop must reinstall"
+        "Migration of #{AuthToken.create_key(token)} returned an incomplete pair; " <>
+          @recover_migration
   end
 
-  # Stores the migrated pair, turning a write failure into the loud, unrecoverable case it is:
-  # the exchange already revoked the permanent token, so a lost write leaves the shop with no
-  # credential at all. Only the failure's type is named, never its message — a persistence error
-  # can carry the token it was writing, and this message reaches logs and pagers. See
+  # Stores the migrated pair, turning a write failure into a loud one: nothing is stored, so the
+  # pair is recoverable only by exchanging the permanent token again within the window. Only the
+  # failure's type is named, never its message — a persistence error can carry the token it was
+  # writing, and this message reaches logs and pagers. See
   # `ShopifyAPI.AuthTokenServer`, which keeps the same contents out of its own errors.
   @spec store_migrated!(AuthToken.t()) :: :ok
   defp store_migrated!(token) do
@@ -426,8 +433,7 @@ defmodule ShopifyAPI.AuthRequest do
       reraise ShopifyAPI.TokenMigrationError.exception(
                 message:
                   "Migrated #{AuthToken.create_key(token)} but could not store the new pair " <>
-                    "(#{inspect(error.__struct__)}); the old token is revoked and the shop is " <>
-                    "locked out until it reinstalls"
+                    "(#{inspect(error.__struct__)}); " <> @recover_migration
               ),
               __STACKTRACE__
   end

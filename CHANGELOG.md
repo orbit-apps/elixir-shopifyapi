@@ -7,6 +7,10 @@
   dead refresh token. The permanent token stays cached and the next fetch tries the exchange
   again. `ShopifyAPI.Bulk` raises `ShopifyAPI.ShopAuthError` for it, as for every `fetch/2`
   error.
+- Fix: `ShopifyAPI.TokenMigrationError` and the migration docs no longer say a lost pair needs
+  a reinstall. Shopify
+  [now returns the same pair](https://shopify.dev/changelog/posts/more-resilient-token-exchanges-when-migrating-tokens-without-a-user-session)
+  when a permanent token is exchanged again within seven days, so the next exchange recovers it.
 
 ## 0.19.0
 
