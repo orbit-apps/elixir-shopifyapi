@@ -155,6 +155,7 @@ case ShopifyAPI.AuthToken.fetch(shop.domain, MyApp.app_name()) do
   {:ok, auth_token} -> do_the_work(auth_token)
   {:error, :not_found} -> cancel("shop has no token")
   {:error, :needs_reacquisition} -> cancel_and_flag(shop)
+  {:error, :invalid_subject_token} -> skip(shop)
 end
 ```
 
@@ -214,10 +215,11 @@ exchange in both cases, and always requests an expiring pair whatever
 
 With `offline_tokens: :exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2`
 exchanges a shop's permanent token the first time it reads it, and returns the
-new pair. Concurrent callers wait on a single exchange. A spent token comes back
-as `{:error, :needs_reacquisition}`, and an exchange that fails before Shopify
-revokes the permanent token raises `ShopifyAPI.TokenRefreshError`, so the next
-fetch tries again.
+new pair. Concurrent callers wait on a single exchange. A token Shopify refuses
+— already spent, or belonging to a closed shop — comes back as
+`{:error, :invalid_subject_token}`, and an exchange that fails before Shopify
+revokes the permanent token raises `ShopifyAPI.TokenRefreshError`. Either way
+the permanent token stays cached, so the next fetch tries again.
 
 > #### Exchange after the cutover is observed, not documented {: .warning}
 >
@@ -234,7 +236,7 @@ fetch tries again.
 > The exchange is de-duplicated within this node only. If another application
 > holds the same permanent tokens and exchanges them too, whichever goes second
 > gets a spent token. This library then returns
-> `{:error, :needs_reacquisition}`, because it has no way to load the other
+> `{:error, :invalid_subject_token}`, because it has no way to load the other
 > application's pair from storage. Enable `:exchange_permanent` only where
 > nothing else exchanges the same tokens.
 

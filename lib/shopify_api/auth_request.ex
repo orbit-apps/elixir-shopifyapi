@@ -221,9 +221,10 @@ defmodule ShopifyAPI.AuthRequest do
     - `{:error, :already_expiring}` — the token already carries a refresh token, so there is
       nothing to migrate. No request is made, which lets a sweep run over every token and skip
       the ones already moved.
-    - `{:error, :invalid_subject_token}` — Shopify rejected the subject token as already spent
-      (`400 invalid_subject_token`). The shop was migrated already, by an earlier run or another
-      writer, so a re-run skips it cleanly.
+    - `{:error, :invalid_subject_token}` — Shopify refused the subject token
+      (`400 invalid_subject_token`). Either the shop was migrated already, by an earlier run or
+      another writer, or it is closed (the Admin API answers it with a `403` or `404`). Nothing
+      is stored, so a sweep can skip the shop and carry on.
     - `{:error, {:failed_migrating_offline_token, failure}}` — the exchange failed for another
       reason before the old token was revoked. Safe to retry. `failure` is a
       `t:migration_failure/0`: Shopify's status and body, or the connection error when Shopify
@@ -275,14 +276,15 @@ defmodule ShopifyAPI.AuthRequest do
 
         {:ok, migrated}
 
-      # A spent subject token: this shop was migrated already, so the caller can skip it. It may
-      # be a harmless re-run, or a shop stranded by an earlier lost write — the library cannot
-      # tell the two apart, so it surfaces the fact and leaves the decision to the caller.
+      # A refused subject token: this shop was migrated already, or is closed, so the caller can
+      # skip it. A migrated shop may be a harmless re-run, or one stranded by an earlier lost
+      # write; a closed shop may reopen, and its exchange then succeed. The library cannot tell
+      # these apart, so it surfaces the fact and leaves the decision to the caller.
       {:ok, %{status_code: 400, body: body}} = err ->
         if invalid_subject_token?(body) do
           Logger.warning(
-            "#{__MODULE__} #{AuthToken.create_key(token)} was already migrated " <>
-              "(invalid_subject_token); skipping. Reacquire it if it has no working token."
+            "#{__MODULE__} #{AuthToken.create_key(token)} was already migrated, or the shop " <>
+              "is closed (invalid_subject_token); skipping."
           )
 
           {:error, :invalid_subject_token}
@@ -438,8 +440,8 @@ defmodule ShopifyAPI.AuthRequest do
     {:error, {:failed_migrating_offline_token, failure}}
   end
 
-  # Whether a token-endpoint error body is a spent subject token, the signal that a shop has
-  # already been migrated.
+  # Whether a token-endpoint error body is a refused subject token, the signal that a shop has
+  # already been migrated or is closed.
   defp invalid_subject_token?(body) do
     match?({:ok, %{"error" => "invalid_subject_token"}}, JSONSerializer.decode(body))
   end

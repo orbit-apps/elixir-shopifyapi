@@ -294,7 +294,7 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
       assert :counters.get(counter, 1) == 2
     end
 
-    test "a waiter reports a spent token rather than a retryable failure", %{
+    test "a waiter reports a refused token rather than a retryable failure", %{
       bypass: bypass,
       shop: shop,
       permanent: permanent
@@ -312,12 +312,12 @@ defmodule ShopifyAPI.RefreshConcurrencyTest do
         Process.sleep(100)
         send(first_handler, {:respond, 400, spent})
 
-        assert {:error, :needs_reacquisition} = Task.await(first)
+        assert {:error, :invalid_subject_token} = Task.await(first)
 
         assert_receive {:exchange_started, second_handler}, 2_000
         send(second_handler, {:respond, 400, spent})
 
-        assert {:error, :needs_reacquisition} = Task.await(waiter)
+        assert {:error, :invalid_subject_token} = Task.await(waiter)
       end)
 
       assert :counters.get(counter, 1) == 2

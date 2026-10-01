@@ -5,8 +5,8 @@ defmodule ShopifyAPI.Bulk do
   A bulk operation is identified by a shop's myshopify domain and an app name, not by a token.
   Before every request, the token cached for that pair is looked up with
   `ShopifyAPI.AuthToken.fetch/2`, so an operation that runs longer than a token's lifetime keeps
-  working across refreshes. Raises `ShopifyAPI.ShopAuthError` when no usable token is cached —
-  `fetch/2` returns `{:error, :not_found}` or `{:error, :needs_reacquisition}`.
+  working across refreshes. Raises `ShopifyAPI.ShopAuthError` whenever `fetch/2` returns an
+  error, `t:ShopifyAPI.AuthToken.fetch_error/0`, naming the reason in the message.
 
   Each function also accepts an `ShopifyAPI.AuthToken` in place of the domain and app name. Only
   its `shop_name` and `app_name` are used; the token itself is looked up from the cache as above.

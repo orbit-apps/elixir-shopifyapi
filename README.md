@@ -123,6 +123,7 @@ case ShopifyAPI.AuthToken.fetch(myshopify_domain, "my-app") do
   {:ok, auth_token} -> do_the_work(auth_token)
   {:error, :not_found} -> cancel("shop has no token")
   {:error, :needs_reacquisition} -> cancel_and_flag(shop)
+  {:error, :invalid_subject_token} -> skip(shop)
 end
 ```
 
