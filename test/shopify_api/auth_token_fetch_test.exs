@@ -312,7 +312,7 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       assert {:ok, ^token} = AuthToken.fetch(shop, @app_name)
     end
 
-    test "reports reacquisition when the permanent token was already spent", %{
+    test "returns a refused exchange as invalid_subject_token", %{
       bypass: bypass,
       shop: shop
     } do
@@ -325,7 +325,7 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       original = permanent(shop)
 
       capture_log(fn ->
-        assert {:error, :needs_reacquisition} = AuthToken.fetch(shop, @app_name)
+        assert {:error, :invalid_subject_token} = AuthToken.fetch(shop, @app_name)
       end)
 
       assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)

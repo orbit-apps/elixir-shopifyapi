@@ -35,12 +35,12 @@ defmodule ShopifyAPI.TokenMigrationError do
   Raised when a permanent-to-expiring token exchange succeeds at Shopify but the new pair
   cannot be stored, or Shopify returns an unusable one.
 
-  This is the one unrecoverable failure in the token lifecycle. Unlike a refresh, the migration
-  exchange has no replay: Shopify revokes the permanent token in the same step that issues the
-  expiring pair, so once the exchange returns the new pair is the shop's only working
-  credential. If it never reaches storage the shop is locked out until its merchant reinstalls
-  the app, with nothing to fall back on — so this raises rather than returning an error, and is
-  worth paging on.
+  Nothing is stored, so the permanent token is still in storage. For seven days after the
+  exchange, presenting it again returns the same pair, unless that pair has been refreshed or the
+  shop has acquired another token since. Under `:exchange_permanent`,
+  `ShopifyAPI.AuthToken.fetch/2` does that on its next call. Past the window the shop has no
+  working credential until its merchant reinstalls the app, so this raises rather than returning
+  an error, and is worth alerting on.
 
   `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` raises it. A failure *before* the
   exchange succeeds leaves the permanent token intact and returns `{:error, _}` instead, since

@@ -21,7 +21,7 @@ The package can be installed by adding `shopify_api` to your list of dependencie
 ```elixir
 def deps do
   [
-    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "v0.19.0"}
+    {:shopify_api, github: "pixelunion/elixir-shopifyapi", tag: "v0.19.1"}
   ]
 end
 ```
@@ -123,6 +123,7 @@ case ShopifyAPI.AuthToken.fetch(myshopify_domain, "my-app") do
   {:ok, auth_token} -> do_the_work(auth_token)
   {:error, :not_found} -> cancel("shop has no token")
   {:error, :needs_reacquisition} -> cancel_and_flag(shop)
+  {:error, :invalid_subject_token} -> skip(shop)
 end
 ```
 
