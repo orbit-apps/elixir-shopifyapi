@@ -78,13 +78,20 @@ defmodule ShopifyAPI.AuthToken do
   @type needs_reacquisition :: {:error, :needs_reacquisition}
 
   @typedoc """
-  Shopify refused to exchange a permanent token for an expiring pair: it was already spent, or
-  the shop is closed. The permanent token stays cached.
+  Shopify refused to exchange a permanent token for an expiring pair: it was already spent. The
+  permanent token stays cached.
   """
   @type migration_refused :: {:error, :invalid_subject_token}
 
+  @typedoc """
+  Shopify answered the exchange of a permanent token with `404`. The permanent token stays
+  cached.
+  """
+  @type shop_not_found :: {:error, :shop_not_found}
+
   @typedoc "Every error `fetch/2` can return."
-  @type fetch_error :: not_found() | needs_reacquisition() | migration_refused()
+  @type fetch_error ::
+          not_found() | needs_reacquisition() | migration_refused() | shop_not_found()
 
   @typedoc "The result of `fetch/2`."
   @type fetch_result :: ok_t() | fetch_error()
@@ -122,8 +129,11 @@ defmodule ShopifyAPI.AuthToken do
   obtained via OAuth or token exchange.
 
   Under `:exchange_permanent` it returns `{:error, :invalid_subject_token}` when Shopify refuses
-  the exchange: the permanent token was already spent, or the shop is closed. Nothing
-  is changed in the cache, so the next fetch tries the exchange again.
+  the exchange: the permanent token was already spent. Nothing is changed in the cache, so the
+  next fetch tries the exchange again.
+
+  It returns `{:error, :shop_not_found}` when Shopify answers the exchange with `404`. The cache
+  is left unchanged here too.
 
   All other failures (assumed to be transient) raise.
 

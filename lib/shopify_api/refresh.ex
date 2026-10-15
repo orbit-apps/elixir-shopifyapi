@@ -42,8 +42,9 @@ defmodule ShopifyAPI.Refresh do
 
   `{:error, :needs_reacquisition}` is returned (never retried) when the refresh token is dead.
   `{:error, :invalid_subject_token}` is returned (never retried) when Shopify refuses to
-  exchange a permanent token — it was already spent, or the shop is closed. All other
-  failures (assumed to be transient) raise.
+  exchange a permanent token — it was already spent.
+  `{:error, :shop_not_found}` is returned (never retried) when Shopify answers the exchange with
+  `404`. All other failures (assumed to be transient) raise.
   `run_in_background/1` retries inside its task; `await_or_run/1`, `await_or_exchange/1` and
   `run/1` do not — the caller's own retry (Oban, Phoenix) handles that.
 
@@ -138,11 +139,12 @@ defmodule ShopifyAPI.Refresh do
   exits while waiting — abandoning it once Shopify has issued the pair would leave that pair
   unstored until the token is exchanged again.
 
-  Returns `{:error, :invalid_subject_token}` when Shopify refuses the permanent token — it was
-  already spent, or the shop is closed. The permanent token stays cached, so the next call asks
-  Shopify again. Raises `ShopifyAPI.TokenRefreshError` when the exchange fails before Shopify
-  revokes the permanent token, which is safe to retry, and lets `ShopifyAPI.TokenMigrationError`
-  from a failure after it propagate.
+  Returns `{:error, :invalid_subject_token}` when Shopify refuses the permanent token. The
+  permanent token stays cached, so the next call asks Shopify again. Returns
+  `{:error, :shop_not_found}`, likewise leaving the token cached, when Shopify answers `404`.
+  Raises `ShopifyAPI.TokenRefreshError` when the exchange fails before Shopify revokes the
+  permanent token, which is safe to retry, and lets `ShopifyAPI.TokenMigrationError` from a
+  failure after it propagate.
 
   > #### Exchange after the cutover is observed, not documented {: .warning}
   >
@@ -153,7 +155,8 @@ defmodule ShopifyAPI.Refresh do
   > the cutover. If they do not, the failure raises `ShopifyAPI.TokenRefreshError` on every fetch
   > of that shop.
   """
-  @spec await_or_exchange(AuthToken.t()) :: AuthToken.ok_t() | AuthToken.migration_refused()
+  @spec await_or_exchange(AuthToken.t()) ::
+          AuthToken.ok_t() | AuthToken.migration_refused() | AuthToken.shop_not_found()
   def await_or_exchange(%AuthToken{refresh_token: nil} = token) do
     task = Task.Supervisor.async_nolink(@task_supervisor, fn -> claim_and_exchange(token) end)
 
@@ -270,11 +273,13 @@ defmodule ShopifyAPI.Refresh do
       {:ok, _exchanged} = ok ->
         ok
 
-      # Spent by an exchange outside this node, whose pair this cache has no way to load, or
-      # belonging to a closed shop: Shopify gives both the same answer. The permanent
-      # token stays cached, so the next fetch asks again.
+      # Spent, such as by an exchange outside this node, whose pair this cache has no way to
+      # load. The permanent token stays cached, so the next fetch asks again.
       {:error, :invalid_subject_token} = refused ->
         refused
+
+      {:error, :shop_not_found} = not_found ->
+        not_found
 
       {:error, {:failed_migrating_offline_token, failure}} ->
         raise ShopifyAPI.TokenRefreshError,
