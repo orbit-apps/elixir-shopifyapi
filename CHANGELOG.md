@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.19.2
+
+- Fix: a `404` from exchanging a permanent token no longer raises
+  `ShopifyAPI.TokenRefreshError` as if it were transient.
+  `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` returns `{:error, :shop_not_found}`,
+  and so does `ShopifyAPI.AuthToken.fetch/2` under `:exchange_permanent`. The permanent token
+  stays cached. Callers that match every `fetch/2` error explicitly need a clause for it.
+
 ## 0.19.1
 
 - Fix: under `offline_tokens: :exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2` no longer

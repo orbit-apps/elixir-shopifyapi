@@ -331,6 +331,25 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
     end
 
+    test "returns an exchange that gets a 404 as shop_not_found", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 404, ~s({"errors":"Not Found"}))
+      end)
+
+      original = permanent(shop)
+
+      capture_log(fn ->
+        assert {:error, :shop_not_found} = AuthToken.fetch(shop, @app_name)
+      end)
+
+      assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
+    end
+
     test "raises a retryable error when the exchange fails before revoking", %{
       bypass: bypass,
       shop: shop
@@ -582,11 +601,12 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       shop: shop,
       storage: storage
     } do
-      dead = cache(shop,
-        token_expires_at: from_now(-@hour),
-        refresh_token: "shprt_dead",
-        refresh_token_expires_at: from_now(-@hour)
-      )
+      dead =
+        cache(shop,
+          token_expires_at: from_now(-@hour),
+          refresh_token: "shprt_dead",
+          refresh_token_expires_at: from_now(-@hour)
+        )
 
       store(storage, dead)
 

@@ -262,6 +262,24 @@ defmodule ShopifyAPI.AuthRequestTest do
       assert log =~ "already migrated"
     end
 
+    test "returns :shop_not_found when the token endpoint answers 404", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 404, ~s({"errors":"Not Found"}))
+      end)
+
+      log =
+        capture_log(fn ->
+          assert {:error, :shop_not_found} =
+                   AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+        end)
+
+      assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
+      assert log =~ "answered 404"
+    end
+
     test "returns Shopify's status and body for other exchange failures", %{
       bypass: bypass,
       shop: shop
