@@ -44,7 +44,8 @@ defmodule ShopifyAPI.Refresh do
   `{:error, :invalid_subject_token}` is returned (never retried) when Shopify refuses to
   exchange a permanent token — it was already spent.
   `{:error, :shop_not_found}` is returned (never retried) when Shopify answers the exchange with
-  `404`. All other failures (assumed to be transient) raise.
+  `404`, and `{:error, :shop_unavailable}` when it answers with `403` or `423`. All other failures
+  (assumed to be transient) raise.
   `run_in_background/1` retries inside its task; `await_or_run/1`, `await_or_exchange/1` and
   `run/1` do not — the caller's own retry (Oban, Phoenix) handles that.
 
@@ -141,8 +142,8 @@ defmodule ShopifyAPI.Refresh do
 
   Returns `{:error, :invalid_subject_token}` when Shopify refuses the permanent token. The
   permanent token stays cached, so the next call asks Shopify again. Returns
-  `{:error, :shop_not_found}`, likewise leaving the token cached, when Shopify answers `404`.
-  Raises `ShopifyAPI.TokenRefreshError` when the exchange fails before Shopify revokes the
+  `{:error, :shop_not_found}`, likewise leaving the token cached, when Shopify answers `404`,
+  and `{:error, :shop_unavailable}` when it answers `403` or `423`. Raises `ShopifyAPI.TokenRefreshError` when the exchange fails before Shopify revokes the
   permanent token, which is safe to retry, and lets `ShopifyAPI.TokenMigrationError` from a
   failure after it propagate.
 
@@ -156,7 +157,10 @@ defmodule ShopifyAPI.Refresh do
   > of that shop.
   """
   @spec await_or_exchange(AuthToken.t()) ::
-          AuthToken.ok_t() | AuthToken.migration_refused() | AuthToken.shop_not_found()
+          AuthToken.ok_t()
+          | AuthToken.migration_refused()
+          | AuthToken.shop_not_found()
+          | AuthToken.shop_unavailable()
   def await_or_exchange(%AuthToken{refresh_token: nil} = token) do
     task = Task.Supervisor.async_nolink(@task_supervisor, fn -> claim_and_exchange(token) end)
 
@@ -278,8 +282,8 @@ defmodule ShopifyAPI.Refresh do
       {:error, :invalid_subject_token} = refused ->
         refused
 
-      {:error, :shop_not_found} = not_found ->
-        not_found
+      {:error, reason} = unexchangeable when reason in [:shop_not_found, :shop_unavailable] ->
+        unexchangeable
 
       {:error, {:failed_migrating_offline_token, failure}} ->
         raise ShopifyAPI.TokenRefreshError,
