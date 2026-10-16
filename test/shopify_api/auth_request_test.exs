@@ -280,6 +280,29 @@ defmodule ShopifyAPI.AuthRequestTest do
       assert log =~ "answered 404"
     end
 
+    for {status, body} <- [
+          {403, ~s({"errors":"Unavailable Shop"})},
+          {423, ~s({"errors":"This store is unavailable"})}
+        ] do
+      test "returns :shop_unavailable when the exchange answers #{status}", %{
+        bypass: bypass,
+        shop: shop
+      } do
+        Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+          Conn.resp(conn, unquote(status), unquote(body))
+        end)
+
+        log =
+          capture_log(fn ->
+            assert {:error, :shop_unavailable} =
+                     AuthRequest.migrate_offline_access_token(@app, permanent_token(shop))
+          end)
+
+        assert {:error, :not_found} = AuthTokenServer.get(shop, @app.name)
+        assert log =~ "answered #{unquote(status)}"
+      end
+    end
+
     test "returns Shopify's status and body for other exchange failures", %{
       bypass: bypass,
       shop: shop

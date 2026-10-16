@@ -350,6 +350,25 @@ defmodule ShopifyAPI.AuthTokenFetchTest do
       assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
     end
 
+    test "returns an exchange that gets a 403 as shop_unavailable", %{
+      bypass: bypass,
+      shop: shop
+    } do
+      Application.put_env(:shopify_api, :offline_tokens, :exchange_permanent)
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        Conn.resp(conn, 403, ~s({"errors":"Unavailable Shop"}))
+      end)
+
+      original = permanent(shop)
+
+      capture_log(fn ->
+        assert {:error, :shop_unavailable} = AuthToken.fetch(shop, @app_name)
+      end)
+
+      assert {:ok, ^original} = AuthTokenServer.get(shop, @app_name)
+    end
+
     test "raises a retryable error when the exchange fails before revoking", %{
       bypass: bypass,
       shop: shop

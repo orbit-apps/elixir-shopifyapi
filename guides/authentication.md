@@ -157,6 +157,7 @@ case ShopifyAPI.AuthToken.fetch(shop.domain, MyApp.app_name()) do
   {:error, :needs_reacquisition} -> cancel_and_flag(shop)
   {:error, :invalid_subject_token} -> skip(shop)
   {:error, :shop_not_found} -> cancel("shop not found")
+  {:error, :shop_unavailable} -> cancel("shop unavailable")
 end
 ```
 
@@ -218,8 +219,10 @@ exchange in both cases, and always requests an expiring pair whatever
 With `offline_tokens: :exchange_permanent`, `ShopifyAPI.AuthToken.fetch/2`
 exchanges a shop's permanent token the first time it reads it, and returns the
 new pair. Concurrent callers wait on a single exchange. A token Shopify refuses
-as already spent comes back as `{:error, :invalid_subject_token}`, and an
-exchange Shopify answers with `404` comes back as `{:error, :shop_not_found}`.
+as already spent comes back as `{:error, :invalid_subject_token}`. An exchange
+Shopify answers with `404` comes back as `{:error, :shop_not_found}`, and one
+it answers with `403` or `423` as `{:error, :shop_unavailable}`. A shop whose
+Admin API calls are answered with `402` can still exchange its permanent token.
 An exchange that fails for any other reason before Shopify revokes the
 permanent token raises `ShopifyAPI.TokenRefreshError`. In every case the
 permanent token stays cached, so the next fetch tries again.
@@ -260,6 +263,7 @@ ShopifyAPI.AuthTokenServer.all()
     {:error, :already_expiring} -> :ok
     {:error, :invalid_subject_token} -> flag_for_reacquisition(token)
     {:error, :shop_not_found} -> skip(token)
+    {:error, :shop_unavailable} -> skip(token)
     {:error, {:failed_migrating_offline_token, failure}} -> retry_later(token, failure)
   end
 end)

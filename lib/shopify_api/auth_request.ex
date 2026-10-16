@@ -232,6 +232,9 @@ defmodule ShopifyAPI.AuthRequest do
       Nothing is stored, so a sweep can skip the shop and carry on.
     - `{:error, :shop_not_found}` — Shopify answered the exchange with `404`. Nothing is stored,
       and retrying gets the same answer.
+    - `{:error, :shop_unavailable}` — Shopify answered the exchange with `403` or `423`. Nothing
+      is stored, and retrying gets the same answer. A shop whose Admin API calls are answered
+      with `402` is not among these: its exchange succeeds.
     - `{:error, {:failed_migrating_offline_token, failure}}` — the exchange failed for another
       reason before the old token was revoked. Safe to retry. `failure` is a
       `t:migration_failure/0`: Shopify's status and body, or the connection error when Shopify
@@ -247,7 +250,8 @@ defmodule ShopifyAPI.AuthRequest do
   """
   @spec migrate_offline_access_token(App.t(), AuthToken.t()) ::
           AuthToken.ok_t()
-          | {:error, :already_expiring | :invalid_subject_token | :shop_not_found}
+          | {:error,
+             :already_expiring | :invalid_subject_token | :shop_not_found | :shop_unavailable}
           | {:error, {:failed_migrating_offline_token, migration_failure()}}
   def migrate_offline_access_token(_app, %AuthToken{refresh_token: refresh_token})
       when not is_nil(refresh_token),
@@ -306,6 +310,13 @@ defmodule ShopifyAPI.AuthRequest do
         )
 
         {:error, :shop_not_found}
+
+      {:ok, %{status_code: status}} when status in [403, 423] ->
+        Logger.warning(
+          "#{__MODULE__} #{AuthToken.create_key(token)} exchange answered #{status}; skipping."
+        )
+
+        {:error, :shop_unavailable}
 
       err ->
         migration_failed(err)
