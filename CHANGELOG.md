@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.19.3
+
 - Fix: a `403` or `423` from exchanging a permanent token no longer raises
   `ShopifyAPI.TokenRefreshError` as if it were transient.
   `ShopifyAPI.AuthRequest.migrate_offline_access_token/2` returns
