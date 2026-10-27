@@ -24,9 +24,15 @@ defmodule ShopifyAPI.AppServer do
       writes every app it loads straight back out again on boot — keep your persistence
       callback idempotent
     - lookups return a bare `:error` rather than an `{:error, reason}` tuple
+    - `set/2` logs an error for an app whose `:client_secret` is blank. It is still cached, but
+      its token requests to Shopify fail, and signatures verify only against a usable
+      `:client_secret_secondary`. With neither, every signature is rejected (see
+      `ShopifyAPI.App.verification_secrets/1`)
   """
 
   use GenServer
+
+  require Logger
 
   alias ShopifyAPI.App
   alias ShopifyAPI.Config
@@ -43,6 +49,7 @@ defmodule ShopifyAPI.AppServer do
 
   @spec set(String.t(), App.t()) :: :ok
   def set(name, app) when is_binary(name) and is_struct(app, App) do
+    log_blank_secret(name, app)
     :ets.insert(@table, {name, app})
     do_persist(app)
     :ok
@@ -91,6 +98,25 @@ defmodule ShopifyAPI.AppServer do
       {module, function, args} -> apply(module, function, args)
       {module, function} -> apply(module, function, [])
       _ -> []
+    end
+  end
+
+  defp log_blank_secret(name, %App{client_secret: secret} = app) do
+    cond do
+      App.usable_secret?(secret) ->
+        :ok
+
+      App.verification_secrets(app) == [] ->
+        Logger.error(
+          "#{__MODULE__} app #{inspect(name)} has no usable client secret; token requests to " <>
+            "Shopify will fail, and every session token, webhook and HMAC will be rejected"
+        )
+
+      true ->
+        Logger.error(
+          "#{__MODULE__} app #{inspect(name)} has a blank client_secret; token requests to " <>
+            "Shopify will fail, and signatures verify against client_secret_secondary alone"
+        )
     end
   end
 

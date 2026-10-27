@@ -39,14 +39,35 @@ defmodule ShopifyAPI.JWTSessionToken do
   @doc """
   Verifies a session token's signature against an app's client secret.
 
+  Given a `ShopifyAPI.App`, the token is accepted if it verifies against any of
+  `ShopifyAPI.App.verification_secrets/1`, so it keeps working while a rotation has two secrets
+  active. Given a bare secret, only that one is tried.
+
   Returns JOSE's three-element result rather than an ok tuple, so match on `{true, jwt, _jws}`
-  to accept a token and treat everything else as a rejection.
+  to accept a token and treat everything else as a rejection. A token that isn't a JWT at all
+  comes back as `{:error, reason}`, and so does a blank secret, which is never used: a token
+  signed with one could have been forged by anyone.
   """
-  @spec verify(String.t(), String.t()) ::
-          {valid? :: boolean(), jwt :: JOSE.JWT.t(), jws :: JOSE.JWS.t()}
-  def verify(token, client_secret) do
-    jwk = JOSE.JWK.from_oct(client_secret)
-    JOSE.JWT.verify_strict(jwk, ["HS256"], token)
+  @spec verify(String.t(), ShopifyAPI.App.t() | String.t()) ::
+          {valid? :: boolean(), jwt :: JOSE.JWT.t(), jws :: JOSE.JWS.t()} | {:error, any()}
+  def verify(token, %ShopifyAPI.App{} = app) do
+    app
+    |> ShopifyAPI.App.verification_secrets()
+    |> Enum.reduce_while({:error, :no_usable_secret}, fn secret, _ ->
+      case verify(token, secret) do
+        {true, _jwt, _jws} = valid -> {:halt, valid}
+        invalid -> {:cont, invalid}
+      end
+    end)
+  end
+
+  def verify(token, client_secret) when is_binary(client_secret) do
+    if ShopifyAPI.App.usable_secret?(client_secret) do
+      jwk = JOSE.JWK.from_oct(client_secret)
+      JOSE.JWT.verify_strict(jwk, ["HS256"], token)
+    else
+      {:error, :no_usable_secret}
+    end
   end
 
   @doc """

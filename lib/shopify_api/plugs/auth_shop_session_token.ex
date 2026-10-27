@@ -33,7 +33,7 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionToken do
   def call(conn, _options) do
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
          {:ok, app} <- JWTSessionToken.app(token),
-         {true, jwt, _jws} <- JWTSessionToken.verify(token, app.client_secret),
+         {true, jwt, _jws} <- JWTSessionToken.verify(token, app),
          {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
          {:ok, user_id} <- JWTSessionToken.user_id(jwt),
          {:ok, shop} <- ShopServer.get(myshopify_domain),

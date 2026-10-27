@@ -15,6 +15,9 @@ defmodule ShopifyAPI.App do
       token and which `ShopifyAPI.AppServer.get_by_client_id/1` looks apps up by
     - `:client_secret` — signs session tokens and webhook HMACs, and authenticates token
       requests
+    - `:client_secret_secondary` — a second secret accepted when verifying session tokens and
+      HMACs, while a rotation has both active. It never signs anything and is never sent to
+      Shopify; leave it `nil` outside a rotation. See `verification_secrets/1`
     - `:auth_redirect_uri` — where Shopify returns the merchant after they authorize; must match
       one of the redirect URLs configured in the Partner dashboard
     - `:nonce` — the `state` value round-tripped through OAuth and checked by
@@ -22,10 +25,19 @@ defmodule ShopifyAPI.App do
     - `:scope` — the comma-separated access scopes requested at install
   """
   @derive {Jason.Encoder,
-           only: [:name, :client_id, :client_secret, :auth_redirect_uri, :nonce, :scope]}
+           only: [
+             :name,
+             :client_id,
+             :client_secret,
+             :client_secret_secondary,
+             :auth_redirect_uri,
+             :nonce,
+             :scope
+           ]}
   defstruct name: "",
             client_id: "",
             client_secret: "",
+            client_secret_secondary: nil,
             auth_redirect_uri: "",
             nonce: "",
             scope: ""
@@ -37,6 +49,7 @@ defmodule ShopifyAPI.App do
           name: String.t(),
           client_id: String.t(),
           client_secret: String.t(),
+          client_secret_secondary: String.t() | nil,
           auth_redirect_uri: String.t(),
           nonce: String.t(),
           scope: String.t()
@@ -48,6 +61,34 @@ defmodule ShopifyAPI.App do
   alias ShopifyAPI.AuthToken
   alias ShopifyAPI.JSONSerializer
   alias ShopifyAPI.UserToken
+
+  @doc """
+  Returns the secrets a signature from Shopify may be verified with, current secret first.
+
+  Blank secrets are left out. A signature keyed with `""` (or any whitespace) can be forged by
+  anyone, so an app whose secrets are all blank gets `[]` back, and every verifier in this
+  library rejects everything rather than accepting such a signature.
+
+  ## Examples
+
+      iex> ShopifyAPI.App.verification_secrets(%ShopifyAPI.App{client_secret: "current"})
+      ["current"]
+
+      iex> app = %ShopifyAPI.App{client_secret: "current", client_secret_secondary: "old"}
+      iex> ShopifyAPI.App.verification_secrets(app)
+      ["current", "old"]
+
+      iex> ShopifyAPI.App.verification_secrets(%ShopifyAPI.App{client_secret: " "})
+      []
+
+  """
+  @spec verification_secrets(t()) :: [String.t()]
+  def verification_secrets(%__MODULE__{} = app),
+    do: Enum.filter([app.client_secret, app.client_secret_secondary], &usable_secret?/1)
+
+  @doc false
+  @spec usable_secret?(term()) :: boolean()
+  def usable_secret?(secret), do: is_binary(secret) and String.trim(secret) != ""
 
   @doc """
   Exchanges an OAuth authorization code for a token struct.

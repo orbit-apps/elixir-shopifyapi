@@ -63,7 +63,6 @@ defmodule ShopifyAPI.Plugs.Webhook do
   """
 
   import Plug.Conn
-  import Plug.Crypto, only: [secure_compare: 2]
 
   require Logger
 
@@ -181,15 +180,13 @@ defmodule ShopifyAPI.Plugs.Webhook do
   end
 
   # Verifies the request body with the X-Shopify-HMAC-SHA256 header
-  defp verify_and_read_body(%Conn{} = conn, %App{client_secret: secret}) do
+  defp verify_and_read_body(%Conn{} = conn, %App{} = app) do
     with {:ok, shopify_hmac} <- fetch_hmac(conn),
          {:ok, body, conn} <- read_body(conn, length: @supported_body_length_bytes) do
-      payload_hmac = ShopifyAPI.Security.base64_sha256_hmac(body, secret)
-
-      if secure_compare(shopify_hmac, payload_hmac) do
+      if ShopifyAPI.Security.valid_body_hmac?(app, body, shopify_hmac) do
         {:ok, conn, ShopifyAPI.JSONSerializer.decode!(body)}
       else
-        {:error, {:hmac_mismatch, shopify_hmac, payload_hmac}}
+        {:error, :hmac_mismatch}
       end
     end
   end
