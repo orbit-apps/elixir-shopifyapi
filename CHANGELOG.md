@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.20.0
+
 - New: `ShopifyAPI.App` has a `:client_secret_secondary` field for rotating the client secret.
   Session tokens, webhooks and query-param HMACs are accepted when signed with either secret.
   Only `:client_secret` is sent to Shopify. Leave the secondary `nil` outside a rotation.
