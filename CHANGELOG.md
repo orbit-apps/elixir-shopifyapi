@@ -1,5 +1,27 @@
 ## Unreleased
 
+## 0.20.0
+
+- New: `ShopifyAPI.App` has a `:client_secret_secondary` field for rotating the client secret.
+  Session tokens, webhooks and query-param HMACs are accepted when signed with either secret.
+  Only `:client_secret` is sent to Shopify. Leave the secondary `nil` outside a rotation.
+  `ShopifyAPI.App.verification_secrets/1` returns the secrets a signature is checked against.
+- New: `ShopifyAPI.JWTSessionToken.verify/2` takes an `ShopifyAPI.App` as well as a bare
+  secret, and accepts either of the app's secrets. `ShopifyAPI.Plugs.AuthShopSessionToken` and
+  `ShopifyAPI.Plugs.AdminAuthenticator` pass the app. Callers that verify with
+  `app.client_secret` keep working but only accept the current secret.
+- BREAKING: a blank or whitespace-only secret is never used to verify a signature, since anyone can
+  forge one signed with it. An app with a blank `:client_secret` and no secondary now rejects
+  every session token, webhook and HMAC. Before, it accepted ones signed with an empty key.
+  `ShopifyAPI.AppServer.set/1` logs an error for such an app. `JWTSessionToken.verify/2`
+  returns `{:error, :no_usable_secret}` when it has no secret to verify with.
+- New: `ShopifyAPI.Security.valid_params_hmac?/2` and `valid_body_hmac?/3` check a query
+  string or webhook body against an app's verification secrets, comparing in constant time.
+  `ShopifyAPI.Router`, `ShopifyAPI.Plugs.AdminAuthenticator` and `ShopifyAPI.Plugs.Webhook`
+  use them.
+- Deprecated: `ShopifyAPI.Router.verify_params_with_hmac/2`, in favour of
+  `ShopifyAPI.Security.valid_params_hmac?/2`.
+
 ## 0.19.3
 
 - Fix: a `403` or `423` from exchanging a permanent token no longer raises

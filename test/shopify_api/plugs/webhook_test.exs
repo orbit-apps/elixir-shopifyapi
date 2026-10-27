@@ -155,19 +155,37 @@ defmodule ShopifyAPI.Plugs.WebhookTest do
     refute_received {:webhook, _, _, _}
   end
 
+  test "dispatches a webhook signed with the app's secondary secret" do
+    app = %{
+      build(:app)
+      | name: "rotating-app",
+        client_id: "rotating-app-id",
+        client_secret_secondary: "old_secret"
+    }
+
+    AppServer.set(app)
+
+    conn = post_webhook("/shopify/webhooks/rotating-app", %{"id" => 1}, "old_secret")
+
+    assert conn.status == 200
+    assert_received {:webhook, ^app, _shop, "orders/create", %{"id" => 1}}
+  end
+
+  defp post_webhook(path, payload, secret) do
+    {hmac, json_payload} = encode_with_hmac(payload, secret)
+
+    :post
+    |> conn(path, json_payload)
+    |> put_req_header("content-type", "application/json")
+    |> put_req_header("x-shopify-topic", "orders/create")
+    |> put_req_header("x-shopify-hmac-sha256", hmac)
+    |> Webhook.call(@opts)
+  end
+
   # Encodes an object as JSON, generating a HMAC string for integrity verification.
   # Returns a two-tuple containing the Base64-encoded HMAC and JSON payload string.
-  if System.otp_release() >= "22" do
-    defp encode_with_hmac(payload) when is_map(payload) do
-      json_payload = Jason.encode!(payload)
-      hmac = Base.encode64(:crypto.mac(:hmac, :sha256, @secret, json_payload))
-      {hmac, json_payload}
-    end
-  else
-    defp encode_with_hmac(payload) when is_map(payload) do
-      json_payload = Jason.encode!(payload)
-      hmac = Base.encode64(:crypto.hmac(:sha256, @secret, json_payload))
-      {hmac, json_payload}
-    end
+  defp encode_with_hmac(payload, secret \\ @secret) when is_map(payload) do
+    json_payload = Jason.encode!(payload)
+    {ShopifyAPI.Security.base64_sha256_hmac(json_payload, secret), json_payload}
   end
 end

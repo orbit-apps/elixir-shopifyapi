@@ -45,6 +45,35 @@ defmodule ShopifyAPI.Plugs.AuthShopSessionTokenTest do
     assert conn.assigns.auth_token == offline_token
   end
 
+  test "accepts a session token signed with the secondary secret" do
+    app = %{
+      build(:app)
+      | name: "rotating-app",
+        client_id: "rotating-app-id",
+        client_secret_secondary: "old_secret"
+    }
+
+    AppServer.set(app)
+    shop = build(:shop)
+    ShopServer.set(shop)
+    context = %{app: app, shop: shop, secret: "old_secret"}
+    [offline_token: offline_token] = offline_token(context)
+    [online_token: online_token] = online_token(context)
+
+    [jwt_session_token: session_token] =
+      jwt_session_token(Map.put(context, :online_token, online_token))
+
+    conn =
+      :get
+      |> conn("/")
+      |> Conn.put_req_header("authorization", "Bearer " <> session_token)
+      |> AuthShopSessionToken.call([])
+
+    refute conn.halted
+    assert conn.assigns.app == app
+    assert conn.assigns.auth_token == offline_token
+  end
+
   test "exchanges the session token when the cached refresh token is dead", %{app: app} do
     # `myshopify_domain/1` keeps only the host of the `dest` claim, so the exchange can't be
     # pointed at Bypass. It goes to localhost, where nothing listens, so the request still ends

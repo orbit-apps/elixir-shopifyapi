@@ -85,6 +85,46 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
     end
   end
 
+  describe "with an hmac and session token signed with the secondary secret" do
+    test "assigns the app, shop, and authtoken" do
+      app = %{
+        build(:app)
+        | name: "rotating-app",
+          client_id: "rotating-app-id",
+          client_secret_secondary: "old_secret"
+      }
+
+      shop = build(:shop)
+      AppServer.set(app)
+      ShopServer.set(shop)
+      context = %{app: app, shop: shop, secret: "old_secret"}
+      [offline_token: offline_token] = offline_token(context)
+      [online_token: online_token] = online_token(context)
+
+      [jwt_session_token: jwt_session_token] =
+        jwt_session_token(Map.put(context, :online_token, online_token))
+
+      params =
+        ShopifyValidationSetup.params_append_hmac(
+          app,
+          %{shop: shop.domain, id_token: jwt_session_token},
+          "old_secret"
+        )
+
+      conn =
+        :get
+        |> conn("/admin/#{app.name}?" <> URI.encode_query(params))
+        |> init_test_session(%{})
+        |> Conn.fetch_query_params()
+        |> AdminAuthenticator.call([])
+
+      refute conn.halted
+      assert conn.assigns.app == app
+      assert conn.assigns.auth_token == offline_token
+      assert conn.assigns.user_token == online_token
+    end
+  end
+
   describe "with a valid hmac and no session token" do
     test "raises rather than redirecting to OAuth when a refresh fails", %{app: app} do
       # Shopify erroring on the refresh is transient. Treating it as a missing token would send

@@ -57,7 +57,7 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   defp do_authentication(%{params: %{"id_token" => token}} = conn, _options)
        when is_binary(token) do
     with {:ok, app} <- JWTSessionToken.app(token),
-         {true, jwt, _jws} <- JWTSessionToken.verify(token, app.client_secret),
+         {true, jwt, _jws} <- JWTSessionToken.verify(token, app),
          :ok <- validate_hmac(app, conn.query_params),
          {:ok, myshopify_domain} <- JWTSessionToken.myshopify_domain(jwt),
          {:ok, shop} <- ShopifyAPI.ShopServer.get_or_create(myshopify_domain, true),
@@ -123,17 +123,9 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
   defp has_hmac(%{"hmac" => hmac}) when is_binary(hmac), do: :ok
   defp has_hmac(_params), do: {:error, :no_hmac}
 
-  defp validate_hmac(%ShopifyAPI.App{client_secret: secret}, params) do
-    request_hmac = params["hmac"]
-
-    params
-    |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
-    |> Enum.sort_by(&elem(&1, 0))
-    |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
-    |> ShopifyAPI.Security.base16_sha256_hmac(secret)
-    |> then(fn
-      ^request_hmac -> :ok
-      _ -> {:error, :invalid_hmac}
-    end)
+  defp validate_hmac(app, params) do
+    if ShopifyAPI.Security.valid_params_hmac?(app, params),
+      do: :ok,
+      else: {:error, :invalid_hmac}
   end
 end

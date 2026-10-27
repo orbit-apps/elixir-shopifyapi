@@ -86,7 +86,7 @@ defmodule ShopifyAPI.Router do
     if conn.params[@auth_code_param_name] != nil do
       with {:ok, app} <- conn |> app_name() |> AppServer.get(),
            true <- verify_nonce(app, conn.query_params),
-           true <- verify_params_with_hmac(app, conn.query_params),
+           true <- ShopifyAPI.Security.valid_params_hmac?(app, conn.query_params),
            {:ok, auth_token} <- request_auth_token(conn, app),
            shop <- shop_from_auth_token(auth_token) do
         ShopifyAPI.ShopServer.set(shop, true)
@@ -198,19 +198,12 @@ defmodule ShopifyAPI.Router do
   @doc """
   Checks a request's query parameters against the `hmac` parameter Shopify signed them with.
 
-  Every parameter except `hmac` and `signature` is sorted, joined into a query string and
-  hashed with the app's client secret. Returns `false` on any mismatch, including a request
-  carrying no `hmac` at all.
+  See `ShopifyAPI.Security.valid_params_hmac?/2`.
   """
+  @deprecated "Use ShopifyAPI.Security.valid_params_hmac?/2 instead"
   @spec verify_params_with_hmac(ShopifyAPI.App.t(), map()) :: boolean()
-  def verify_params_with_hmac(%ShopifyAPI.App{client_secret: secret}, params) do
-    params["hmac"] ==
-      params
-      |> Enum.reject(fn {key, _} -> key == "hmac" or key == "signature" end)
-      |> Enum.sort_by(&elem(&1, 0))
-      |> Enum.map_join("&", fn {key, value} -> key <> "=" <> value end)
-      |> ShopifyAPI.Security.base16_sha256_hmac(secret)
-  end
+  def verify_params_with_hmac(app, params),
+    do: ShopifyAPI.Security.valid_params_hmac?(app, params)
 
   defp shop_from_auth_token(%ShopifyAPI.AuthToken{shop_name: myshopify_domain}),
     do: %ShopifyAPI.Shop{domain: myshopify_domain}
