@@ -81,6 +81,32 @@ defmodule ShopifyAPI.Shop do
   def slug_from_domain(domain), do: String.replace(domain, "." <> @shopify_domain, "")
 
   @doc """
+  Checks that a value is a bare myshopify domain, so it is safe to build a request to.
+
+  Returns `false` for anything else, including a value that is not a string. In `:dev` and
+  `:test` it also accepts `"localhost:<port>"`, matching `to_uri/1`.
+
+  ## Examples
+
+      iex> ShopifyAPI.Shop.valid_domain?("acme.myshopify.com")
+      true
+      iex> ShopifyAPI.Shop.valid_domain?("acme.myshopify.com.example.com")
+      false
+
+  """
+  @spec valid_domain?(term()) :: boolean()
+  def valid_domain?(domain) when is_binary(domain),
+    do: Regex.match?(~r/\A[a-z0-9][a-z0-9-]*\.myshopify\.com\z/, domain) or local_domain?(domain)
+
+  def valid_domain?(_domain), do: false
+
+  if Mix.env() == :test or Mix.env() == :dev do
+    defp local_domain?(domain), do: Regex.match?(~r/\Alocalhost:\d+\z/, domain)
+  else
+    defp local_domain?(_domain), do: false
+  end
+
+  @doc """
   Builds the base `URI` for a shop, from either the struct or its domain.
 
   In `:dev` and `:test` the domain may carry a port (`"localhost:4040"`), so that requests can

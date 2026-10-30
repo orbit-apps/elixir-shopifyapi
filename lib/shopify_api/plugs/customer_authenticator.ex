@@ -104,7 +104,8 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticator do
     secrets
     |> List.wrap()
     |> Enum.any?(fn secret ->
-      signature == Security.base16_sha256_hmac(auth_payload, secret)
+      is_binary(signature) and
+        Plug.Crypto.secure_compare(signature, Security.base16_sha256_hmac(auth_payload, secret))
     end)
     |> case do
       true -> :ok

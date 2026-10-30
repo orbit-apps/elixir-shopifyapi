@@ -78,15 +78,17 @@ config :shopify_api, ShopifyAPI.Shop, post_login: {MyApp.Shop, :post_login, []}
 GET /shop/install?shop=acme.myshopify.com&app=my-app
       │
       │  ShopifyAPI.Router looks the app up in AppServer
+      │  and requires a *.myshopify.com shop
       ▼
 302 → https://acme.myshopify.com/admin/oauth/authorize?...
       │
       │  merchant approves the scopes
       ▼
-GET /shop/authorized/my-app?code=…&state=…&hmac=…&timestamp=…
+GET /shop/authorized/my-app?code=…&shop=…&state=…&hmac=…&timestamp=…
       │
       ├─ check `state` against the app's nonce
       ├─ verify the query string HMAC with the client secret
+      ├─ require the signed `shop` to be a *.myshopify.com domain
       ├─ ShopifyAPI.App.fetch_token/3 → POST /admin/oauth/access_token
       ├─ ShopServer.set/2  +  AuthTokenServer.set/2   (persistence fires here)
       └─ ShopifyAPI.Shop.post_login/1

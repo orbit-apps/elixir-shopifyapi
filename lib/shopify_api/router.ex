@@ -20,11 +20,14 @@ defmodule ShopifyAPI.Router do
       it starts the install instead, which is what makes an install link from the Partner
       dashboard work.
 
-  Both the shop domain and the app name may arrive more than one way. The domain is taken from
-  the `x-shopify-shop-domain` header, falling back to a `shop` parameter. The app name is taken
-  from an `app` parameter, which may be the `:app` path segment or a query string value; with
-  neither it falls back to the last segment of the request path, which for a bare
-  `GET /install` is `"install"` and will not match an app.
+  An install takes the shop domain from the `x-shopify-shop-domain` header, falling back to a
+  `shop` parameter. The callback only trusts the `shop`, `code` and `timestamp` that Shopify
+  signed in the query string, because it sends the app's client secret to that shop. Either way,
+  a domain that fails `ShopifyAPI.Shop.valid_domain?/1` gets a `404`.
+
+  The app name is taken from an `app` parameter, which may be the `:app` path segment or a query
+  string value; with neither it falls back to the last segment of the request path, which for a
+  bare `GET /install` is `"install"` and will not match an app.
 
   The `:app` segment is how one deployment installs more than one Shopify app — it selects
   which `ShopifyAPI.App`, and so which client id and secret, the flow runs with. Give each app
@@ -34,8 +37,9 @@ defmodule ShopifyAPI.Router do
   ## What the callback does
 
   On `GET /authorized/:app`, in order: look up the `ShopifyAPI.App`, check the `state`
-  parameter against the app's nonce, verify the query string HMAC, exchange the `code` for a
-  token with `ShopifyAPI.App.fetch_token/3`, then cache the shop and the token and fire the
+  parameter against the app's nonce, verify the query string HMAC, check the signed shop domain,
+  exchange the `code` for a token with `ShopifyAPI.App.fetch_token/3`, then cache the shop and
+  the token and fire the
   `ShopifyAPI.Shop` `post_login` hook. The merchant is finally redirected to the app inside
   their admin. Any failure along the way is a bare `404`.
 
@@ -81,12 +85,13 @@ defmodule ShopifyAPI.Router do
 
   # Shopify Callback on App authorization
   get "/authorized/:app" do
-    Logger.info("Authorized #{shop_domain(conn)}")
+    Logger.info("Authorized #{inspect(conn.query_params["shop"])}")
 
-    if conn.params[@auth_code_param_name] != nil do
+    if conn.query_params[@auth_code_param_name] != nil do
       with {:ok, app} <- conn |> app_name() |> AppServer.get(),
            true <- verify_nonce(app, conn.query_params),
            true <- ShopifyAPI.Security.valid_params_hmac?(app, conn.query_params),
+           true <- ShopifyAPI.Shop.valid_domain?(conn.query_params["shop"]),
            {:ok, auth_token} <- request_auth_token(conn, app),
            shop <- shop_from_auth_token(auth_token) do
         ShopifyAPI.ShopServer.set(shop, true)
@@ -139,8 +144,8 @@ defmodule ShopifyAPI.Router do
 
   defp request_auth_token(conn, app) do
     Logger.debug("APP #{inspect(app)}")
-    myshopify_domain = shop_domain(conn)
-    auth_code = conn.params[@auth_code_param_name]
+    myshopify_domain = conn.query_params["shop"]
+    auth_code = conn.query_params[@auth_code_param_name]
     timestamp = String.to_integer(conn.query_params["timestamp"])
 
     case App.fetch_token(app, myshopify_domain, auth_code) do
@@ -157,18 +162,20 @@ defmodule ShopifyAPI.Router do
   end
 
   defp install_app(conn) do
-    case conn |> app_name() |> AppServer.get() do
-      {:ok, app} ->
-        oauth_url = ShopifyAPI.shopify_oauth_url(app, shop_domain(conn))
-        Logger.debug("redirecting to Shop oauth url: #{oauth_url}")
+    myshopify_domain = shop_domain(conn)
 
-        conn
-        |> Conn.put_resp_header("location", oauth_url)
-        |> Conn.resp(unquote(302), "You are being redirected.")
-        |> Conn.halt()
+    with {:ok, app} <- conn |> app_name() |> AppServer.get(),
+         true <- ShopifyAPI.Shop.valid_domain?(myshopify_domain) do
+      oauth_url = ShopifyAPI.shopify_oauth_url(app, myshopify_domain)
+      Logger.debug("redirecting to Shop oauth url: #{oauth_url}")
 
+      conn
+      |> Conn.put_resp_header("location", oauth_url)
+      |> Conn.resp(unquote(302), "You are being redirected.")
+      |> Conn.halt()
+    else
       res ->
-        Logger.info("#{__MODULE__} failed install with: #{res}")
+        Logger.info("#{__MODULE__} failed install with: #{inspect(res)}")
 
         conn
         |> Conn.resp(404, "Not Found.")
@@ -188,6 +195,9 @@ defmodule ShopifyAPI.Router do
   Shopify identifies the shop with an `x-shopify-shop-domain` header on some requests and a
   `shop` query parameter on others, so both are checked, header first. Returns `nil` when
   neither is present.
+
+  Neither value is verified: anyone can set the header, and the parameter is only trustworthy
+  once its signature has been checked. Don't send credentials to the result.
   """
   @spec shop_domain(Plug.Conn.t()) :: String.t() | nil
   def shop_domain(conn), do: shop_domain_from_header(conn) || conn.params["shop"]
