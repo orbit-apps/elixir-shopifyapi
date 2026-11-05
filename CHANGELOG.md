@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.21.0
+
 - Security: the `ShopifyAPI.Router` callback only trusts the `shop`, `code` and `timestamp` in
   the signed query string. It used to prefer the `x-shopify-shop-domain` header, so a replayed
   signed query string could send the app's client id and secret to any host. If you mount the
