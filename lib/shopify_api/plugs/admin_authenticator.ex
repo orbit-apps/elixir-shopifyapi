@@ -83,7 +83,8 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticator do
 
   # Offline token auth OR new install
   defp do_authentication(conn, options) do
-    myshopify_domain = conn.params["shop"]
+    # The hmac only covers the query string, so a merged param could name a shop it never signed.
+    myshopify_domain = conn.query_params["shop"]
     app_name = ShopifyAPI.Config.app_name(conn, options)
     {:ok, app} = ShopifyAPI.AppServer.get(app_name)
 

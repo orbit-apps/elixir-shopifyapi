@@ -20,7 +20,7 @@ defmodule Test.ShopifyAPI.RouterTest do
   @client_secret "test"
   @nonce "testing"
   @redirect_uri "example.com"
-  @shop_domain "shop.example.com"
+  @shop_domain "shop.myshopify.com"
 
   setup_all do
     AppServer.set(@app_name, %App{
@@ -55,6 +55,37 @@ defmodule Test.ShopifyAPI.RouterTest do
       conn =
         :get
         |> conn("/install?app=not-an-app&shop=#{@shop_domain}")
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "without a shop it errors" do
+      conn =
+        :get
+        |> conn("/install?app=#{@app_name}")
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "with a shop outside myshopify.com it errors" do
+      conn =
+        :get
+        |> conn("/install?app=#{@app_name}&shop=evil.example.com")
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "with a shop header outside myshopify.com it errors" do
+      conn =
+        :get
+        |> conn("/install?app=#{@app_name}&shop=#{@shop_domain}")
+        |> Conn.put_req_header("x-shopify-shop-domain", "evil.example.com")
         |> parse()
         |> Router.call(%{})
 
@@ -139,6 +170,73 @@ defmodule Test.ShopifyAPI.RouterTest do
           "/authorized/#{@app_name}?" <>
             add_hmac_to_params("code=#{@code}&shop=invalid-shop&state=#{@nonce}&timestamp=1234")
         )
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "sends the client secret to the signed shop, not the shop header", %{
+      bypass: bypass,
+      shop_domain: shop_domain
+    } do
+      # Bypass fails the test if this server receives any request.
+      spoofed = Bypass.open()
+      spoofed_domain = "localhost:#{spoofed.port}"
+
+      Bypass.expect_once(bypass, "POST", "/admin/oauth/access_token", fn conn ->
+        {:ok, body} = JSONSerializer.encode(@token)
+        Conn.resp(conn, 200, body)
+      end)
+
+      conn =
+        :get
+        |> conn(
+          "/authorized/#{@app_name}?" <>
+            add_hmac_to_params("code=#{@code}&shop=#{shop_domain}&state=#{@nonce}&timestamp=1234")
+        )
+        |> Conn.put_req_header("x-shopify-shop-domain", spoofed_domain)
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 302
+      assert {:ok, _token} = AuthTokenServer.get(shop_domain, @app_name)
+      assert {:error, _reason} = AuthTokenServer.get(spoofed_domain, @app_name)
+    end
+
+    test "fails with a signed shop outside myshopify.com" do
+      conn =
+        :get
+        |> conn(
+          "/authorized/#{@app_name}?" <>
+            add_hmac_to_params(
+              "code=#{@code}&shop=evil.example.com&state=#{@nonce}&timestamp=1234"
+            )
+        )
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "fails with a signed query that has no shop" do
+      conn =
+        :get
+        |> conn(
+          "/authorized/#{@app_name}?" <>
+            add_hmac_to_params("code=#{@code}&state=#{@nonce}&timestamp=1234")
+        )
+        |> Conn.put_req_header("x-shopify-shop-domain", @shop_domain)
+        |> parse()
+        |> Router.call(%{})
+
+      assert conn.status == 404
+    end
+
+    test "with no code and a shop outside myshopify.com it does not start an install" do
+      conn =
+        :get
+        |> conn("/authorized/#{@app_name}?shop=evil.example.com")
         |> parse()
         |> Router.call(%{})
 

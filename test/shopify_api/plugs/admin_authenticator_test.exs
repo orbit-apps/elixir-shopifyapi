@@ -85,6 +85,30 @@ defmodule ShopifyAPI.Plugs.AdminAuthenticatorTest do
     end
   end
 
+  describe "with a valid hmac and a different shop in the request body" do
+    test "assigns the shop the query string signed", %{
+      app: app,
+      shop: shop,
+      offline_token: offline_token
+    } do
+      other_shop = %ShopifyAPI.Shop{domain: "other.myshopify.com"}
+      ShopServer.set(other_shop)
+      AuthTokenServer.set(%{offline_token | shop_name: other_shop.domain, token: "other"}, false)
+
+      params = ShopifyValidationSetup.params_append_hmac(app, %{shop: shop.domain})
+
+      conn =
+        :post
+        |> conn("/admin/#{app.name}?" <> URI.encode_query(params), %{shop: other_shop.domain})
+        |> init_test_session(%{})
+        |> Conn.fetch_query_params()
+        |> AdminAuthenticator.call(app_name: app.name)
+
+      assert conn.assigns.shop == shop
+      assert conn.assigns.auth_token == offline_token
+    end
+  end
+
   describe "with an hmac and session token signed with the secondary secret" do
     test "assigns the app, shop, and authtoken" do
       app = %{

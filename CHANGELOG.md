@@ -1,5 +1,17 @@
 ## Unreleased
 
+## 0.21.0
+
+- Security: the `ShopifyAPI.Router` callback only trusts the `shop`, `code` and `timestamp` in
+  the signed query string. It used to prefer the `x-shopify-shop-domain` header, so a replayed
+  signed query string could send the app's client id and secret to any host. If you mount the
+  router, upgrade and rotate your client secret.
+- Security: `ShopifyAPI.Plugs.AdminAuthenticator` reads `shop` from the signed query string, so a
+  request body can't name a different shop than the one the HMAC covers.
+- BREAKING: `ShopifyAPI.Router` answers `404` for a shop that isn't a `*.myshopify.com` domain.
+  `ShopifyAPI.Shop.valid_domain?/1` is the new check.
+- Fix: `ShopifyAPI.Plugs.CustomerAuthenticator` compares signatures in constant time.
+
 ## 0.20.0
 
 - New: `ShopifyAPI.App` has a `:client_secret_secondary` field for rotating the client secret.

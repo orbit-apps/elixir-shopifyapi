@@ -122,6 +122,12 @@ defmodule ShopifyAPI.Plugs.CustomerAuthenticatorTest do
 
       assert_unauthorized(conn, "Authorization failed")
     end
+
+    test "signature that is not a string" do
+      conn = post(auth_payload(), %{a: "b"})
+
+      assert_unauthorized(conn, "Authorization failed")
+    end
   end
 
   defp post(payload, signature) do
